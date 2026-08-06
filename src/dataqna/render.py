@@ -5,8 +5,10 @@ There is no build step and no bundler: the pages are small enough that the
 cost of a toolchain would exceed its benefit.
 """
 
+import hashlib
 import html
 import os
+import re
 
 from . import config, http
 
@@ -19,7 +21,33 @@ CONTENT_TYPES = {
     ".svg": "image/svg+xml",
 }
 
+# A speech bubble with the upvote chevron inside it — the whole product in one
+# glyph. Inline so it costs no request and cannot be blocked by the CSP.
+FAVICON = (
+    "data:image/svg+xml,"
+    "%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E"
+    "%3Crect width='32' height='32' rx='8' fill='%233b5bdb'/%3E"
+    "%3Cpath d='M9 20.5h10l4 4v-4h0a2 2 0 0 0 2-2v-9a2 2 0 0 0-2-2H9a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2z'"
+    " fill='none' stroke='white' stroke-width='0'/%3E"
+    "%3Cpath d='M10.5 18.5l5.5-6 5.5 6' fill='none' stroke='white' stroke-width='2.6'"
+    " stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"
+)
+
+THEME_META = (
+    '<meta name="theme-color" content="#fbfbfd" media="(prefers-color-scheme: light)">'
+    '<meta name="theme-color" content="#0e1016" media="(prefers-color-scheme: dark)">'
+)
+
+BRAND = (
+    '<a class="brand" href="/live">'
+    '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor"'
+    ' stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'
+    '<path d="M6 14l6-7 6 7"/></svg>DataQnA</a>'
+)
+
 _cache = {}
+_version = None
+_ASSET_REF = re.compile(r'(href|src)="(/assets/[a-zA-Z0-9_.-]+)"')
 
 
 def asset_bytes(name):
@@ -32,24 +60,47 @@ def asset_bytes(name):
     return _cache[name]
 
 
-def asset_response(name, *, immutable=False):
+def version():
+    """A build stamp, so a mid-session participant is not left on stale JS.
+
+    Computed from the asset bytes at cold start; the files cannot change under
+    a running container, so this is stable for the container's life.
+    """
+    global _version
+    if _version is None:
+        digest = hashlib.sha256()
+        for name in sorted(("app.css", "room.js", "admin.js", "present.js")):
+            digest.update(asset_bytes(name) or b"")
+        _version = digest.hexdigest()[:10]
+    return _version
+
+
+def _stamp(markup):
+    return _ASSET_REF.sub(lambda m: f'{m.group(1)}="{m.group(2)}?v={version()}"', markup)
+
+
+def asset_response(name):
     payload = asset_bytes(name)
     if payload is None:
         return http.response(404, "Not found")
     extension = os.path.splitext(name)[1]
+    # Versioned by the query string above, so a long life is safe.
+    cache = "public, max-age=86400, immutable"
     return http.response(
         200,
         payload.decode("utf-8"),
         content_type=CONTENT_TYPES.get(extension, "application/octet-stream"),
-        headers={"cache-control": "public, max-age=300" if not immutable else "public, max-age=86400"},
+        headers={"cache-control": cache},
     )
 
 
 def page(template, replacements):
     body = asset_bytes(template).decode("utf-8")
-    for key, value in replacements.items():
+    values = dict(replacements)
+    values.setdefault("FAVICON", FAVICON)
+    for key, value in values.items():
         body = body.replace("{{" + key + "}}", value)
-    return body
+    return _stamp(body)
 
 
 def room_page(room, *, config_payload, cookies=None):
@@ -75,40 +126,42 @@ def present_page(room, config_payload):
     return http.html_response(200, body)
 
 
-def cohost_page(error=None, code=""):
-    message = f'<div class="banner warn">{html.escape(error)}</div>' if error else ""
+def _shell(title, inner, *, status=200):
     body = f"""<!doctype html>
 <html lang="en"><head><meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="robots" content="noindex">
-<title>Co-host access</title>
+<title>{html.escape(title)}</title>
+{THEME_META}
+<link rel="icon" href="{FAVICON}">
 <link rel="stylesheet" href="/assets/app.css"></head>
-<body><div class="wrap">
-<h1 style="font-size:1.4rem">Co-host access</h1>
+<body><div class="wrap">{inner}</div></body></html>"""
+    return http.html_response(status, _stamp(body))
+
+
+def cohost_page(error=None, code=""):
+    message = f'<div class="banner warn">{html.escape(error)}</div>' if error else ""
+    inner = f"""{BRAND}
+<h1 style="font-size:1.5rem;letter-spacing:-.01em">Co-host access</h1>
 <p class="muted">Enter the code the host gave you. It lets you moderate that one
 room — approve, answer, pin, and hide questions, and run presentation mode. No
 account needed.</p>
-{message}
 <form method="POST" action="/cohost" class="card stack">
+  {message}
   <input type="text" name="code" autocomplete="off" autocapitalize="characters"
-         spellcheck="false" placeholder="XXXX-XXXX-XXXX" aria-label="Co-host code"
-         class="mono" value="{html.escape(code)}">
+         autofocus spellcheck="false" maxlength="20" placeholder="XXXX-XXXX-XXXX"
+         aria-label="Co-host code" class="mono" value="{html.escape(code)}">
   <button type="submit">Continue</button>
-</form>
-</div></body></html>"""
-    return http.html_response(200 if not error else 403, body)
+</form>"""
+    return _shell("Co-host access", inner, status=200 if not error else 403)
 
 
 def notice(title, message, *, status=200, link=None):
-    action = f'<p><a class="btn" href="{html.escape(link[1])}">{html.escape(link[0])}</a></p>' if link else ""
-    body = f"""<!doctype html>
-<html lang="en"><head><meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="robots" content="noindex">
-<title>{html.escape(title)}</title>
-<link rel="stylesheet" href="/assets/app.css"></head>
-<body><div class="wrap"><div class="empty">
-<h1 style="font-size:1.4rem">{html.escape(title)}</h1>
-<p>{html.escape(message)}</p>{action}
-</div></div></body></html>"""
-    return http.html_response(status, body)
+    target, label = (link[1], link[0]) if link else ("/live", "See what's live")
+    inner = f"""{BRAND}
+<div class="empty">
+<h2 style="font-size:1.3rem">{html.escape(title)}</h2>
+<p>{html.escape(message)}</p>
+<p style="margin-top:18px"><a class="btn" href="{html.escape(target)}">{html.escape(label)}</a></p>
+</div>"""
+    return _shell(title, inner, status=status)

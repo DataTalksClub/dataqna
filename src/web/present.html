@@ -5,35 +5,42 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex">
 <title>{{TITLE}}</title>
+<meta name="theme-color" content="#05070d">
+<link rel="icon" href="{{FAVICON}}">
 <link rel="stylesheet" href="/assets/app.css">
 </head>
 <body class="present">
 <div class="present-grid">
-  <div class="present-main">
+  <div class="present-title" id="room-title"></div>
+
+  <div class="present-main" id="main">
     <div class="q-text" id="q-text">No questions yet.</div>
     <div class="q-meta" id="q-meta"></div>
   </div>
 
   <aside class="present-side">
     <h2>Up next · <span id="remaining">0</span></h2>
-    <ol id="upcoming"></ol>
+    <ul id="upcoming"></ul>
     <div class="present-join">
       <div class="qr" id="qr"></div>
       <div>
+        <div class="join-label">Join and ask</div>
         <div class="url" id="join-url"></div>
-        <div class="code" id="join-code"></div>
       </div>
     </div>
   </aside>
 
-  <div class="present-foot">
-    → next · ← back · Enter answered · p pin · h hide · q QR · f fullscreen · Esc exit
+  <div class="present-foot" id="foot">
+    → next · ← back · Enter answered · p pin · h hide · u undo · q QR · f fullscreen · Esc exit
   </div>
 </div>
+
+<div class="present-cue" id="cue"></div>
 
 <div class="present-overlay" id="overlay">
   <div class="qr" id="qr-big"></div>
   <div class="url" id="overlay-url"></div>
+  <div class="code" id="overlay-code"></div>
 </div>
 
 <script id="config" type="application/json">{{CONFIG}}</script>

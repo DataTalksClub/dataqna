@@ -5,12 +5,15 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex">
 <title>DataQnA admin</title>
+<meta name="theme-color" content="#fbfbfd" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0e1016" media="(prefers-color-scheme: dark)">
+<link rel="icon" href="{{FAVICON}}">
 <link rel="stylesheet" href="/assets/app.css">
 </head>
 <body>
 <div class="wrap wide">
   <div class="row" style="margin-bottom:18px">
-    <strong class="grow"><a href="/admin" style="text-decoration:none;color:inherit">DataQnA</a></strong>
+    <span class="grow"><a class="brand" href="/admin"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 14l6-7 6 7"/></svg>DataQnA</a></span>
     <span class="muted" id="who"></span>
     <a class="btn ghost small" href="/auth/logout">Sign out</a>
   </div>
@@ -25,19 +28,15 @@
           <option value="open">Open now</option>
           <option value="draft">Draft</option>
         </select>
+        <select id="new-expiry" aria-label="Closes after">
+          <option value="">never closes</option>
+          <option value="1">closes in 1 hour</option>
+          <option value="2">closes in 2 hours</option>
+          <option value="4">closes in 4 hours</option>
+          <option value="24">closes in 1 day</option>
+          <option value="2880">closes in 4 months</option>
+        </select>
         <button id="create">Create</button>
-      </div>
-      <div class="row wrapping">
-        <label class="muted">Closes after
-          <select id="new-expiry" aria-label="Expiry">
-            <option value="">never</option>
-            <option value="1">1 hour</option>
-            <option value="2">2 hours</option>
-            <option value="4">4 hours</option>
-            <option value="24">1 day</option>
-            <option value="2880">4 months</option>
-          </select>
-        </label>
       </div>
     </div>
 
@@ -67,10 +66,13 @@
         <div><a id="public-link" href="#" class="mono"></a></div>
         <div>Join code <code id="join-code"></code></div>
         <div class="row wrapping">
-          <a id="present" class="btn" href="#">Presentation mode</a>
+          <a id="present" class="btn" href="#" target="_blank" rel="noopener">Presentation mode</a>
           <button id="copy-link" class="ghost small">Copy link</button>
-          <a id="qr-download" class="btn ghost small" href="#" download>Download QR</a>
-          <a id="export" class="btn ghost small" href="#">Export</a>
+          <a id="qr-png" class="btn ghost small" href="#" download>QR PNG</a>
+          <a id="qr-svg" class="btn ghost small" href="#" download>QR SVG</a>
+          <a id="export-md" class="btn ghost small" href="#">Export MD</a>
+          <a id="export-csv" class="btn ghost small" href="#">CSV</a>
+          <a id="export-json" class="btn ghost small" href="#">JSON</a>
         </div>
       </div>
     </div>
@@ -110,18 +112,18 @@
       settings and access are managed by the room owner.
     </div>
 
-    <div class="tabs" role="tablist">
-      <button role="tab" id="f-all" aria-selected="true">All</button>
-      <button role="tab" id="f-pending" aria-selected="false">Review</button>
-      <button role="tab" id="f-answered" aria-selected="false">Answered</button>
-      <button role="tab" id="f-hidden" aria-selected="false">Hidden</button>
+    <div class="tabs">
+      <button type="button" id="f-all" aria-pressed="true">All</button>
+      <button type="button" id="f-pending" aria-pressed="false">Review <span class="badge" id="pending-badge" hidden>0</span></button>
+      <button type="button" id="f-answered" aria-pressed="false">Answered</button>
+      <button type="button" id="f-hidden" aria-pressed="false">Hidden</button>
     </div>
     <ul class="questions" id="qlist"></ul>
     <div class="empty" id="qempty" hidden>Nothing here yet.</div>
   </div>
 </div>
 
-<div class="toast" id="toast"></div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
 <script src="/assets/admin.js"></script>
 </body>
 </html>

@@ -5,7 +5,7 @@
   var API = "/api/v1";
   var roomId = (location.pathname.match(/^\/admin\/rooms\/([^/]+)/) || [])[1];
   var toastEl = document.getElementById("toast");
-  var state = { room: null, filter: "all", items: [], etag: null };
+  var state = { room: null, filter: "all", items: [], etag: null, armedDelete: null };
 
   function $(id) { return document.getElementById(id); }
 
@@ -32,29 +32,42 @@
 
   /* ---- room list ---- */
 
+  var GROUPS = [["open", "Open"], ["draft", "Draft"], ["closed", "Closed"], ["archived", "Archived"]];
+
   function renderRooms(items) {
     var host = $("rooms");
     host.textContent = "";
     if (!items.length) {
-      host.innerHTML = '<div class="empty">No rooms yet. Create one above.</div>';
+      host.innerHTML = '<div class="empty"><h2>No rooms yet</h2><p>Create one above.</p></div>';
       return;
     }
-    items.forEach(function (room) {
-      var card = document.createElement("div");
-      card.className = "card row wrapping";
-      var link = document.createElement("a");
-      link.href = "/admin/rooms/" + room.room_id;
-      link.textContent = room.title;
-      link.style.fontWeight = "600";
-      var meta = document.createElement("div");
-      meta.className = "muted";
-      meta.style.width = "100%";
-      meta.textContent = room.state + " · /r/" + room.slug + " · " +
-        room.counts.questions + " questions, " + room.counts.answered + " answered" +
-        (room.counts.pending ? ", " + room.counts.pending + " to review" : "");
-      card.appendChild(link);
-      card.appendChild(meta);
-      host.appendChild(card);
+    GROUPS.forEach(function (group) {
+      var inGroup = items.filter(function (room) { return room.state === group[0]; });
+      if (!inGroup.length) return;
+      var heading = document.createElement("div");
+      heading.className = "group-heading";
+      heading.textContent = group[1] + " · " + inGroup.length;
+      host.appendChild(heading);
+
+      inGroup.forEach(function (room) {
+        var card = document.createElement("div");
+        card.className = "card room-card row wrapping";
+        var link = document.createElement("a");
+        // Stretched so the whole card is the hit target, not just the words.
+        link.className = "stretched";
+        link.href = "/admin/rooms/" + room.room_id;
+        link.textContent = room.title;
+        link.style.fontWeight = "600";
+        var meta = document.createElement("div");
+        meta.className = "muted";
+        meta.style.width = "100%";
+        meta.textContent = "/r/" + room.slug + " · " +
+          room.counts.questions + " questions, " + room.counts.answered + " answered" +
+          (room.counts.pending ? " · " + room.counts.pending + " to review" : "");
+        card.appendChild(link);
+        card.appendChild(meta);
+        host.appendChild(card);
+      });
     });
   }
 
@@ -175,8 +188,11 @@
     $("public-link").textContent = room.url;
     $("join-code").textContent = room.code;
     $("present").href = "/admin/rooms/" + room.room_id + "/present";
-    $("qr-download").href = "/r/" + room.slug + "/qr.png?size=1024";
-    $("export").href = API + "/rooms/" + room.room_id + "/export?format=md";
+    $("qr-png").href = "/r/" + room.slug + "/qr.png?size=1024";
+    $("qr-svg").href = "/r/" + room.slug + "/qr.svg";
+    ["md", "csv", "json"].forEach(function (format) {
+      $("export-" + format).href = API + "/rooms/" + room.room_id + "/export?format=" + format;
+    });
     $("state").value = room.state;
     $("questions-open").checked = room.settings.questions_open;
     $("voting-open").checked = room.settings.voting_open;
@@ -202,6 +218,10 @@
       if (state.filter === "answered") return item.status === "answered";
       return item.status === "hidden";
     });
+    var pending = state.items.filter(function (q) { return q.status === "pending"; }).length;
+    $("pending-badge").hidden = pending === 0;
+    $("pending-badge").textContent = pending;
+
     $("qempty").hidden = filtered.length > 0;
     var list = $("qlist");
     list.textContent = "";
@@ -211,8 +231,12 @@
       li.className = "q" + (item.status === "answered" ? " answered" : "") + (item.pinned ? " pinned" : "");
 
       var score = document.createElement("div");
-      score.className = "vote";
-      score.innerHTML = '<span class="arrow">▲</span><span>' + item.score + "</span>";
+      // Displays a score; it is not a control, so it must not look like one.
+      score.className = "vote static";
+      score.setAttribute("aria-hidden", "true");
+      score.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" ' +
+        'stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">' +
+        '<path d="M6 14l6-7 6 7"/></svg><span>' + item.score + "</span>";
 
       var body = document.createElement("div");
       body.className = "grow";
@@ -226,21 +250,25 @@
       var actions = document.createElement("div");
       actions.className = "actions";
       [
-        item.status === "pending" ? ["Approve", { status: "visible" }] : null,
-        item.status === "answered" ? ["Unanswer", { status: "visible" }] : ["Mark answered", { status: "answered" }],
-        [item.pinned ? "Unpin" : "Pin", { pinned: !item.pinned }],
-        item.status === "hidden" ? ["Restore", { status: "visible" }] : ["Hide", { status: "hidden" }]
-      ].filter(Boolean).forEach(function (pair) {
+        item.status === "pending" ? ["Approve", { status: "visible" }, true] : null,
+        item.status === "answered"
+          ? ["Unanswer", { status: "visible" }, false]
+          : ["Mark answered", { status: "answered" }, item.status !== "pending"],
+        [item.pinned ? "Unpin" : "Pin", { pinned: !item.pinned }, false],
+        item.status === "hidden" ? ["Restore", { status: "visible" }, false] : ["Hide", { status: "hidden" }, false]
+      ].filter(Boolean).forEach(function (entry) {
         var button = document.createElement("button");
-        button.className = "ghost small";
-        button.textContent = pair[0];
+        // Answering is the live-session flow; it earns the filled treatment.
+        button.className = entry[2] ? "small" : "ghost small";
+        button.textContent = entry[0];
         button.addEventListener("click", function () {
           request("/rooms/" + roomId + "/questions/" + item.question_id, {
-            method: "PATCH", body: JSON.stringify(pair[1])
+            method: "PATCH", body: JSON.stringify(entry[1])
           }).then(function () { state.etag = null; refresh(); }).catch(fail);
         });
         actions.appendChild(button);
       });
+      actions.appendChild(deleteButton(item));
 
       body.appendChild(text);
       body.appendChild(meta);
@@ -262,10 +290,33 @@
       }).catch(function () {});
   }
 
+  /* Deleting is irreversible, so the first click only arms the button. */
+  function deleteButton(item) {
+    var button = document.createElement("button");
+    var armed = state.armedDelete === item.question_id;
+    button.className = armed ? "small arm" : "ghost small";
+    button.textContent = armed ? "Really delete?" : "Delete";
+    button.addEventListener("click", function () {
+      if (state.armedDelete !== item.question_id) {
+        state.armedDelete = item.question_id;
+        renderQuestions();
+        setTimeout(function () {
+          if (state.armedDelete === item.question_id) { state.armedDelete = null; renderQuestions(); }
+        }, 3000);
+        return;
+      }
+      state.armedDelete = null;
+      request("/rooms/" + roomId + "/questions/" + item.question_id, {
+        method: "PATCH", body: JSON.stringify({ status: "deleted" })
+      }).then(function () { state.etag = null; refresh(); }).catch(fail);
+    });
+    return button;
+  }
+
   function selectFilter(name) {
     state.filter = name;
     ["all", "pending", "answered", "hidden"].forEach(function (key) {
-      $("f-" + key).setAttribute("aria-selected", key === name ? "true" : "false");
+      $("f-" + key).setAttribute("aria-pressed", key === name ? "true" : "false");
     });
     renderQuestions();
   }

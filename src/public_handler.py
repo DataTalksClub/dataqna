@@ -90,19 +90,27 @@ def _serve_qr(identifier, extension, query):
 def _serve_live():
     open_rooms = rooms.live_room()
     if not open_rooms:
-        return render.notice("Nothing live right now", "There is no open Q&A at the moment. Check back when the session starts.")
+        return render.notice(
+            "Nothing live right now",
+            "There is no open Q&A at the moment. Check back when the session starts.",
+            link=("Check again", "/live"),
+        )
     if len(open_rooms) == 1:
         return http.redirect(f"/r/{open_rooms[0]['slug']}")
 
+    import html as _html
+
     items = "".join(
-        f'<div class="card"><a href="/r/{room["slug"]}"><strong>{room.get("title")}</strong></a></div>'
+        f'<div class="card room-card"><a class="stretched" href="/r/{_html.escape(room["slug"])}">'
+        f'<strong>{_html.escape(room.get("title") or "Q&A")}</strong></a></div>'
         for room in open_rooms
     )
-    body = f"""<!doctype html><html lang="en"><head><meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Live Q&amp;A</title><link rel="stylesheet" href="/assets/app.css"></head>
-<body><div class="wrap"><h1 style="font-size:1.4rem">Live right now</h1>{items}</div></body></html>"""
-    return http.html_response(200, body)
+    inner = (
+        f'{render.BRAND}'
+        '<h1 style="font-size:1.5rem;letter-spacing:-.01em">Live right now</h1>'
+        f"{items}"
+    )
+    return render._shell("Live Q&A", inner)
 
 
 def lambda_handler(event, _context):
