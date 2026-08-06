@@ -40,8 +40,11 @@ jobs:
       - name: Install dependencies
         run: uv sync
 
+      # `make build`, not `sam build`: src/requirements.txt is generated from the
+      # lockfile and gitignored, so building without it ships a Lambda with no
+      # dependencies — which deploys cleanly and then 500s on every request.
       - name: Build
-        run: sam build --config-env sandbox
+        run: make build
 
       - name: Deploy
         run: sam deploy --config-env sandbox --no-confirm-changeset --no-fail-on-empty-changeset
