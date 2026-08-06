@@ -11,6 +11,7 @@ recurring events are scripted rather than clicked.
 **Live at [qna.dtcdev.click](https://qna.dtcdev.click).**
 
 - [Specification](docs/specification.md) — product behaviour, architecture, data model
+- [Design system](docs/design-system.md) — tokens, themes, contrast rules, components
 - [API reference](docs/api.md) — endpoints, payloads, authentication
 
 ## Shape of it
