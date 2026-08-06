@@ -20,8 +20,8 @@
 
   <div id="view-list" hidden>
     <div class="card stack">
-      <strong>New room</strong>
-      <input type="text" id="new-title" placeholder="Room title" aria-label="Room title">
+      <strong>New session</strong>
+      <input type="text" id="new-title" placeholder="Session title" aria-label="Session title">
       <div class="row wrapping">
         <input type="text" id="new-slug" class="grow" placeholder="custom-link (optional)" aria-label="Slug">
         <select id="new-state" aria-label="Initial state">
@@ -40,12 +40,12 @@
       </div>
     </div>
 
-    <h2 style="font-size:1.05rem">Rooms</h2>
+    <h2 style="font-size:1.05rem">Your sessions</h2>
     <div id="rooms"></div>
 
     <div class="card stack">
       <strong>API keys</strong>
-      <p class="muted" style="margin:0">For scripting rooms and for the DataOps integration. Shown once.</p>
+      <p class="muted" style="margin:0">For scripting sessions and for the DataOps integration. Shown once.</p>
       <div class="row wrapping">
         <input type="text" id="key-name" class="grow" placeholder="Key name" aria-label="Key name">
         <button id="create-key" class="ghost">Create key</button>
@@ -56,7 +56,7 @@
   </div>
 
   <div id="view-room" hidden>
-    <a href="/admin" class="muted" style="text-decoration:none">&larr; All rooms</a>
+    <a href="/admin" class="muted" style="text-decoration:none">&larr; All sessions</a>
     <h1 id="room-title" style="font-size:1.4rem;margin:10px 0 4px"></h1>
     <div class="muted" id="room-sub" style="margin-bottom:14px"></div>
 
@@ -79,7 +79,7 @@
 
     <div class="card stack" id="settings-card">
       <div class="row wrapping">
-        <select id="state" aria-label="Room state">
+        <select id="state" aria-label="Session state">
           <option value="draft">Draft</option>
           <option value="open">Open</option>
           <option value="closed">Closed</option>
@@ -87,7 +87,13 @@
         <label class="row"><input type="checkbox" id="questions-open"> <span>Accept questions</span></label>
         <label class="row"><input type="checkbox" id="voting-open"> <span>Accept votes</span></label>
         <label class="row"><input type="checkbox" id="moderation"> <span>Review before showing</span></label>
+        <label class="row"><input type="checkbox" id="listed"> <span>Show on the front page</span></label>
       </div>
+    </div>
+
+    <div class="card stack" id="people-card">
+      <strong>Admins</strong>
+      <p class="muted" style="margin:0">DataTalks.Club accounts with full access to this session.</p>
       <div class="row wrapping">
         <input type="email" id="admin-email" class="grow" placeholder="Add admin by email" aria-label="Admin email">
         <button id="add-admin" class="ghost">Add admin</button>
@@ -97,9 +103,9 @@
 
     <div class="card stack" id="cohost-card">
       <strong>Co-hosts</strong>
-      <p class="muted" style="margin:0">Give someone a code and they can moderate
-      this room and run presentation mode — no account, no access to anything else.
-      Revoking a code takes effect immediately.</p>
+      <p class="muted" style="margin:0">A code lets someone run this session —
+      questions, settings, and presentation mode — with no account. They cannot add
+      people or reach any other session. Revoking takes effect immediately.</p>
       <div class="row wrapping">
         <input type="text" id="cohost-label" class="grow" placeholder="Who is this for? (optional)" aria-label="Co-host label">
         <button id="create-cohost" class="ghost">Create code</button>
@@ -108,8 +114,8 @@
     </div>
 
     <div class="banner" id="cohost-notice" hidden>
-      You are here as a co-host. You can moderate questions and present; room
-      settings and access are managed by the room owner.
+      You are here with a session code: you can run this session — its questions,
+      settings, and presentation view. Only the owner can add people to it.
     </div>
 
     <div class="tabs">

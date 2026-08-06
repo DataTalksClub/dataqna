@@ -156,6 +156,69 @@ account needed.</p>
     return _shell("Co-host access", inner, status=200 if not error else 403)
 
 
+def _room_card(room, *, note):
+    title = html.escape(room.get("title") or "Q&A")
+    slug = html.escape(room.get("slug") or "")
+    return (
+        f'<div class="card room-card">'
+        f'<a class="stretched room-link" href="/r/{slug}">{title}</a>'
+        f'<div class="muted room-note">{html.escape(note)}</div>'
+        f"</div>"
+    )
+
+
+def _counts_note(room):
+    total = int(room.get("q_total") or 0)
+    return f"{total} question{'' if total == 1 else 's'}"
+
+
+def directory_page(live, recent, *, signed_in=None):
+    """The front page: what is on now, and what was on recently."""
+    parts = [
+        '<div class="row" style="margin-bottom:22px">',
+        f'<span class="grow">{BRAND}</span>',
+    ]
+    if signed_in:
+        parts.append('<a class="btn small" href="/admin">Your sessions</a>')
+    else:
+        parts.append('<a class="btn ghost small" href="/auth/login">Sign in</a>')
+    parts.append("</div>")
+
+    if signed_in:
+        parts.append(
+            '<div class="card stack">'
+            f'<strong>Signed in as {html.escape(signed_in)}</strong>'
+            '<p class="muted" style="margin:0">Create a session, share its QR code, '
+            'and run presentation mode from the console.</p>'
+            '<div class="row wrapping">'
+            '<a class="btn" href="/admin">New session</a>'
+            '<a class="btn ghost" href="/auth/logout">Sign out</a>'
+            "</div></div>"
+        )
+
+    if live:
+        parts.append('<div class="group-heading">Live now</div>')
+        parts.extend(
+            _room_card(room, note=f"{_counts_note(room)} · open") for room in live
+        )
+
+    if recent:
+        parts.append('<div class="group-heading">Recently finished</div>')
+        parts.extend(
+            _room_card(room, note=f"{_counts_note(room)} · closed") for room in recent
+        )
+
+    if not live and not recent:
+        parts.append(
+            '<div class="empty">'
+            '<h2>Nothing running right now</h2>'
+            "<p>Sessions appear here while they are live, and for a week after "
+            "they finish.</p></div>"
+        )
+
+    return _shell("Q&A sessions", "".join(parts))
+
+
 def notice(title, message, *, status=200, link=None):
     target, label = (link[1], link[0]) if link else ("/live", "See what's live")
     inner = f"""{BRAND}

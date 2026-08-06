@@ -18,6 +18,9 @@ DEFAULT_SETTINGS = {
     "moderation": "off",
     "questions_open": True,
     "voting_open": True,
+    # Whether the session appears on the public front page. Off makes a room
+    # reachable by link only — it changes nothing about who may read it.
+    "listed": True,
     "allow_names": True,
     "require_names": False,
     "answered_placement": "separate",

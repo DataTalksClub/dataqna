@@ -280,6 +280,8 @@ th, td { text-align: left; padding: 8px 6px; border-bottom: 1px solid var(--bord
 th { color: var(--muted); font-weight: 600; }
 
 .room-card { position: relative; }
+.room-card .room-link { font-weight: 600; text-decoration: none; font-size: 1.02rem; }
+.room-card .room-note { margin-top: 4px; font-size: .86rem; }
 .room-card .stretched::after { content: ""; position: absolute; inset: 0; }
 .group-heading {
   font-size: .78rem;

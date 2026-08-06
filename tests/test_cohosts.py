@@ -79,13 +79,42 @@ def test_cohost_cannot_reach_another_room(table):
     assert excinfo.value.status == 403
 
 
-def test_cohost_cannot_change_room_settings(table):
+def test_cohost_runs_the_session_including_its_settings(table):
+    """A code is admin *of one session*: its questions, settings, and lifecycle."""
+    room = make_room()
+    identity = cohost_identity(room, invite_for(room))
+
+    updated = json.loads(
+        call(["rooms", room["room_id"]], "PATCH", identity=identity,
+             body={"settings": {"questions_open": False}})["body"]
+    )
+    assert updated["settings"]["questions_open"] is False
+
+    closed = json.loads(
+        call(["rooms", room["room_id"]], "PATCH", identity=identity,
+             body={"state": "closed"})["body"]
+    )
+    assert closed["state"] == "closed"
+
+
+def test_cohost_cannot_change_the_published_link(table):
+    """The slug is what the owner printed on a slide; a code must not move it."""
     room = make_room()
     identity = cohost_identity(room, invite_for(room))
     with pytest.raises(HttpError) as excinfo:
-        call(["rooms", room["room_id"]], "PATCH", identity=identity, body={"state": "closed"})
+        call(["rooms", room["room_id"]], "PATCH", identity=identity, body={"slug": "hijacked"})
     assert excinfo.value.status == 403
     assert excinfo.value.code == "cohost_scope"
+    assert rooms.load("hijacked") is None
+
+
+def test_cohost_cannot_change_another_rooms_settings(table):
+    mine = make_room(slug="mine")
+    other = make_room(slug="other")
+    identity = cohost_identity(mine, invite_for(mine))
+    with pytest.raises(HttpError) as excinfo:
+        call(["rooms", other["room_id"]], "PATCH", identity=identity, body={"state": "closed"})
+    assert excinfo.value.status == 403
 
 
 def test_cohost_cannot_grant_admin_or_mint_codes(table):

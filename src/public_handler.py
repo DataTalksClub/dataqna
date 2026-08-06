@@ -87,6 +87,31 @@ def _serve_qr(identifier, extension, query):
     }
 
 
+RECENT_WINDOW_SECONDS = 7 * 86400
+
+
+def _listed(room):
+    return room.get("settings", {}).get("listed", True)
+
+
+def _serve_home(event):
+    """The front page: live sessions, then the last week's finished ones.
+
+    Signed in, the same page gains a way into the console — the directory is
+    still the thing everyone shares, so it does not disappear for admins.
+    """
+    live = [room for room in rooms.live_room() if _listed(room)]
+    recent = [
+        room
+        for room in store.rooms_by_state(
+            "closed", limit=25, since=store.now() - RECENT_WINDOW_SECONDS
+        )
+        if _listed(room)
+    ]
+    email = security.session_email(http.cookie(event, config.SESSION_COOKIE))
+    return render.directory_page(live, recent, signed_in=email)
+
+
 def _serve_live():
     open_rooms = rooms.live_room()
     if not open_rooms:
@@ -132,7 +157,12 @@ def lambda_handler(event, _context):
             identity = api.identify(event)
             return api.route(event, segments, method, identity)
 
-        if path in ("/", "/live"):
+        if path == "/":
+            return _serve_home(event)
+
+        # The permanent link to whatever is on right now, for podcast notes
+        # and slides that must not be edited per episode.
+        if path == "/live":
             return _serve_live()
 
         if path.startswith("/r/"):

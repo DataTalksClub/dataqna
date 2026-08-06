@@ -173,8 +173,10 @@
     state.room = room;
     // A co-host sees the questions and the share panel, and nothing that would
     // let them change the room or widen their own access.
+    // A session code is admin of this session: settings and lifecycle
+    // included. What it cannot do is hand that access on to anyone else.
     var isCohost = room.role === "cohost";
-    $("settings-card").hidden = isCohost;
+    $("people-card").hidden = isCohost;
     $("cohost-card").hidden = isCohost;
     $("cohost-notice").hidden = !isCohost;
     if (isCohost) {
@@ -197,6 +199,7 @@
     $("questions-open").checked = room.settings.questions_open;
     $("voting-open").checked = room.settings.voting_open;
     $("moderation").checked = room.settings.moderation === "on";
+    $("listed").checked = room.settings.listed !== false;
     if (!isCohost) {
       $("admins").textContent = "Owner " + room.owner +
         (room.admins && room.admins.length ? " · admins: " + room.admins.join(", ") : "");
@@ -336,6 +339,7 @@
     $("questions-open").addEventListener("change", function () { patchRoom({ settings: { questions_open: this.checked } }); });
     $("voting-open").addEventListener("change", function () { patchRoom({ settings: { voting_open: this.checked } }); });
     $("moderation").addEventListener("change", function () { patchRoom({ settings: { moderation: this.checked ? "on" : "off" } }); });
+    $("listed").addEventListener("change", function () { patchRoom({ settings: { listed: this.checked } }); });
     $("add-admin").addEventListener("click", function () {
       var email = $("admin-email").value.trim().toLowerCase();
       if (!email) return;

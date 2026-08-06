@@ -152,10 +152,16 @@ def rooms_for_user(email):
     return rooms
 
 
-def rooms_by_state(state, limit=25):
+def rooms_by_state(state, limit=25, since=None):
+    """Rooms in a state, newest first. `since` is an epoch cutoff on the
+    moment the room entered that state — which is what "closed this week"
+    means."""
+    condition = Key("GSI1PK").eq(f"STATE#{state}")
+    if since is not None:
+        condition = condition & Key("GSI1SK").gte(sort_key(since))
     return table().query(
         IndexName="GSI1",
-        KeyConditionExpression=Key("GSI1PK").eq(f"STATE#{state}"),
+        KeyConditionExpression=condition,
         ScanIndexForward=False,
         Limit=limit,
     )["Items"]

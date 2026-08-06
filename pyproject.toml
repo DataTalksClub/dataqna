@@ -1,0 +1,30 @@
+[project]
+name = "dataqna"
+version = "0.1.0"
+description = "Audience Q&A for live events, podcasts, and courses"
+requires-python = ">=3.12"
+
+# Runtime dependencies. SAM installs the Lambda's own copies from
+# src/requirements.txt, which must stay in step with this list — there is a test
+# that fails if the two drift apart.
+dependencies = [
+    "PyJWT[crypto]==2.10.1",
+    "segno==1.6.1",
+    "boto3>=1.35",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8",
+    "moto[dynamodb]>=5",
+    "requests>=2.32",
+]
+
+# An application, not a library: nothing here is meant to be built or installed.
+[tool.uv]
+package = false
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src", "."]
+addopts = "-q"

@@ -56,16 +56,24 @@ admin who created them and can be scoped to a single room.
 ## Development
 
 ```bash
-make test      # unit tests, DynamoDB mocked with moto
+make install   # uv sync — runtime and dev dependencies
+make test      # uv run pytest; DynamoDB mocked with moto
 make validate  # sam validate --lint
 make build
 make deploy    # sandbox, eu-west-1
-make verify    # 21 checks against the live site; needs DATAQNA_KEY
+make verify    # 30 checks against the live site; needs DATAQNA_KEY
 ```
 
-`make verify` creates a throwaway room, exercises the participant and admin paths
-against the deployed site, and purges it. CI runs it after every deploy, so a
-deploy that returns `CREATE_COMPLETE` but serves a broken site fails the workflow.
+Dependencies live in `pyproject.toml` — runtime under `[project]`, test tooling
+under the `dev` group. `uv run pytest` needs no exported environment and no
+`--with` flags: `tests/conftest.py` supplies every variable the app reads.
+`src/requirements.txt` is what SAM installs into the Lambda, and a test fails if
+it drifts from the project's runtime list.
+
+`make verify` creates a throwaway session, exercises the participant, co-host,
+and admin paths against the deployed site, and purges it. CI runs it after every
+deploy, so a deploy that returns `CREATE_COMPLETE` but serves a broken site fails
+the workflow.
 
 ## Access
 

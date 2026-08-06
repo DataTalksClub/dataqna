@@ -17,15 +17,20 @@ API_PREFIX = "/api/v1"
 class Identity:
     """Who is calling, and how much that is worth.
 
-    Two separate powers, deliberately not the same thing:
+    Three ways in, and only three:
 
-    *Moderating* a room — approving, answering, pinning, hiding — is what a
-    guest co-host needs, and a co-host code grants exactly that, for exactly one
-    room, with no account anywhere.
+    Signed in with a DataTalks.Club Google account — an admin, of the rooms
+    they own or have been granted.
 
-    *Administering* a room — its settings, its lifecycle, who else can reach it,
-    and the codes themselves — always requires a signed-in DataTalks.Club admin.
-    A co-host can never widen their own access or hand it to someone else.
+    Holding a session's secret code — an admin *of that one session*: its
+    questions, its settings, its lifecycle, its presentation view.
+
+    Neither — a participant, who can ask and vote and nothing else.
+
+    The line a code does not cross is handing on access. Adding admins, minting
+    or reading co-host codes, changing the published slug, deleting the room,
+    and anything touching another room all stay with the signed-in owner, so a
+    session code can never grow into more than the session it was cut for.
     """
 
     def __init__(self, email=None, source="anonymous", key_room_id=None, cohost=None):
@@ -261,8 +266,13 @@ def _room_detail(event, room, method, identity):
             return http.json_response(200, dict(view, role=role))
         return http.json_response(200, rooms.public_view(room))
     if method == "PATCH":
-        identity.require_admin(room)
-        updated = rooms.apply_updates(room, http.body(event))
+        identity.require_moderator(room)
+        payload = http.body(event)
+        # The slug is the link the owner published; a session code must not be
+        # able to break it out from under them.
+        if "slug" in payload and not identity.is_admin_of(room):
+            raise HttpError(403, "cohost_scope", "Only a room admin can change the link.")
+        updated = rooms.apply_updates(room, payload)
         return http.json_response(
             200, rooms.admin_view(updated, admins=store.list_admins(room["room_id"]))
         )
