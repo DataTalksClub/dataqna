@@ -62,7 +62,7 @@ def test_hidden_attribute_is_forced_over_button_display():
 def test_dark_mode_button_text_uses_the_on_accent_token():
     css = render.asset_bytes("app.css").decode()
     assert "--on-accent" in css
-    # White on the dark-theme accent is 2.97:1, below AA.
+    # White on the dark-theme accent is 2.49:1, below AA; the token maps to ink.
     assert "color: var(--on-accent);" in css
 
 

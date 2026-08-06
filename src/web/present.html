@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" class="theme-light">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -18,28 +18,24 @@
       <div>
         <div class="join-label">Join and ask</div>
         <div class="url" id="join-url"></div>
+        <div class="code">code <code id="join-code"></code></div>
       </div>
     </div>
   </header>
 
-  <div class="present-body">
-    <main class="present-stage" id="stage">
-      <div class="q-text" id="q-text">No questions yet.</div>
-      <div class="q-meta" id="q-meta"></div>
-    </main>
+  <main class="present-main">
+    <ol class="present-list" id="plist"></ol>
+    <div class="present-more" id="more" hidden></div>
 
-    <aside class="present-queue">
-      <h2>Up next</h2>
-      <ul id="upcoming"></ul>
-      <div class="queue-empty" id="queue-empty" hidden>Nothing waiting.</div>
-    </aside>
-  </div>
+    <section class="present-stage" id="stage" hidden>
+      <div class="q-text" id="q-text"></div>
+      <div class="q-meta" id="q-meta"></div>
+    </section>
+  </main>
 
   <footer class="present-foot">
     <span class="progress" id="progress"></span>
-    <span class="hints" id="hints">
-      → next · ← back · Enter answered · p pin · h hide · u undo · q QR · f fullscreen · Esc exit
-    </span>
+    <span class="hints" id="hints"></span>
   </footer>
 </div>
 

@@ -26,7 +26,7 @@ CONTENT_TYPES = {
 FAVICON = (
     "data:image/svg+xml,"
     "%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E"
-    "%3Crect width='32' height='32' rx='8' fill='%233b5bdb'/%3E"
+    "%3Crect width='32' height='32' rx='8' fill='%23635bff'/%3E"
     "%3Cpath d='M9 20.5h10l4 4v-4h0a2 2 0 0 0 2-2v-9a2 2 0 0 0-2-2H9a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2z'"
     " fill='none' stroke='white' stroke-width='0'/%3E"
     "%3Cpath d='M10.5 18.5l5.5-6 5.5 6' fill='none' stroke='white' stroke-width='2.6'"
@@ -34,8 +34,8 @@ FAVICON = (
 )
 
 THEME_META = (
-    '<meta name="theme-color" content="#fbfbfd" media="(prefers-color-scheme: light)">'
-    '<meta name="theme-color" content="#0e1016" media="(prefers-color-scheme: dark)">'
+    '<meta name="theme-color" content="#f6f8fb" media="(prefers-color-scheme: light)">'
+    '<meta name="theme-color" content="#0d1220" media="(prefers-color-scheme: dark)">'
 )
 
 BRAND = (

@@ -237,27 +237,35 @@ belong to the owner. Ownership can be transferred to another admin.
 view rather than a fullscreen toggle on the admin page: no controls that could be
 mis-clicked on a shared screen, no other rooms' names, no moderation queue.
 
-Layout: the current question fills most of the screen at a size readable from the
-back of a room, with its author and score. A compact list of what is coming next
-runs down one side. A corner holds the QR code and the short join code, so people
-who arrive late can still join without the host interrupting themselves.
+Two states share one frame. The resting state is the **ranked list**: the top
+questions as large cards, vote counts prominent, re-sorting live as votes land —
+the audience votes because they can see what is winning. **Spotlight** blows a
+single question up at a size readable from the back of the room, with its author
+and score; the host enters it deliberately and returns to the list with Esc. A
+join strip — QR code, URL, and short join code — stays visible along the top in
+both states, so people who arrive late can join without the host interrupting
+themselves. While the room has no questions yet, the join card takes over the
+whole screen.
 
 Keyboard only:
 
-| Key | Action |
-|-----|--------|
-| `→` / `space` | Next question |
-| `←` | Previous question |
-| `Enter` | Mark current answered and advance |
-| `p` | Pin current |
-| `h` | Hide current |
-| `q` | Toggle the QR overlay to full screen |
-| `f` | Browser fullscreen |
-| `Esc` | Back to room detail |
+| Key | Action (list) | Action (spotlight) |
+|-----|---------------|--------------------|
+| `↑` `↓` / `←` `→` / `space` | Move the selection | Previous / next question |
+| `Enter` | Spotlight the selected question | Mark answered, back to the list |
+| `a` | Mark selected answered | — |
+| `p` | Pin | Pin |
+| `h` | Hide | Hide, back to the list |
+| `u` | Undo the last answered/hidden | same |
+| `q` | Toggle the QR overlay to full screen | same |
+| `d` | Toggle the dark theme (light is the projector default) | same |
+| `f` | Browser fullscreen | same |
+| `Esc` | Back to room detail | Back to the list |
 
-The list refreshes on the same polling loop, but the question currently on screen
-never moves underneath the host — reordering applies to the upcoming list only, and
-takes effect when they advance.
+The list refreshes on the polling loop; answered and hidden questions visibly
+leave it, and rank changes animate so movement is legible. The spotlit question
+never moves underneath the host — ranking applies again once they return to the
+list.
 
 ## 8. The permanent link
 
