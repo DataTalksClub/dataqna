@@ -69,14 +69,16 @@ deploy that returns `CREATE_COMPLETE` but serves a broken site fails the workflo
 
 ## Access
 
-Admin sign-in goes through the shared DataTalks.Club Cognito pool. Google accounts
-must be verified `@datatalks.club`; guest hosts outside the Workspace get an
-administrator-created password account.
+Admin sign-in goes through the shared DataTalks.Club Cognito pool, restricted to
+verified `@datatalks.club` Google accounts.
 
-`dataqna` is the only app client in that pool accepting password users — every
-other service is Google-only — so a guest account reaches this service and nothing
-else. Authorization is re-read from DynamoDB on every request, so removing an admin
-takes effect immediately rather than at next login.
+Guest hosts get a **co-host code** instead of an account: three groups of four
+characters that grant moderation and presentation rights for one room and nothing
+else. No account, no email address, no identity in the shared pool. Create one from
+the Co-hosts panel on any room; revoking it takes effect on the next request.
+
+Authorization — admin grants and co-host codes alike — is re-read from DynamoDB on
+every request, so removing access is immediate rather than effective at next login.
 
 ## Related repositories
 

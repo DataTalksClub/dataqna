@@ -315,6 +315,80 @@ def votes_for_participant(room_id, participant):
     return {item["question_id"] for item in items}
 
 
+# --- co-host invites --------------------------------------------------------
+
+# The invite record lives under the room partition and holds the code in the
+# clear, because a host has to be able to read it back and say it out loud. It
+# is only ever returned through admin-authorized endpoints. The lookup pointer
+# is keyed by the code's hash, so resolving a code needs no scan and the
+# pointer items leak nothing on their own.
+
+
+def _code_hash(code):
+    import hashlib
+
+    return hashlib.sha256(normalize_cohost_code(code).encode()).hexdigest()
+
+
+def normalize_cohost_code(code):
+    return "".join(str(code or "").split()).replace("-", "").upper()
+
+
+def put_cohost_invite(invite):
+    item = dict(invite)
+    item["PK"] = _room_pk(invite["room_id"])
+    item["SK"] = f"COHOST#{invite['invite_id']}"
+    item["entity"] = "cohost_invite"
+    if invite.get("ttl"):
+        item["ttl"] = invite["ttl"]
+    table().put_item(Item=item)
+
+    pointer = {
+        "PK": f"COHOST#{_code_hash(invite['code'])}",
+        "SK": "META",
+        "entity": "cohost_pointer",
+        "room_id": invite["room_id"],
+        "invite_id": invite["invite_id"],
+    }
+    if invite.get("ttl"):
+        pointer["ttl"] = invite["ttl"]
+    table().put_item(Item=pointer)
+    return invite
+
+
+def list_cohost_invites(room_id):
+    items = table().query(
+        KeyConditionExpression=Key("PK").eq(_room_pk(room_id)) & Key("SK").begins_with("COHOST#")
+    )["Items"]
+    return sorted(items, key=lambda item: item.get("created_at", 0), reverse=True)
+
+
+def get_cohost_invite(room_id, invite_id):
+    item = table().get_item(
+        Key={"PK": _room_pk(room_id), "SK": f"COHOST#{invite_id}"}
+    ).get("Item")
+    return item if item and item.get("entity") == "cohost_invite" else None
+
+
+def revoke_cohost_invite(room_id, invite_id):
+    invite = get_cohost_invite(room_id, invite_id)
+    if not invite:
+        return False
+    table().delete_item(Key={"PK": _room_pk(room_id), "SK": f"COHOST#{invite_id}"})
+    table().delete_item(Key={"PK": f"COHOST#{_code_hash(invite['code'])}", "SK": "META"})
+    return True
+
+
+def resolve_cohost_code(code):
+    normalized = normalize_cohost_code(code)
+    if not normalized:
+        return None
+    pointer = table().get_item(Key={"PK": f"COHOST#{_code_hash(normalized)}", "SK": "META"}).get("Item")
+    if not pointer or pointer.get("entity") != "cohost_pointer":
+        return None
+    return get_cohost_invite(pointer["room_id"], pointer["invite_id"])
+
+
 # --- api keys ---------------------------------------------------------------
 
 

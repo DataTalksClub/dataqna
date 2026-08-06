@@ -28,28 +28,51 @@ later work.
 | Role | Identity | How it is established |
 |------|----------|-----------------------|
 | **Participant** | Anonymous | A signed participant cookie issued on first visit to a room |
-| **Admin** | `@datatalks.club` Google account, or a Cognito password user created by an operator | Authorization code + PKCE against `https://auth.dtcdev.click`, then a service session cookie |
+| **Co-host** | Anonymous, room-scoped | A secret code from a room admin, exchanged for a room-scoped cookie |
+| **Admin** | `@datatalks.club` Google account | Authorization code + PKCE against `https://auth.dtcdev.click`, then a service session cookie |
 | **API client** | An API key bound to an admin | `Authorization: Bearer dq_...` |
 
 A participant is never asked to authenticate. The cookie exists to make voting
 idempotent and to let someone edit or withdraw their own question — not to identify
 them. It carries no personal data.
 
-Admins are people in the DataTalks.Club Google workspace. External co-hosts who
-need moderation rights are handled by creating a Cognito password user for them in
-the shared pool (`admin-create-user`, documented in `aws-infra/sandbox/auth`), not
-by weakening the room's authorization model.
+Admins are people in the DataTalks.Club Google workspace, and that is the only way
+to become one. The `dataqna` app client is Google-only like every other client in
+the shared pool, so nothing about this service creates an account that could reach
+a sibling service.
 
-The shared pool is used by five other services, so a password account must not
-become a skeleton key. `dataqna` is therefore the only app client in the pool that
-accepts `COGNITO` as an identity provider; every other client is Google-only. A
-password user can obtain a token for DataQnA and for nothing else. This matters
-because at least one sibling service treats any valid pool token as full admin
-with no email allowlist of its own — see `aws-infra/sandbox/dataqna/README.md`.
+Guest hosts are handled without accounts at all. See section 2.1.
 
-Two admins exist today: `alexey@datatalks.club` (Google) and
-`realmistic@gmail.com` (password user, created suppressed and invited once the
-site went live).
+### 2.1 Co-hosts
+
+A room admin generates a **co-host code** — three groups of four characters, like
+`Q7K2-M9XR-T8VB`, drawn from an alphabet with no glyph you can misread or mishear.
+Anyone holding it can moderate that one room: approve, answer, pin, hide, edit for
+typos, and run presentation mode. They need no account, no email address, and no
+prior relationship with the organization.
+
+What a co-host code deliberately cannot do:
+
+- reach any other room, or even learn that other rooms exist;
+- change the room's settings, state, or expiry;
+- add admins, or create or read co-host codes — a co-host cannot widen their own
+  access or pass it on in a form that outlives their own;
+- create rooms, list rooms, or mint API keys;
+- delete the room.
+
+This is the whole of the guest-access story. The earlier design gave guest hosts
+Cognito password accounts in the shared pool, which meant one service's guest was
+an identity in a pool five other services trust — a large mechanism, and a large
+blast radius, for what is really "let this person help me run tonight's Q&A".
+
+Codes expire after 30 days by default, and revoking one takes effect on the next
+request rather than at the end of a session.
+
+The code is stored in the clear under the room's partition, because a host has to
+be able to read it back and say it out loud a second time; it is only ever
+returned through admin-authorized endpoints. The lookup pointer used at
+redemption is keyed by the code's hash, so resolving a code needs no scan and the
+pointer items reveal nothing by themselves.
 
 ## 3. Rooms
 
@@ -338,6 +361,8 @@ One DynamoDB table, `dataqna`, on-demand, TTL on `ttl`, point-in-time recovery o
 | Question | `ROOM#<room_id>` | `Q#<question_id>` | — | — |
 | Vote | `ROOM#<room_id>` | `V#<question_id>#<participant_id>` | — | — |
 | Admin grant | `ROOM#<room_id>` | `ADMIN#<email>` | `USER#<email>` | `ROOM#<room_id>` |
+| Co-host invite | `ROOM#<room_id>` | `COHOST#<invite_id>` | — | — |
+| Co-host pointer | `COHOST#<sha256(code)>` | `META` | — | — |
 | API key | `KEY#<sha256>` | `META` | `USER#<email>` | `KEY#<key_id>` |
 | Rate counter | `RATE#<scope>` | `<window>` | — | — |
 | Idempotency | `IDEM#<email>#<key>` | `META` | — | — |
@@ -448,11 +473,10 @@ Settled during the build:
 
 Still open:
 
-1. **Blanket access for the second admin.** `realmistic@gmail.com` can sign in, but
-   holds no room grants yet — access is given one room at a time from the People
-   field or the API. Making them a second entry in the `RootAdmin` stack parameter
-   would grant admin on every room, current and future. That is a parameter change,
-   not a code change; it is left off by default because it is the larger grant.
+1. **Co-host powers.** A code currently grants moderation and presentation but not
+   room settings. Pausing questions mid-event is arguably moderation; opening and
+   closing the room is arguably not. If co-hosts need the pause switch, it is a
+   one-line move from `require_admin` to `require_moderator`.
 2. **Slido import.** Worth pulling the existing rooms' questions across before the
    subscription lapses, or is the archive not needed?
 3. **Public room directory.** Rooms are currently unlisted and shared only by link,

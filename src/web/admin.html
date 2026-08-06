@@ -75,7 +75,7 @@
       </div>
     </div>
 
-    <div class="card stack">
+    <div class="card stack" id="settings-card">
       <div class="row wrapping">
         <select id="state" aria-label="Room state">
           <option value="draft">Draft</option>
@@ -91,6 +91,23 @@
         <button id="add-admin" class="ghost">Add admin</button>
       </div>
       <div id="admins" class="muted"></div>
+    </div>
+
+    <div class="card stack" id="cohost-card">
+      <strong>Co-hosts</strong>
+      <p class="muted" style="margin:0">Give someone a code and they can moderate
+      this room and run presentation mode — no account, no access to anything else.
+      Revoking a code takes effect immediately.</p>
+      <div class="row wrapping">
+        <input type="text" id="cohost-label" class="grow" placeholder="Who is this for? (optional)" aria-label="Co-host label">
+        <button id="create-cohost" class="ghost">Create code</button>
+      </div>
+      <table id="cohosts"></table>
+    </div>
+
+    <div class="banner" id="cohost-notice" hidden>
+      You are here as a co-host. You can moderate questions and present; room
+      settings and access are managed by the room owner.
     </div>
 
     <div class="tabs" role="tablist">

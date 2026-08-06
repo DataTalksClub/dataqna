@@ -15,22 +15,70 @@ API_PREFIX = "/api/v1"
 
 
 class Identity:
-    """Who is calling, and how much that is worth."""
+    """Who is calling, and how much that is worth.
 
-    def __init__(self, email=None, source="anonymous", key_room_id=None, participant=None):
+    Two separate powers, deliberately not the same thing:
+
+    *Moderating* a room — approving, answering, pinning, hiding — is what a
+    guest co-host needs, and a co-host code grants exactly that, for exactly one
+    room, with no account anywhere.
+
+    *Administering* a room — its settings, its lifecycle, who else can reach it,
+    and the codes themselves — always requires a signed-in DataTalks.Club admin.
+    A co-host can never widen their own access or hand it to someone else.
+    """
+
+    def __init__(self, email=None, source="anonymous", key_room_id=None, cohost=None):
         self.email = email
         self.source = source
         self.key_room_id = key_room_id
-        self.participant = participant
+        self.cohost = cohost
 
     @property
     def authenticated(self):
         return bool(self.email)
 
+    def _key_allows(self, room):
+        return not self.key_room_id or self.key_room_id == room["room_id"]
+
+    def is_cohost_of(self, room):
+        """Re-checked against storage, so revoking a code takes effect at once."""
+        if not self.cohost or self.cohost.get("room_id") != room["room_id"]:
+            return False
+        invite = store.get_cohost_invite(room["room_id"], self.cohost.get("invite_id"))
+        if not invite:
+            return False
+        expires_at = invite.get("expires_at")
+        return not (expires_at and int(expires_at) <= store.now())
+
+    def is_admin_of(self, room):
+        if not self.authenticated or not self._key_allows(room):
+            return False
+        return store.is_admin(room["room_id"], self.email)
+
+    def moderates(self, room):
+        return self.is_admin_of(room) or self.is_cohost_of(room)
+
+    def role_in(self, room):
+        if self.is_admin_of(room):
+            return "owner" if room.get("owner") == self.email else "admin"
+        return "cohost" if self.is_cohost_of(room) else None
+
+    def require_moderator(self, room):
+        if self.moderates(room):
+            return
+        if self.authenticated and not self._key_allows(room):
+            raise HttpError(403, "key_scope", "This API key is scoped to a different room.")
+        if self.authenticated or self.cohost:
+            raise HttpError(403, "forbidden", "You cannot moderate this room.")
+        raise HttpError(401, "unauthenticated", "Sign in, provide an API key, or enter a co-host code.")
+
     def require_admin(self, room):
         if not self.authenticated:
+            if self.cohost:
+                raise HttpError(403, "cohost_scope", "A co-host code does not allow this. Ask the room owner.")
             raise HttpError(401, "unauthenticated", "Sign in or provide an API key.")
-        if self.key_room_id and self.key_room_id != room["room_id"]:
+        if not self._key_allows(room):
             raise HttpError(403, "key_scope", "This API key is scoped to a different room.")
         if not store.is_admin(room["room_id"], self.email):
             raise HttpError(403, "forbidden", "You are not an admin of this room.")
@@ -63,6 +111,10 @@ def identify(event):
     email = security.session_email(http.cookie(event, config.SESSION_COOKIE))
     if email:
         return Identity(email=email, source="session")
+
+    cohost = security.cohost_claim(http.cookie(event, config.COHOST_COOKIE))
+    if cohost:
+        return Identity(source="cohost", cohost=cohost)
     return Identity()
 
 
@@ -91,7 +143,7 @@ def _readable(room, identity):
     """A draft room is invisible to anyone who is not an admin of it."""
     if room.get("state") != "draft":
         return
-    if not (identity.authenticated and store.is_admin(room["room_id"], identity.email)):
+    if not identity.moderates(room):
         raise HttpError(404, "not_found", "No such room.")
 
 
@@ -148,6 +200,13 @@ def route(event, segments, method, identity):
         )
     if len(tail) == 2 and tail[0] == "admins":
         return _admin_grant(room, tail[1], method, identity)
+    if tail == ["cohosts"]:
+        return _cohosts(event, room, method, identity)
+    if len(tail) == 2 and tail[0] == "cohosts" and method == "DELETE":
+        identity.require_admin(room)
+        if not store.revoke_cohost_invite(room["room_id"], tail[1]):
+            raise HttpError(404, "not_found", "No such co-host code.")
+        return http.json_response(200, {"revoked": True})
     if tail == ["export"]:
         return _export(event, room, identity)
 
@@ -194,10 +253,12 @@ def _list_rooms(identity):
 def _room_detail(event, room, method, identity):
     if method == "GET":
         _readable(room, identity)
-        if identity.authenticated and store.is_admin(room["room_id"], identity.email):
-            return http.json_response(
-                200, rooms.admin_view(room, admins=store.list_admins(room["room_id"]))
-            )
+        role = identity.role_in(room)
+        if role == "cohost":
+            return http.json_response(200, dict(rooms.admin_view(room), role=role))
+        if role:
+            view = rooms.admin_view(room, admins=store.list_admins(room["room_id"]))
+            return http.json_response(200, dict(view, role=role))
         return http.json_response(200, rooms.public_view(room))
     if method == "PATCH":
         identity.require_admin(room)
@@ -216,7 +277,7 @@ def _room_detail(event, room, method, identity):
 
 
 def _questions(event, room, method, identity):
-    is_admin = identity.authenticated and store.is_admin(room["room_id"], identity.email)
+    is_admin = identity.moderates(room)
     _readable(room, identity)
 
     if method == "GET":
@@ -266,7 +327,7 @@ def _question(event, room, question_id, method, identity):
         raise HttpError(405, "method_not_allowed", f"{method} is not allowed here.")
 
     payload = http.body(event)
-    is_admin = identity.authenticated and store.is_admin(room["room_id"], identity.email)
+    is_admin = identity.moderates(room)
     participant = security.participant_id(http.cookie(event, config.PARTICIPANT_COOKIE))
 
     if not is_admin:
@@ -325,7 +386,7 @@ def _vote(event, room, question_id, method, identity):
 
 
 def _bulk(event, room, identity):
-    identity.require_admin(room)
+    identity.require_moderator(room)
     payload = http.body(event)
     action = payload.get("action")
     ids_ = payload.get("question_ids") or []
@@ -379,8 +440,50 @@ def _admin_grant(room, email, method, identity):
     raise HttpError(405, "method_not_allowed", f"{method} is not allowed here.")
 
 
-def _export(event, room, identity):
+def _cohost_view(room, invite):
+    return {
+        "invite_id": invite["invite_id"],
+        "code": invite["code"],
+        "label": invite.get("label"),
+        "join_url": f"{config.SITE_URL}/cohost/{invite['code']}",
+        "created_at": rooms.iso(invite.get("created_at")),
+        "expires_at": rooms.iso(invite.get("expires_at")),
+    }
+
+
+def _cohosts(event, room, method, identity):
+    """Co-host codes are created, read, and revoked by room admins only."""
     identity.require_admin(room)
+
+    if method == "GET":
+        return http.json_response(
+            200,
+            {"items": [_cohost_view(room, invite) for invite in store.list_cohost_invites(room["room_id"])]},
+        )
+
+    if method == "POST":
+        payload = http.body(event)
+        expires_at = rooms.parse_timestamp(payload.get("expires_at"), "expires_at")
+        if expires_at is None:
+            expires_at = store.now() + config.COHOST_DEFAULT_VALID_DAYS * 86400
+        invite = {
+            "invite_id": ids.ulid(),
+            "room_id": room["room_id"],
+            "code": security.new_cohost_code(),
+            "label": str(payload.get("label") or "").strip()[:80] or None,
+            "created_by": identity.email,
+            "created_at": store.now(),
+            "expires_at": expires_at,
+            "ttl": expires_at + 86400,
+        }
+        store.put_cohost_invite(invite)
+        return http.json_response(201, _cohost_view(room, invite))
+
+    raise HttpError(405, "method_not_allowed", f"{method} is not allowed here.")
+
+
+def _export(event, room, identity):
+    identity.require_moderator(room)
     items, _, _ = questions.collect(room, is_admin=True)
     fmt = (http.query(event).get("format") or "json").lower()
     rows = [item for item in items if item["status"] != "deleted"]

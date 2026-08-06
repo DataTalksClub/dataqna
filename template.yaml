@@ -145,6 +145,12 @@ Resources:
         Auth:
           Type: HttpApi
           Properties: {ApiId: !Ref Api, Path: '/auth/{proxy+}', Method: GET}
+        CohostEntry:
+          Type: HttpApi
+          Properties: {ApiId: !Ref Api, Path: /cohost, Method: ANY}
+        CohostCode:
+          Type: HttpApi
+          Properties: {ApiId: !Ref Api, Path: '/cohost/{proxy+}', Method: GET}
 
   PublicErrorAlarm:
     Type: AWS::CloudWatch::Alarm

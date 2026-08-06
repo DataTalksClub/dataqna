@@ -16,7 +16,7 @@ jobs:
 
       - name: Run tests
         env:
-          PYTHONPATH: src
+          PYTHONPATH: src:.
           SESSION_SECRET: test-secret
           TABLE_NAME: dataqna-test
           SITE_URL: https://qna.test

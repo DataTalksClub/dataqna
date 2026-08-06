@@ -102,6 +102,33 @@ def session_email(token):
     return payload.get("email") if payload else None
 
 
+def new_cohost_code(groups=3, size=4):
+    """A code that survives being read aloud and typed on a phone."""
+    from .ids import _CODE_ALPHABET
+
+    raw = os.urandom(groups * size)
+    chars = [_CODE_ALPHABET[b % len(_CODE_ALPHABET)] for b in raw]
+    return "-".join("".join(chars[i * size:(i + 1) * size]) for i in range(groups))
+
+
+def new_cohost_token(room_id, invite_id, ttl_seconds):
+    return sign(
+        {
+            "kind": "cohost",
+            "room": room_id,
+            "invite": invite_id,
+            "exp": int(time.time()) + int(ttl_seconds),
+        }
+    )
+
+
+def cohost_claim(token):
+    payload = verify(token, kind="cohost")
+    if not payload:
+        return None
+    return {"room_id": payload.get("room"), "invite_id": payload.get("invite")}
+
+
 def new_api_key():
     raw = os.urandom(32)
     value = "".join(_ALPHABET[b % len(_ALPHABET)] for b in raw)

@@ -150,10 +150,9 @@ Withdrawn questions are omitted; moderator-hidden ones appear marked. Admin only
 
 ### `PUT /rooms/{room}/admins/{email}`
 
-Grants admin rights. The address must be resolvable in the shared Cognito pool —
-either an `@datatalks.club` Google identity or a password user created by an
-operator. Unknown addresses return `400` rather than creating a grant that can
-never be used.
+Grants admin rights. The address must be a `@datatalks.club` Google identity in
+the shared Cognito pool. To give someone outside the organization moderation
+rights, issue a co-host code instead — see below.
 
 ### `DELETE /rooms/{room}/admins/{email}`
 
@@ -164,6 +163,52 @@ between requests.
 
 `{ "email": "..." }` — owner only. Transfers ownership; the previous owner stays as
 an admin.
+
+## Co-host codes
+
+A co-host code grants moderation and presentation rights for one room, to someone
+with no account. Only room admins can create, read, or revoke them — a co-host
+cannot reach any of these endpoints.
+
+### `POST /rooms/{room}/cohosts`
+
+```json
+{ "label": "guest host", "expires_at": "2026-09-05T00:00:00Z" }
+```
+
+Both fields optional; `expires_at` defaults to 30 days out. `201`:
+
+```json
+{
+  "invite_id": "01K3QJA...",
+  "code": "Q7K2-M9XR-T8VB",
+  "label": "guest host",
+  "join_url": "https://qna.dtcdev.click/cohost/Q7K2-M9XR-T8VB",
+  "created_at": "2026-08-06T10:15:00Z",
+  "expires_at": "2026-09-05T00:00:00Z"
+}
+```
+
+Send the recipient the `join_url`, or read the `code` out and let them enter it at
+`https://qna.dtcdev.click/cohost`. Codes are matched without regard to case,
+dashes, or surrounding spaces.
+
+### `GET /rooms/{room}/cohosts`
+
+Lists the room's codes in full, so a host can re-share one they have mislaid.
+
+### `DELETE /rooms/{room}/cohosts/{invite_id}`
+
+Revokes. Effective on the co-host's next request, not at the end of their session.
+
+### Redeeming — `GET /cohost/{code}`
+
+Not part of the JSON API. Validates the code, sets a room-scoped cookie, and
+redirects to that room's moderation view. `GET /cohost` renders a form for typing
+a code in by hand; `POST /cohost` accepts it as `code`.
+
+An unknown, revoked, or expired code returns `403` with the entry form and an
+explanation, and sets no cookie.
 
 ## Questions
 

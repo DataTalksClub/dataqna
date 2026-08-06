@@ -6,6 +6,7 @@ traffic cannot throttle the host's own access mid-event.
 """
 
 import logging
+import urllib.parse
 
 from dataqna import config, http, oidc, render, rooms, security, store
 from dataqna.http import HttpError
@@ -15,6 +16,40 @@ logging.getLogger().setLevel(logging.INFO)
 
 def _signed_in(event):
     return security.session_email(http.cookie(event, config.SESSION_COOKIE))
+
+
+def _cohost_of(event, room_id):
+    """The room this browser holds a valid, unrevoked co-host code for."""
+    claim = security.cohost_claim(http.cookie(event, config.COHOST_COOKIE))
+    if not claim or claim.get("room_id") != room_id:
+        return False
+    invite = store.get_cohost_invite(room_id, claim.get("invite_id"))
+    if not invite:
+        return False
+    expires_at = invite.get("expires_at")
+    return not (expires_at and int(expires_at) <= store.now())
+
+
+def _redeem_cohost_code(code):
+    invite = store.resolve_cohost_code(code)
+    if not invite:
+        return render.cohost_page(error="That code is not valid. Check it with the host.")
+
+    expires_at = invite.get("expires_at")
+    if expires_at and int(expires_at) <= store.now():
+        return render.cohost_page(error="That code has expired. Ask the host for a new one.")
+
+    room = rooms.load(invite["room_id"])
+    if not room or room.get("state") == "archived":
+        return render.cohost_page(error="That room is no longer available.")
+
+    remaining = int(expires_at) - store.now() if expires_at else config.COHOST_TTL_SECONDS
+    ttl = max(60, min(config.COHOST_TTL_SECONDS, remaining))
+    token = security.new_cohost_token(room["room_id"], invite["invite_id"], ttl)
+    return http.redirect(
+        f"/admin/rooms/{room['room_id']}",
+        cookies=[http.set_cookie(config.COHOST_COOKIE, token, max_age=ttl)],
+    )
 
 
 def _login(event):
@@ -48,10 +83,24 @@ def _callback(event):
     )
 
 
+def _form_code(event):
+    """Pull the code out of an ordinary form post — no JavaScript required."""
+    import base64
+
+    raw = event.get("body") or ""
+    if event.get("isBase64Encoded"):
+        raw = base64.b64decode(raw).decode("utf-8", "replace")
+    fields = urllib.parse.parse_qs(raw)
+    return (fields.get("code") or [""])[0]
+
+
 def _logout():
     return http.redirect(
         oidc.logout_url() if oidc.configured() else "/",
-        cookies=[http.clear_cookie(config.SESSION_COOKIE)],
+        cookies=[
+            http.clear_cookie(config.SESSION_COOKIE),
+            http.clear_cookie(config.COHOST_COOKIE),
+        ],
     )
 
 
@@ -59,8 +108,10 @@ def _present(event, room_id, email):
     room = rooms.load(room_id)
     if not room:
         return render.notice("Room not found", "This room no longer exists.", status=404)
-    if not store.is_admin(room["room_id"], email):
-        return render.notice("Not allowed", "Presentation mode is for room admins.", status=403)
+    if not (store.is_admin(room["room_id"], email) if email else _cohost_of(event, room["room_id"])):
+        return render.notice(
+            "Not allowed", "Presentation mode is for room admins and co-hosts.", status=403
+        )
     return render.present_page(
         room,
         {
@@ -92,14 +143,26 @@ def lambda_handler(event, _context):
                 link=("Try again", "/auth/login"),
             )
 
-        email = _signed_in(event)
-        if not email:
-            import urllib.parse
+        # Co-host codes are redeemed without any account, so this sits ahead of
+        # the sign-in gate.
+        if path == "/cohost":
+            if http.method(event) == "POST":
+                return _redeem_cohost_code(_form_code(event))
+            code = http.query(event).get("code", "")
+            return _redeem_cohost_code(code) if code else render.cohost_page()
+        if path.startswith("/cohost/"):
+            return _redeem_cohost_code(urllib.parse.unquote(path[len("/cohost/"):]))
 
+        email = _signed_in(event)
+        room_id = None
+        if path.startswith("/admin/rooms/"):
+            room_id = path[len("/admin/rooms/"):].split("/")[0]
+
+        # A co-host has no session, but does hold a code for exactly one room.
+        if not email and not (room_id and _cohost_of(event, room_id)):
             return http.redirect(f"/auth/login?next={urllib.parse.quote(path)}")
 
         if path.startswith("/admin/rooms/") and path.endswith("/present"):
-            room_id = path[len("/admin/rooms/"):-len("/present")]
             return _present(event, room_id, email)
 
         if path == "/admin" or path.startswith("/admin/"):

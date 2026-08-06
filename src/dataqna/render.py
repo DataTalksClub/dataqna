@@ -75,6 +75,30 @@ def present_page(room, config_payload):
     return http.html_response(200, body)
 
 
+def cohost_page(error=None, code=""):
+    message = f'<div class="banner warn">{html.escape(error)}</div>' if error else ""
+    body = f"""<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Co-host access</title>
+<link rel="stylesheet" href="/assets/app.css"></head>
+<body><div class="wrap">
+<h1 style="font-size:1.4rem">Co-host access</h1>
+<p class="muted">Enter the code the host gave you. It lets you moderate that one
+room — approve, answer, pin, and hide questions, and run presentation mode. No
+account needed.</p>
+{message}
+<form method="POST" action="/cohost" class="card stack">
+  <input type="text" name="code" autocomplete="off" autocapitalize="characters"
+         spellcheck="false" placeholder="XXXX-XXXX-XXXX" aria-label="Co-host code"
+         class="mono" value="{html.escape(code)}">
+  <button type="submit">Continue</button>
+</form>
+</div></body></html>"""
+    return http.html_response(200 if not error else 403, body)
+
+
 def notice(title, message, *, status=200, link=None):
     action = f'<p><a class="btn" href="{html.escape(link[1])}">{html.escape(link[0])}</a></p>' if link else ""
     body = f"""<!doctype html>

@@ -110,6 +110,40 @@ def main():
         anonymous_export = requests.get(f"{api}/rooms/{room_id}/export?format=md", timeout=20)
         check("export requires an admin", anonymous_export.status_code == 401)
 
+        # Co-host codes: moderation for one room, granted without an account.
+        invite = requests.post(f"{api}/rooms/{room_id}/cohosts", headers=admin_headers,
+                               json={"label": "verifier"}, timeout=20)
+        check("co-host code creation", invite.status_code == 201, invite.text[:200])
+        code = invite.json()["code"]
+
+        cohost = requests.Session()
+        redeemed = cohost.get(f"{base}/cohost/{code}", timeout=20, allow_redirects=False)
+        check("co-host code redeems to the room",
+              redeemed.status_code == 302 and room_id in redeemed.headers.get("location", ""))
+        check("co-host cookie is issued", "dq_cohost" in cohost.cookies)
+
+        moderated = cohost.patch(f"{api}/rooms/{room_id}/questions/{question_id}",
+                                 json={"pinned": True}, timeout=20)
+        check("co-host can moderate", moderated.status_code == 200, moderated.text[:200])
+
+        blocked = cohost.patch(f"{api}/rooms/{room_id}", json={"state": "closed"}, timeout=20)
+        check("co-host cannot change room settings", blocked.status_code == 403)
+
+        no_keys = cohost.get(f"{api}/rooms/{room_id}/cohosts", timeout=20)
+        check("co-host cannot read co-host codes", no_keys.status_code == 403)
+
+        no_rooms = cohost.get(f"{api}/rooms", timeout=20)
+        check("co-host cannot list rooms", no_rooms.status_code == 401)
+
+        bad_code = requests.get(f"{base}/cohost/ZZZZ-ZZZZ-ZZZZ", timeout=20, allow_redirects=False)
+        check("an unknown co-host code is refused", bad_code.status_code == 403)
+
+        requests.delete(f"{api}/rooms/{room_id}/cohosts/{invite.json()['invite_id']}",
+                        headers=admin_headers, timeout=20)
+        after_revoke = cohost.patch(f"{api}/rooms/{room_id}/questions/{question_id}",
+                                    json={"pinned": False}, timeout=20)
+        check("revoking a co-host code takes effect immediately", after_revoke.status_code == 403)
+
     finally:
         requests.delete(f"{api}/rooms/{room_id}?purge=true", headers=admin_headers, timeout=20)
 

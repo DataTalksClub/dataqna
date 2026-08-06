@@ -113,8 +113,61 @@
 
   /* ---- room detail ---- */
 
+  function loadCohosts() {
+    request("/rooms/" + roomId + "/cohosts").then(function (body) {
+      var table = $("cohosts");
+      table.innerHTML = "<tr><th>Code</th><th>For</th><th>Valid until</th><th></th></tr>";
+      (body.items || []).forEach(function (invite) {
+        var row = table.insertRow();
+        var codeCell = row.insertCell();
+        codeCell.className = "mono";
+        codeCell.textContent = invite.code;
+        row.insertCell().textContent = invite.label || "—";
+        row.insertCell().textContent = (invite.expires_at || "").slice(0, 10) || "no expiry";
+
+        var cell = row.insertCell();
+        var copy = document.createElement("button");
+        copy.className = "ghost small";
+        copy.textContent = "Copy link";
+        copy.addEventListener("click", function () {
+          navigator.clipboard.writeText(invite.join_url).then(function () { toast("Co-host link copied"); });
+        });
+        var revoke = document.createElement("button");
+        revoke.className = "ghost small";
+        revoke.textContent = "Revoke";
+        revoke.addEventListener("click", function () {
+          request("/rooms/" + roomId + "/cohosts/" + invite.invite_id, { method: "DELETE" })
+            .then(loadCohosts).catch(fail);
+        });
+        cell.appendChild(copy);
+        cell.appendChild(revoke);
+      });
+    }).catch(fail);
+  }
+
+  function createCohost() {
+    request("/rooms/" + roomId + "/cohosts", {
+      method: "POST",
+      body: JSON.stringify({ label: $("cohost-label").value.trim() || null })
+    }).then(function (invite) {
+      $("cohost-label").value = "";
+      toast("Code " + invite.code + " created");
+      loadCohosts();
+    }).catch(fail);
+  }
+
   function renderRoom(room) {
     state.room = room;
+    // A co-host sees the questions and the share panel, and nothing that would
+    // let them change the room or widen their own access.
+    var isCohost = room.role === "cohost";
+    $("settings-card").hidden = isCohost;
+    $("cohost-card").hidden = isCohost;
+    $("cohost-notice").hidden = !isCohost;
+    if (isCohost) {
+      var back = document.querySelector('a[href="/admin"]');
+      if (back) back.hidden = true;
+    }
     $("room-title").textContent = room.title;
     $("room-sub").textContent = room.state + " · " + room.counts.questions + " questions" +
       (room.expires_at ? " · closes " + new Date(room.expires_at).toLocaleString() : "");
@@ -128,8 +181,10 @@
     $("questions-open").checked = room.settings.questions_open;
     $("voting-open").checked = room.settings.voting_open;
     $("moderation").checked = room.settings.moderation === "on";
-    $("admins").textContent = "Owner " + room.owner +
-      (room.admins && room.admins.length ? " · admins: " + room.admins.join(", ") : "");
+    if (!isCohost) {
+      $("admins").textContent = "Owner " + room.owner +
+        (room.admins && room.admins.length ? " · admins: " + room.admins.join(", ") : "");
+    }
 
     fetch("/r/" + room.slug + "/qr.svg").then(function (r) { return r.text(); })
       .then(function (svg) { $("qr").innerHTML = svg; });
@@ -219,7 +274,10 @@
 
   if (roomId) {
     $("view-room").hidden = false;
-    request("/rooms/" + roomId).then(renderRoom).catch(fail);
+    request("/rooms/" + roomId).then(function (room) {
+      renderRoom(room);
+      if (room.role !== "cohost") loadCohosts();
+    }).catch(fail);
     refresh();
     setInterval(function () { if (!document.hidden) refresh(); }, 5000);
 
@@ -240,6 +298,7 @@
     $("copy-link").addEventListener("click", function () {
       navigator.clipboard.writeText(state.room.url).then(function () { toast("Link copied"); });
     });
+    $("create-cohost").addEventListener("click", createCohost);
     ["all", "pending", "answered", "hidden"].forEach(function (key) {
       $("f-" + key).addEventListener("click", function () { selectFilter(key); });
     });
