@@ -122,6 +122,12 @@ Resources:
         Api:
           Type: HttpApi
           Properties: {ApiId: !Ref Api, Path: '/api/v1/{proxy+}', Method: ANY}
+        CohostEntry:
+          Type: HttpApi
+          Properties: {ApiId: !Ref Api, Path: /cohost, Method: ANY}
+        CohostLink:
+          Type: HttpApi
+          Properties: {ApiId: !Ref Api, Path: '/cohost/{proxy+}', Method: ANY}
 
   AdminFunction:
     Type: AWS::Serverless::Function
@@ -145,12 +151,6 @@ Resources:
         Auth:
           Type: HttpApi
           Properties: {ApiId: !Ref Api, Path: '/auth/{proxy+}', Method: GET}
-        CohostEntry:
-          Type: HttpApi
-          Properties: {ApiId: !Ref Api, Path: /cohost, Method: ANY}
-        CohostCode:
-          Type: HttpApi
-          Properties: {ApiId: !Ref Api, Path: '/cohost/{proxy+}', Method: GET}
 
   PublicErrorAlarm:
     Type: AWS::CloudWatch::Alarm

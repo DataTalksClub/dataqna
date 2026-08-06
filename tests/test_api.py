@@ -61,28 +61,27 @@ def test_a_stranger_cannot_change_a_room(table):
     assert excinfo.value.status == 403
 
 
-def test_a_granted_admin_can_moderate_but_not_delete(table):
+def test_there_is_no_way_to_grant_another_account_access(table):
+    """Access is owner plus session codes. Nothing else, deliberately."""
     room = make_room()
-    store.add_admin(room["room_id"], GUEST)
-    guest = api.Identity(email=GUEST, source="session")
-
-    updated = call(["rooms", room["room_id"]], "PATCH", identity=guest, body={"title": "Renamed"})
-    assert json.loads(updated["body"])["title"] == "Renamed"
-
-    with pytest.raises(HttpError) as excinfo:
-        call(["rooms", room["room_id"]], "DELETE", identity=guest)
-    assert excinfo.value.status == 403
+    for method in ("PUT", "DELETE", "GET"):
+        with pytest.raises(HttpError) as excinfo:
+            call(["rooms", room["room_id"], "admins", GUEST], method, identity=owner())
+        assert excinfo.value.status == 404
 
 
-def test_removing_an_admin_takes_effect_immediately(table):
-    room = make_room()
-    store.add_admin(room["room_id"], GUEST)
-    guest = api.Identity(email=GUEST, source="session")
-    call(["rooms", room["room_id"]], "PATCH", identity=guest, body={"title": "Fine"})
+def test_creating_a_room_ignores_any_admins_field(table):
+    response = call(["rooms"], "POST", identity=owner(),
+                    body={"title": "Podcast", "admins": [GUEST]})
+    room_id = json.loads(response["body"])["room_id"]
+    assert not store.is_admin(room_id, GUEST)
 
-    store.remove_admin(room["room_id"], GUEST)
-    with pytest.raises(HttpError):
-        call(["rooms", room["room_id"]], "PATCH", identity=guest, body={"title": "Not fine"})
+
+def test_a_signed_in_stranger_sees_only_their_own_sessions(table):
+    make_room()
+    stranger = api.Identity(email=STRANGER, source="session")
+    listed = json.loads(call(["rooms"], "GET", identity=stranger)["body"])
+    assert listed["items"] == []
 
 
 def test_draft_rooms_are_invisible_to_the_public(table):

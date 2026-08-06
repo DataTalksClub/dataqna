@@ -110,15 +110,27 @@ def main():
         anonymous_export = requests.get(f"{api}/rooms/{room_id}/export?format=md", timeout=20)
         check("export requires an admin", anonymous_export.status_code == 401)
 
-        # Co-host codes: moderation for one room, granted without an account.
+        # Co-host invites: a link that names one, and a passcode that opens it.
         invite = requests.post(f"{api}/rooms/{room_id}/cohosts", headers=admin_headers,
                                json={"label": "verifier"}, timeout=20)
-        check("co-host code creation", invite.status_code == 201, invite.text[:200])
-        code = invite.json()["code"]
+        check("co-host invite creation", invite.status_code == 201, invite.text[:200])
+        name, passcode = invite.json()["name"], invite.json()["passcode"]
+        check("the join link does not carry the passcode",
+              passcode not in invite.json()["join_url"])
+
+        leaked = requests.Session()
+        link_only = leaked.get(f"{base}/cohost/{name}", timeout=20, allow_redirects=False)
+        check("the link alone only asks for the passcode",
+              link_only.status_code == 200 and "dq_cohost" not in leaked.cookies)
+        wrong = leaked.post(f"{base}/cohost", timeout=20, allow_redirects=False,
+                            data={"name": name, "passcode": "WRONG-WRONG-WRNG"})
+        check("a wrong passcode is refused",
+              wrong.status_code == 403 and "dq_cohost" not in leaked.cookies)
 
         cohost = requests.Session()
-        redeemed = cohost.get(f"{base}/cohost/{code}", timeout=20, allow_redirects=False)
-        check("co-host code redeems to the room",
+        redeemed = cohost.post(f"{base}/cohost", timeout=20, allow_redirects=False,
+                               data={"name": name, "passcode": passcode})
+        check("link and passcode together redeem to the session",
               redeemed.status_code == 302 and room_id in redeemed.headers.get("location", ""))
         check("co-host cookie is issued", "dq_cohost" in cohost.cookies)
 
@@ -126,23 +138,32 @@ def main():
                                  json={"pinned": True}, timeout=20)
         check("co-host can moderate", moderated.status_code == 200, moderated.text[:200])
 
-        blocked = cohost.patch(f"{api}/rooms/{room_id}", json={"state": "closed"}, timeout=20)
-        check("co-host cannot change room settings", blocked.status_code == 403)
+        runs = cohost.patch(f"{api}/rooms/{room_id}",
+                            json={"settings": {"questions_open": False}}, timeout=20)
+        check("co-host runs the session's settings", runs.status_code == 200)
+
+        blocked = cohost.patch(f"{api}/rooms/{room_id}", json={"slug": "hijacked"}, timeout=20)
+        check("co-host cannot move the published link", blocked.status_code == 403)
 
         no_keys = cohost.get(f"{api}/rooms/{room_id}/cohosts", timeout=20)
-        check("co-host cannot read co-host codes", no_keys.status_code == 403)
+        check("co-host cannot read co-host invites", no_keys.status_code == 403)
 
         no_rooms = cohost.get(f"{api}/rooms", timeout=20)
         check("co-host cannot list rooms", no_rooms.status_code == 401)
 
-        bad_code = requests.get(f"{base}/cohost/ZZZZ-ZZZZ-ZZZZ", timeout=20, allow_redirects=False)
-        check("an unknown co-host code is refused", bad_code.status_code == 403)
+        unknown = requests.post(f"{base}/cohost", timeout=20, allow_redirects=False,
+                                data={"name": "no-such-invite", "passcode": passcode})
+        check("an unknown link name is refused", unknown.status_code == 403)
 
         requests.delete(f"{api}/rooms/{room_id}/cohosts/{invite.json()['invite_id']}",
                         headers=admin_headers, timeout=20)
         after_revoke = cohost.patch(f"{api}/rooms/{room_id}/questions/{question_id}",
                                     json={"pinned": False}, timeout=20)
-        check("revoking a co-host code takes effect immediately", after_revoke.status_code == 403)
+        check("revoking an invite takes effect immediately", after_revoke.status_code == 403)
+
+        no_admins = requests.put(f"{api}/rooms/{room_id}/admins/someone@example.com",
+                                 headers=admin_headers, timeout=20)
+        check("per-room email admins are gone", no_admins.status_code == 404)
 
     finally:
         requests.delete(f"{api}/rooms/{room_id}?purge=true", headers=admin_headers, timeout=20)

@@ -312,94 +312,153 @@ th { color: var(--muted); font-weight: 600; }
 .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
 .stack > * + * { margin-top: 12px; }
 
-/* Presentation mode: read from the back of the room. */
-body.present { background: #05070d; color: #fff; overflow: hidden; }
-.present-grid {
+/* Presentation mode. Projected in a lit room, so it is light rather than dark:
+   a projector renders white as "screen off", and dark slides wash out. Layout
+   follows the convention of the genre — a persistent join bar along the top,
+   one question large in the middle, the queue down one side. */
+body.present {
+  background: #ffffff;
+  color: #101322;
+  overflow: hidden;
+}
+
+.present-shell {
   display: grid;
-  grid-template-columns: 1fr 380px;
   grid-template-rows: auto 1fr auto;
   height: 100vh;
-  gap: 24px 32px;
-  padding: 32px 40px;
 }
-.present-title {
-  grid-column: 1 / -1;
-  font-size: .95rem;
-  text-transform: uppercase;
-  letter-spacing: .12em;
-  color: #7c869c;
+
+.present-bar {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  padding: 18px 40px;
+  border-bottom: 1px solid #e6e8ef;
 }
-.present-main { display: flex; flex-direction: column; justify-content: center; min-width: 0; }
-.present-main .q-text {
-  font-size: clamp(2rem, 5vw, 4.2rem);
+.present-bar .session {
+  font-size: 1.15rem;
   font-weight: 650;
-  line-height: 1.15;
-  overflow-wrap: anywhere;
+  letter-spacing: -.01em;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
-.present-main .q-meta {
-  margin-top: 24px;
-  font-size: 1.4rem;
-  color: #98a2b8;
+.present-bar .join {
   display: flex;
   align-items: center;
   gap: 16px;
+  background: #f3f5fb;
+  border-radius: 14px;
+  padding: 10px 18px;
 }
-.present-main .q-score {
+.present-bar .join .qr { width: 76px; height: 76px; color: #101322; }
+.present-bar .join .join-label {
+  font-size: .78rem;
+  text-transform: uppercase;
+  letter-spacing: .12em;
+  color: #6a7288;
+}
+.present-bar .join .url { font-size: 1.3rem; font-weight: 700; letter-spacing: -.01em; }
+
+.present-body {
+  display: grid;
+  grid-template-columns: 1fr 360px;
+  min-height: 0;
+}
+
+.present-stage {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 40px 56px;
+  min-width: 0;
+}
+.present-stage .q-text {
+  font-size: clamp(2rem, 4.6vw, 4rem);
+  font-weight: 650;
+  line-height: 1.18;
+  letter-spacing: -.015em;
+  overflow-wrap: anywhere;
+  max-width: 22ch;
+}
+.present-stage .q-meta {
+  margin-top: 30px;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  font-size: 1.3rem;
+  color: #5c6478;
+}
+.present-stage .q-score {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  font-size: 2rem;
-  font-weight: 700;
+  background: var(--accent);
   color: #fff;
+  border-radius: 999px;
+  padding: 8px 18px;
+  font-size: 1.35rem;
+  font-weight: 700;
 }
 @media (prefers-reduced-motion: no-preference) {
-  .present-main .q-text, .present-main .q-meta { transition: opacity .25s ease, transform .25s ease; }
+  .present-stage .q-text, .present-stage .q-meta { transition: opacity .22s ease, transform .22s ease; }
 }
-.present-main.swapping .q-text,
-.present-main.swapping .q-meta { opacity: 0; transform: translateY(8px); }
+.present-stage.swapping .q-text,
+.present-stage.swapping .q-meta { opacity: 0; transform: translateY(10px); }
 
-.present-side { display: flex; flex-direction: column; gap: 16px; min-height: 0; }
-.present-side h2 {
-  font-size: .95rem;
-  text-transform: uppercase;
-  letter-spacing: .1em;
-  color: #8892a6;
+.present-queue {
+  border-left: 1px solid #e6e8ef;
+  padding: 28px 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-height: 0;
+  background: #fafbfe;
+}
+.present-queue h2 {
   margin: 0;
+  font-size: .8rem;
+  text-transform: uppercase;
+  letter-spacing: .12em;
+  color: #6a7288;
 }
-.present-side ul { list-style: none; margin: 0; padding: 0; overflow-y: auto; scrollbar-width: none; }
-.present-side ul::-webkit-scrollbar { display: none; }
-.present-side li {
-  padding: 11px 0;
-  border-bottom: 1px solid #1c2130;
-  color: #c9d1e0;
-  font-size: 1.3rem;
-  line-height: 1.3;
+.present-queue ul { list-style: none; margin: 0; padding: 0; overflow-y: auto; scrollbar-width: none; }
+.present-queue ul::-webkit-scrollbar { display: none; }
+.present-queue li {
+  display: flex;
+  gap: 12px;
+  align-items: baseline;
+  padding: 13px 0;
+  border-bottom: 1px solid #e9ebf2;
+  color: #333b52;
+  font-size: 1.15rem;
+  line-height: 1.35;
 }
-.present-join {
-  display: flex; align-items: center; gap: 20px;
-  background: #fff; color: #05070d; border-radius: 18px; padding: 18px 20px;
-  margin-top: auto;
-}
-.present-join .qr { width: 180px; height: 180px; color: #05070d; flex: 0 0 auto; }
-.present-join .join-label { font-size: .85rem; text-transform: uppercase; letter-spacing: .1em; color: #5b6478; }
-.present-join .url { font-size: 1.35rem; font-weight: 700; line-height: 1.25; overflow-wrap: anywhere; }
+.present-queue li .score { font-weight: 700; color: var(--accent); flex: 0 0 auto; }
+.present-queue .queue-empty { color: #8891a5; font-size: 1.05rem; }
 
 .present-foot {
-  grid-column: 1 / -1;
-  color: #6b7488;
-  font-size: .9rem;
-  opacity: 1;
-  transition: opacity .5s ease;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 14px 40px;
+  border-top: 1px solid #e6e8ef;
+  color: #8891a5;
+  font-size: .88rem;
 }
-.present-foot.faded { opacity: 0; }
+.present-foot .progress { font-weight: 650; color: #5c6478; }
+.present-foot .hints { opacity: 1; transition: opacity .5s ease; margin-left: auto; }
+.present-foot .hints.faded { opacity: 0; }
 
 .present-cue {
   position: fixed;
   left: 40px;
-  bottom: 32px;
-  background: rgba(255, 255, 255, .12);
-  color: #e6ebf5;
-  padding: 8px 14px;
+  bottom: 72px;
+  background: #101322;
+  color: #fff;
+  padding: 9px 16px;
   border-radius: 999px;
   font-size: .95rem;
   opacity: 0;
@@ -407,19 +466,20 @@ body.present { background: #05070d; color: #fff; overflow: hidden; }
 }
 .present-cue.show { opacity: 1; }
 
+/* The join card, blown up. Shown automatically while the room is still empty,
+   which is exactly when everyone is trying to get in. */
 .present-overlay {
-  position: fixed; inset: 0; background: #fff; color: #05070d;
-  display: none; flex-direction: column; align-items: center; justify-content: center; gap: 20px;
+  position: fixed; inset: 0; background: #fff; color: #101322;
+  display: none; flex-direction: column; align-items: center; justify-content: center; gap: 22px;
 }
 .present-overlay.show { display: flex; }
-.present-overlay .qr { width: min(56vh, 56vw); height: min(56vh, 56vw); }
-.present-overlay .url { font-size: clamp(1.4rem, 3.4vw, 2.6rem); font-weight: 700; }
-.present-overlay .code { font-size: clamp(1.1rem, 2.2vw, 1.7rem); color: #5b6478; letter-spacing: .06em; }
+.present-overlay .qr { width: min(52vh, 52vw); height: min(52vh, 52vw); }
+.present-overlay .url { font-size: clamp(1.6rem, 3.6vw, 2.8rem); font-weight: 750; letter-spacing: -.02em; }
+.present-overlay .code { font-size: clamp(1rem, 2vw, 1.5rem); color: #6a7288; }
 
-@media (max-width: 900px) {
-  .present-grid { grid-template-columns: 1fr; grid-template-rows: auto 1fr auto auto; }
-  .present-side ul, .present-side h2 { display: none; }
-  .present-join { gap: 14px; padding: 12px 14px; }
-  .present-join .qr { width: 108px; height: 108px; }
-  .present-join .url { font-size: 1rem; }
+@media (max-width: 1000px) {
+  .present-body { grid-template-columns: 1fr; }
+  .present-queue { display: none; }
+  .present-bar .join .qr { width: 56px; height: 56px; }
+  .present-bar .join .url { font-size: 1rem; }
 }

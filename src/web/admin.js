@@ -129,21 +129,27 @@
   function loadCohosts() {
     request("/rooms/" + roomId + "/cohosts").then(function (body) {
       var table = $("cohosts");
-      table.innerHTML = "<tr><th>Code</th><th>For</th><th>Valid until</th><th></th></tr>";
+      table.innerHTML = "<tr><th>Link</th><th>Passcode</th><th>For</th><th>Valid until</th><th></th></tr>";
       (body.items || []).forEach(function (invite) {
         var row = table.insertRow();
-        var codeCell = row.insertCell();
-        codeCell.className = "mono";
-        codeCell.textContent = invite.code;
+        var nameCell = row.insertCell();
+        nameCell.className = "mono";
+        nameCell.textContent = invite.name;
+        var passCell = row.insertCell();
+        passCell.className = "mono";
+        passCell.textContent = invite.passcode;
         row.insertCell().textContent = invite.label || "—";
         row.insertCell().textContent = (invite.expires_at || "").slice(0, 10) || "no expiry";
 
         var cell = row.insertCell();
         var copy = document.createElement("button");
         copy.className = "ghost small";
-        copy.textContent = "Copy link";
+        copy.textContent = "Copy both";
         copy.addEventListener("click", function () {
-          navigator.clipboard.writeText(invite.join_url).then(function () { toast("Co-host link copied"); });
+          // The link is useless without the passcode, so copy them together.
+          navigator.clipboard
+            .writeText(invite.join_url + "\nPasscode: " + invite.passcode)
+            .then(function () { toast("Link and passcode copied"); });
         });
         var revoke = document.createElement("button");
         revoke.className = "ghost small";
@@ -161,10 +167,14 @@
   function createCohost() {
     request("/rooms/" + roomId + "/cohosts", {
       method: "POST",
-      body: JSON.stringify({ label: $("cohost-label").value.trim() || null })
+      body: JSON.stringify({
+        label: $("cohost-label").value.trim() || null,
+        name: $("cohost-name").value.trim() || null,
+        passcode: $("cohost-passcode").value.trim() || null
+      })
     }).then(function (invite) {
-      $("cohost-label").value = "";
-      toast("Code " + invite.code + " created");
+      ["cohost-label", "cohost-name", "cohost-passcode"].forEach(function (id) { $(id).value = ""; });
+      toast("Invite created — passcode " + invite.passcode);
       loadCohosts();
     }).catch(fail);
   }
@@ -176,7 +186,6 @@
     // A session code is admin of this session: settings and lifecycle
     // included. What it cannot do is hand that access on to anyone else.
     var isCohost = room.role === "cohost";
-    $("people-card").hidden = isCohost;
     $("cohost-card").hidden = isCohost;
     $("cohost-notice").hidden = !isCohost;
     if (isCohost) {
@@ -184,7 +193,8 @@
       if (back) back.hidden = true;
     }
     $("room-title").textContent = room.title;
-    $("room-sub").textContent = room.state + " · " + room.counts.questions + " questions" +
+    $("room-sub").textContent = "Owner " + room.owner + " · " + room.state + " · " +
+      room.counts.questions + " questions" +
       (room.expires_at ? " · closes " + new Date(room.expires_at).toLocaleString() : "");
     $("public-link").href = room.url;
     $("public-link").textContent = room.url;
@@ -200,10 +210,6 @@
     $("voting-open").checked = room.settings.voting_open;
     $("moderation").checked = room.settings.moderation === "on";
     $("listed").checked = room.settings.listed !== false;
-    if (!isCohost) {
-      $("admins").textContent = "Owner " + room.owner +
-        (room.admins && room.admins.length ? " · admins: " + room.admins.join(", ") : "");
-    }
 
     fetch("/r/" + room.slug + "/qr.svg").then(function (r) { return r.text(); })
       .then(function (svg) { $("qr").innerHTML = svg; });
@@ -340,16 +346,6 @@
     $("voting-open").addEventListener("change", function () { patchRoom({ settings: { voting_open: this.checked } }); });
     $("moderation").addEventListener("change", function () { patchRoom({ settings: { moderation: this.checked ? "on" : "off" } }); });
     $("listed").addEventListener("change", function () { patchRoom({ settings: { listed: this.checked } }); });
-    $("add-admin").addEventListener("click", function () {
-      var email = $("admin-email").value.trim().toLowerCase();
-      if (!email) return;
-      request("/rooms/" + roomId + "/admins/" + encodeURIComponent(email), { method: "PUT" })
-        .then(function () {
-          $("admin-email").value = "";
-          toast("Added " + email);
-          return request("/rooms/" + roomId).then(renderRoom);
-        }).catch(fail);
-    });
     $("copy-link").addEventListener("click", function () {
       navigator.clipboard.writeText(state.room.url).then(function () { toast("Link copied"); });
     });

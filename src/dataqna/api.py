@@ -193,18 +193,6 @@ def route(event, segments, method, identity):
         return _question(event, room, tail[1], method, identity)
     if len(tail) == 3 and tail[0] == "questions" and tail[2] == "vote":
         return _vote(event, room, tail[1], method, identity)
-    if tail == ["admins"]:
-        identity.require_admin(room)
-        admins = store.list_admins(room["room_id"])
-        return http.json_response(
-            200,
-            {
-                "owner": room.get("owner"),
-                "admins": [item["email"] for item in admins if item.get("role") != "owner"],
-            },
-        )
-    if len(tail) == 2 and tail[0] == "admins":
-        return _admin_grant(room, tail[1], method, identity)
     if tail == ["cohosts"]:
         return _cohosts(event, room, method, identity)
     if len(tail) == 2 and tail[0] == "cohosts" and method == "DELETE":
@@ -242,7 +230,7 @@ def _create_room(event, identity):
             UpdateExpression="SET room_id = :r",
             ExpressionAttributeValues={":r": room["room_id"]},
         )
-    return http.json_response(201, rooms.admin_view(room, admins=store.list_admins(room["room_id"])))
+    return http.json_response(201, rooms.admin_view(room))
 
 
 def _list_rooms(identity):
@@ -259,11 +247,8 @@ def _room_detail(event, room, method, identity):
     if method == "GET":
         _readable(room, identity)
         role = identity.role_in(room)
-        if role == "cohost":
-            return http.json_response(200, dict(rooms.admin_view(room), role=role))
         if role:
-            view = rooms.admin_view(room, admins=store.list_admins(room["room_id"]))
-            return http.json_response(200, dict(view, role=role))
+            return http.json_response(200, dict(rooms.admin_view(room), role=role))
         return http.json_response(200, rooms.public_view(room))
     if method == "PATCH":
         identity.require_moderator(room)
@@ -273,9 +258,7 @@ def _room_detail(event, room, method, identity):
         if "slug" in payload and not identity.is_admin_of(room):
             raise HttpError(403, "cohost_scope", "Only a room admin can change the link.")
         updated = rooms.apply_updates(room, payload)
-        return http.json_response(
-            200, rooms.admin_view(updated, admins=store.list_admins(room["room_id"]))
-        )
+        return http.json_response(200, rooms.admin_view(updated))
     if method == "DELETE":
         identity.require_owner(room)
         if str(http.query(event).get("purge", "")).lower() in ("1", "true", "yes"):
@@ -434,35 +417,20 @@ def _bulk(event, room, identity):
     return http.json_response(200, {"results": results})
 
 
-def _admin_grant(room, email, method, identity):
-    identity.require_admin(room)
-    email = email.strip().lower()
-    if method == "PUT":
-        if "@" not in email:
-            raise HttpError(400, "invalid_request", "A valid email address is required.")
-        store.add_admin(room["room_id"], email)
-        return http.json_response(200, {"email": email, "role": "admin"})
-    if method == "DELETE":
-        if email == room.get("owner"):
-            raise HttpError(400, "invalid_request", "Transfer ownership before removing the owner.")
-        store.remove_admin(room["room_id"], email)
-        return http.json_response(200, {"email": email, "removed": True})
-    raise HttpError(405, "method_not_allowed", f"{method} is not allowed here.")
-
-
 def _cohost_view(room, invite):
     return {
         "invite_id": invite["invite_id"],
-        "code": invite["code"],
+        "name": invite["name"],
+        "passcode": invite["passcode"],
         "label": invite.get("label"),
-        "join_url": f"{config.SITE_URL}/cohost/{invite['code']}",
+        "join_url": f"{config.SITE_URL}/cohost/{invite['name']}",
         "created_at": rooms.iso(invite.get("created_at")),
         "expires_at": rooms.iso(invite.get("expires_at")),
     }
 
 
 def _cohosts(event, room, method, identity):
-    """Co-host codes are created, read, and revoked by room admins only."""
+    """Co-host invites are created, read, and revoked by room admins only."""
     identity.require_admin(room)
 
     if method == "GET":
@@ -476,20 +444,77 @@ def _cohosts(event, room, method, identity):
         expires_at = rooms.parse_timestamp(payload.get("expires_at"), "expires_at")
         if expires_at is None:
             expires_at = store.now() + config.COHOST_DEFAULT_VALID_DAYS * 86400
+
+        passcode = str(payload.get("passcode") or "").strip() or security.new_cohost_code()
+        if len(passcode) < 6:
+            raise HttpError(400, "invalid_request", "A passcode must be at least 6 characters.")
+
+        requested = store.normalize_cohost_name(payload.get("name"))
+        if requested and not ids.SLUG_PATTERN.match(requested):
+            raise HttpError(
+                400, "invalid_request",
+                "A link name must be 3-48 characters of lowercase letters, digits, and hyphens.",
+            )
+
+        invite_id = ids.ulid()
+        ttl = expires_at + 86400
+        name = requested or security.new_cohost_name()
+        if not store.claim_cohost_name(name, room["room_id"], invite_id, ttl=ttl):
+            if requested:
+                raise HttpError(409, "name_taken", f"The link name '{name}' is already in use.")
+            name = security.new_cohost_name()
+            if not store.claim_cohost_name(name, room["room_id"], invite_id, ttl=ttl):
+                raise HttpError(503, "name_exhausted", "Could not allocate a link name. Try again.")
+
         invite = {
-            "invite_id": ids.ulid(),
+            "invite_id": invite_id,
             "room_id": room["room_id"],
-            "code": security.new_cohost_code(),
+            "name": name,
+            "passcode": passcode,
             "label": str(payload.get("label") or "").strip()[:80] or None,
             "created_by": identity.email,
             "created_at": store.now(),
             "expires_at": expires_at,
-            "ttl": expires_at + 86400,
+            "ttl": ttl,
         }
         store.put_cohost_invite(invite)
         return http.json_response(201, _cohost_view(room, invite))
 
     raise HttpError(405, "method_not_allowed", f"{method} is not allowed here.")
+
+
+def redeem_cohost(name, passcode, source_ip=""):
+    """Validate a link name and its passcode together.
+
+    Returns (invite, room, error_message). The link alone proves nothing: it
+    names an invite, and the passcode is what grants access. Failures are
+    deliberately indistinguishable, so this cannot be used to discover which
+    link names exist.
+    """
+    generic = "That link and passcode do not match. Check them with the host."
+
+    # Guessing a passcode has to be expensive, and the attempt is unauthenticated.
+    if source_ip:
+        allowed, _ = store.rate_allow(f"cohost:{source_ip}", 300, 10)
+        if not allowed:
+            return None, None, "Too many attempts. Wait a few minutes and try again."
+
+    invite = store.resolve_cohost_name(name)
+    if not invite:
+        return None, None, generic
+    if not security.constant_time_equals(
+        store.normalize_cohost_code(passcode), store.normalize_cohost_code(invite["passcode"])
+    ):
+        return None, None, generic
+
+    expires_at = invite.get("expires_at")
+    if expires_at and int(expires_at) <= store.now():
+        return None, None, "That invite has expired. Ask the host for a new one."
+
+    room = rooms.load(invite["room_id"])
+    if not room or room.get("state") == "archived":
+        return None, None, "That session is no longer available."
+    return invite, room, None
 
 
 def _export(event, room, identity):

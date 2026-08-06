@@ -7,7 +7,7 @@
   var CONFIG = JSON.parse(document.getElementById("config").textContent);
   var API = "/api/v1/rooms/" + CONFIG.room_id;
   var MOTION = window.matchMedia("(prefers-reduced-motion: no-preference)").matches;
-  var UPCOMING_SHOWN = 5;
+  var UPCOMING_SHOWN = 6;
 
   var state = {
     queue: [],
@@ -53,21 +53,26 @@
 
   function paint() {
     var item = current();
+    var list = $("upcoming");
+    list.textContent = "";
+
     if (!item) {
       $("q-text").textContent = "No questions yet.";
       $("q-meta").textContent = "";
-      $("upcoming").textContent = "";
-      $("remaining").textContent = "0";
+      $("progress").textContent = "";
+      $("queue-empty").hidden = false;
+      if (!state.overlayPinned) $("overlay").classList.add("show");
       return;
     }
+
     state.currentId = item.question_id;
     $("q-text").textContent = item.text;
 
     $("q-meta").innerHTML = "";
     var score = document.createElement("span");
     score.className = "q-score";
-    score.innerHTML = '<svg width="26" height="26" viewBox="0 0 24 24" fill="none" ' +
-      'stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">' +
+    score.innerHTML = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" ' +
+      'stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">' +
       '<path d="M6 14l6-7 6 7"/></svg><span>' + item.score + "</span>";
     var who = document.createElement("span");
     who.textContent = (item.author_name || "Anonymous") + (item.pinned ? " · pinned" : "");
@@ -75,19 +80,25 @@
     $("q-meta").appendChild(who);
 
     var index = indexOfCurrent();
+    $("progress").textContent = (index + 1) + " of " + state.queue.length;
+
     var rest = state.queue.slice(index + 1);
-    $("remaining").textContent = String(rest.length);
-    var list = $("upcoming");
-    list.textContent = "";
+    $("queue-empty").hidden = rest.length > 0;
     rest.slice(0, UPCOMING_SHOWN).forEach(function (entry) {
       var li = document.createElement("li");
-      li.textContent = entry.text.length > 80 ? entry.text.slice(0, 80) + "…" : entry.text;
+      var count = document.createElement("span");
+      count.className = "score";
+      count.textContent = entry.score;
+      var text = document.createElement("span");
+      text.textContent = entry.text.length > 90 ? entry.text.slice(0, 90) + "…" : entry.text;
+      li.appendChild(count);
+      li.appendChild(text);
       list.appendChild(li);
     });
 
-    // Nobody is joining a room that has questions in it yet — but at session
-    // start, the QR is the only thing on screen worth looking at.
-    if (!state.overlayPinned) $("overlay").classList.toggle("show", state.queue.length === 0);
+    // Nobody is joining a room that already has questions — but at the start,
+    // the QR is the only thing on screen worth looking at.
+    if (!state.overlayPinned) $("overlay").classList.remove("show");
   }
 
   function render() {
@@ -98,13 +109,13 @@
       state.lastShownId = item ? item.question_id : null;
       return;
     }
-    var main = $("main");
-    main.classList.add("swapping");
+    var stage = $("stage");
+    stage.classList.add("swapping");
     setTimeout(function () {
       paint();
       state.lastShownId = item.question_id;
-      main.classList.remove("swapping");
-    }, 250);
+      stage.classList.remove("swapping");
+    }, 220);
   }
 
   function refresh() {
@@ -173,10 +184,10 @@
   }
 
   function showFoot() {
-    var foot = $("foot");
-    foot.classList.remove("faded");
+    var hints = $("hints");
+    hints.classList.remove("faded");
     clearTimeout(state.footTimer);
-    state.footTimer = setTimeout(function () { foot.classList.add("faded"); }, 5000);
+    state.footTimer = setTimeout(function () { hints.classList.add("faded"); }, 5000);
   }
 
   document.addEventListener("keydown", function (event) {
@@ -210,10 +221,10 @@
   document.addEventListener("mousemove", showFoot);
 
   var shortUrl = CONFIG.url.replace(/^https:\/\//, "");
-  $("room-title").textContent = CONFIG.title || "";
+  $("session-title").textContent = CONFIG.title || "";
   $("join-url").textContent = shortUrl;
   $("overlay-url").textContent = shortUrl;
-  $("overlay-code").textContent = "or " + CONFIG.url.replace(/\/r\/.*$/, "/r/") + CONFIG.code;
+  $("overlay-code").textContent = "Join code " + CONFIG.code;
   fetch("/r/" + CONFIG.slug + "/qr.svg").then(function (r) { return r.text(); }).then(function (svg) {
     $("qr").innerHTML = svg;
     $("qr-big").innerHTML = svg;

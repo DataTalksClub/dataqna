@@ -139,18 +139,31 @@ def _shell(title, inner, *, status=200):
     return http.html_response(status, _stamp(body))
 
 
-def cohost_page(error=None, code=""):
+def cohost_page(error=None, name=""):
+    """The passcode gate.
+
+    The link names an invite; it does not open it. This page is what turns a
+    forwarded link into nothing much.
+    """
     message = f'<div class="banner warn">{html.escape(error)}</div>' if error else ""
+    known = bool(name)
+    name_field = (
+        f'<input type="hidden" name="name" value="{html.escape(name)}">'
+        if known
+        else '<input type="text" name="name" autocomplete="off" spellcheck="false"'
+        ' maxlength="48" placeholder="Invite link name" aria-label="Invite link name"'
+        ' class="mono">'
+    )
     inner = f"""{BRAND}
 <h1 style="font-size:1.5rem;letter-spacing:-.01em">Co-host access</h1>
-<p class="muted">Enter the code the host gave you. It lets you moderate that one
-room — approve, answer, pin, and hide questions, and run presentation mode. No
-account needed.</p>
+<p class="muted">Enter the passcode the host gave you. It lets you run one
+session — its questions, settings, and presentation mode. No account needed.</p>
 <form method="POST" action="/cohost" class="card stack">
   {message}
-  <input type="text" name="code" autocomplete="off" autocapitalize="characters"
-         autofocus spellcheck="false" maxlength="20" placeholder="XXXX-XXXX-XXXX"
-         aria-label="Co-host code" class="mono" value="{html.escape(code)}">
+  {name_field}
+  <input type="text" name="passcode" autocomplete="off" autocapitalize="characters"
+         autofocus spellcheck="false" maxlength="40" placeholder="XXXX-XXXX-XXXX"
+         aria-label="Passcode" class="mono">
   <button type="submit">Continue</button>
 </form>"""
     return _shell("Co-host access", inner, status=200 if not error else 403)

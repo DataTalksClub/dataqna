@@ -91,24 +91,19 @@
       </div>
     </div>
 
-    <div class="card stack" id="people-card">
-      <strong>Admins</strong>
-      <p class="muted" style="margin:0">DataTalks.Club accounts with full access to this session.</p>
-      <div class="row wrapping">
-        <input type="email" id="admin-email" class="grow" placeholder="Add admin by email" aria-label="Admin email">
-        <button id="add-admin" class="ghost">Add admin</button>
-      </div>
-      <div id="admins" class="muted"></div>
-    </div>
-
     <div class="card stack" id="cohost-card">
-      <strong>Co-hosts</strong>
-      <p class="muted" style="margin:0">A code lets someone run this session —
-      questions, settings, and presentation mode — with no account. They cannot add
-      people or reach any other session. Revoking takes effect immediately.</p>
+      <strong>People</strong>
+      <p class="muted" style="margin:0">An invite is a link plus a passcode. Both are
+      needed, so a forwarded link on its own gets nobody in. Whoever has both can run
+      this session — questions, settings, and presentation mode — with no account and
+      no access to anything else. Revoking takes effect immediately.</p>
       <div class="row wrapping">
         <input type="text" id="cohost-label" class="grow" placeholder="Who is this for? (optional)" aria-label="Co-host label">
-        <button id="create-cohost" class="ghost">Create code</button>
+      </div>
+      <div class="row wrapping">
+        <input type="text" id="cohost-name" class="grow" placeholder="Link name (optional, generated if blank)" aria-label="Link name">
+        <input type="text" id="cohost-passcode" class="grow mono" placeholder="Passcode (optional, generated if blank)" aria-label="Passcode">
+        <button id="create-cohost" class="ghost">Create invite</button>
       </div>
       <table id="cohosts"></table>
     </div>

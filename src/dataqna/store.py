@@ -179,7 +179,8 @@ def bump_counter(room_id, field, delta):
 # --- admin grants -----------------------------------------------------------
 
 
-def add_admin(room_id, email, role="admin"):
+def add_admin(room_id, email, role="owner"):
+    """Records who owns a room. Also the index that powers "your sessions"."""
     email = email.lower()
     table().put_item(
         Item={
@@ -194,17 +195,6 @@ def add_admin(room_id, email, role="admin"):
             "created_at": now(),
         }
     )
-
-
-def remove_admin(room_id, email):
-    table().delete_item(Key={"PK": _room_pk(room_id), "SK": f"ADMIN#{email.lower()}"})
-
-
-def list_admins(room_id):
-    items = table().query(
-        KeyConditionExpression=Key("PK").eq(_room_pk(room_id)) & Key("SK").begins_with("ADMIN#")
-    )["Items"]
-    return sorted(items, key=lambda item: (item.get("role") != "owner", item["email"]))
 
 
 def is_admin(room_id, email):
@@ -323,21 +313,23 @@ def votes_for_participant(room_id, participant):
 
 # --- co-host invites --------------------------------------------------------
 
-# The invite record lives under the room partition and holds the code in the
-# clear, because a host has to be able to read it back and say it out loud. It
-# is only ever returned through admin-authorized endpoints. The lookup pointer
-# is keyed by the code's hash, so resolving a code needs no scan and the
-# pointer items leak nothing on their own.
+# An invite is two halves. The `name` sits in the URL and is not a secret — it
+# only says which invite you mean. The `passcode` is the secret, and is what
+# actually grants access. Splitting them means a link forwarded to the wrong
+# chat, or pasted into a public channel, is not enough on its own.
+#
+# Both are stored in the clear under the room partition, because a host has to
+# read them back and say them out loud, and both are only ever returned through
+# admin-authorized endpoints. The lookup pointer is keyed on the name, which is
+# not secret, so nothing sensitive sits outside the room's partition.
 
 
-def _code_hash(code):
-    import hashlib
-
-    return hashlib.sha256(normalize_cohost_code(code).encode()).hexdigest()
+def normalize_cohost_code(value):
+    return "".join(str(value or "").split()).replace("-", "").upper()
 
 
-def normalize_cohost_code(code):
-    return "".join(str(code or "").split()).replace("-", "").upper()
+def normalize_cohost_name(value):
+    return "".join(str(value or "").strip().lower().split())
 
 
 def put_cohost_invite(invite):
@@ -348,18 +340,22 @@ def put_cohost_invite(invite):
     if invite.get("ttl"):
         item["ttl"] = invite["ttl"]
     table().put_item(Item=item)
+    return invite
 
-    pointer = {
-        "PK": f"COHOST#{_code_hash(invite['code'])}",
+
+def claim_cohost_name(name, room_id, invite_id, ttl=None):
+    item = {
+        "PK": f"COHOSTNAME#{normalize_cohost_name(name)}",
         "SK": "META",
         "entity": "cohost_pointer",
-        "room_id": invite["room_id"],
-        "invite_id": invite["invite_id"],
+        "room_id": room_id,
+        "invite_id": invite_id,
     }
-    if invite.get("ttl"):
-        pointer["ttl"] = invite["ttl"]
-    table().put_item(Item=pointer)
-    return invite
+    if ttl:
+        item["ttl"] = ttl
+    return _conditional(
+        table().put_item, Item=item, ConditionExpression="attribute_not_exists(PK)"
+    )
 
 
 def list_cohost_invites(room_id):
@@ -381,15 +377,20 @@ def revoke_cohost_invite(room_id, invite_id):
     if not invite:
         return False
     table().delete_item(Key={"PK": _room_pk(room_id), "SK": f"COHOST#{invite_id}"})
-    table().delete_item(Key={"PK": f"COHOST#{_code_hash(invite['code'])}", "SK": "META"})
+    table().delete_item(
+        Key={"PK": f"COHOSTNAME#{normalize_cohost_name(invite['name'])}", "SK": "META"}
+    )
     return True
 
 
-def resolve_cohost_code(code):
-    normalized = normalize_cohost_code(code)
+def resolve_cohost_name(name):
+    """Find an invite by its link name. Says nothing about the passcode."""
+    normalized = normalize_cohost_name(name)
     if not normalized:
         return None
-    pointer = table().get_item(Key={"PK": f"COHOST#{_code_hash(normalized)}", "SK": "META"}).get("Item")
+    pointer = table().get_item(
+        Key={"PK": f"COHOSTNAME#{normalized}", "SK": "META"}
+    ).get("Item")
     if not pointer or pointer.get("entity") != "cohost_pointer":
         return None
     return get_cohost_invite(pointer["room_id"], pointer["invite_id"])

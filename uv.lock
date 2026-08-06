@@ -3,7 +3,7 @@ revision = 3
 requires-python = ">=3.12"
 
 [options]
-exclude-newer = "2026-07-30T12:21:21.659950628Z"
+exclude-newer = "2026-07-30T13:43:11.253739805Z"
 exclude-newer-span = "P7D"
 
 [[package]]
@@ -253,13 +253,13 @@ name = "dataqna"
 version = "0.1.0"
 source = { virtual = "." }
 dependencies = [
-    { name = "boto3" },
     { name = "pyjwt", extra = ["crypto"] },
     { name = "segno" },
 ]
 
 [package.dev-dependencies]
 dev = [
+    { name = "boto3" },
     { name = "moto", extra = ["dynamodb"] },
     { name = "pytest" },
     { name = "requests" },
@@ -267,13 +267,13 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "boto3", specifier = ">=1.35" },
     { name = "pyjwt", extras = ["crypto"], specifier = "==2.10.1" },
     { name = "segno", specifier = "==1.6.1" },
 ]
 
 [package.metadata.requires-dev]
 dev = [
+    { name = "boto3", specifier = ">=1.35" },
     { name = "moto", extras = ["dynamodb"], specifier = ">=5" },
     { name = "pytest", specifier = ">=8" },
     { name = "requests", specifier = ">=2.32" },

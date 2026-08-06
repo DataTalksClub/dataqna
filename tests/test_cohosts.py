@@ -28,28 +28,85 @@ def cohost_identity(room, invite):
                         cohost={"room_id": room["room_id"], "invite_id": invite["invite_id"]})
 
 
-def test_admin_creates_a_readable_code(table):
+def test_an_invite_is_a_link_plus_a_separate_passcode(table):
     room = make_room()
     invite = invite_for(room, label="Guest host")
     assert invite["label"] == "Guest host"
-    assert invite["code"].count("-") == 2
-    assert invite["join_url"].endswith(invite["code"])
-    # Codes must survive being read aloud: no ambiguous glyphs.
-    assert not set(invite["code"]) & set("OIL01U")
+    assert invite["join_url"].endswith(invite["name"])
+    # The URL must not carry the secret, or forwarding it would be enough.
+    assert invite["passcode"] not in invite["join_url"]
+    assert invite["passcode"].count("-") == 2
+    # Passcodes get read aloud: no ambiguous glyphs.
+    assert not set(invite["passcode"]) & set("OIL01U")
 
 
-def test_code_resolves_case_and_dash_insensitively(table):
+def test_the_link_alone_does_not_get_anybody_in(table):
     room = make_room()
     invite = invite_for(room)
-    scrambled = invite["code"].replace("-", "").lower()
-    assert store.resolve_cohost_code(scrambled)["invite_id"] == invite["invite_id"]
-    assert store.resolve_cohost_code(f"  {invite['code']}  ")["invite_id"] == invite["invite_id"]
+    _, _, error = api.redeem_cohost(invite["name"], "")
+    assert error
+    _, _, error = api.redeem_cohost(invite["name"], "WRONG-GUESS-HERE")
+    assert error
 
 
-def test_unknown_code_resolves_to_nothing(table):
-    make_room()
-    assert store.resolve_cohost_code("ZZZZ-ZZZZ-ZZZZ") is None
-    assert store.resolve_cohost_code("") is None
+def test_the_right_link_and_passcode_together_work(table):
+    room = make_room()
+    invite = invite_for(room)
+    found, resolved, error = api.redeem_cohost(invite["name"], invite["passcode"])
+    assert error is None
+    assert found["invite_id"] == invite["invite_id"]
+    assert resolved["room_id"] == room["room_id"]
+
+
+def test_the_passcode_is_forgiving_about_case_and_dashes(table):
+    room = make_room()
+    invite = invite_for(room)
+    sloppy = invite["passcode"].replace("-", "").lower()
+    _, _, error = api.redeem_cohost(invite["name"].upper(), f"  {sloppy}  ")
+    assert error is None
+
+
+def test_a_wrong_link_and_a_wrong_passcode_look_identical(table):
+    """Otherwise the form becomes an oracle for which link names exist."""
+    room = make_room()
+    invite = invite_for(room)
+    _, _, unknown_link = api.redeem_cohost("no-such-invite", invite["passcode"])
+    _, _, wrong_pass = api.redeem_cohost(invite["name"], "NOPE-NOPE-NOPE")
+    assert unknown_link == wrong_pass
+
+
+def test_an_admin_can_preset_both_halves(table):
+    room = make_room()
+    invite = invite_for(room, name="tonight", passcode="open-sesame-42")
+    assert invite["name"] == "tonight"
+    assert invite["join_url"].endswith("/cohost/tonight")
+    _, _, error = api.redeem_cohost("tonight", "open-sesame-42")
+    assert error is None
+
+
+def test_a_short_passcode_is_refused(table):
+    room = make_room()
+    with pytest.raises(HttpError) as excinfo:
+        invite_for(room, passcode="abc")
+    assert excinfo.value.status == 400
+
+
+def test_a_taken_link_name_is_refused(table):
+    room = make_room()
+    invite_for(room, name="tonight")
+    with pytest.raises(HttpError) as excinfo:
+        invite_for(room, name="tonight")
+    assert excinfo.value.status == 409
+
+
+def test_guessing_is_rate_limited_per_address(table):
+    room = make_room()
+    invite = invite_for(room)
+    errors = [
+        api.redeem_cohost(invite["name"], "WRONG-WRONG-WRNG", source_ip="203.0.113.9")[2]
+        for _ in range(12)
+    ]
+    assert any("Too many attempts" in error for error in errors)
 
 
 def test_cohost_can_moderate_its_room(table):
@@ -153,7 +210,7 @@ def test_cohost_cannot_mint_api_keys(table):
         call(["api-keys"], "POST", identity=identity, body={"name": "escalation"})
 
 
-def test_revoking_a_code_takes_effect_immediately(table):
+def test_revoking_an_invite_takes_effect_immediately(table):
     room = make_room()
     invite = invite_for(room)
     identity = cohost_identity(room, invite)
@@ -161,7 +218,9 @@ def test_revoking_a_code_takes_effect_immediately(table):
 
     call(["rooms", room["room_id"], "cohosts", invite["invite_id"]], "DELETE", identity=owner())
     assert not identity.moderates(room)
-    assert store.resolve_cohost_code(invite["code"]) is None
+    assert store.resolve_cohost_name(invite["name"]) is None
+    _, _, error = api.redeem_cohost(invite["name"], invite["passcode"])
+    assert error
 
 
 def test_expired_code_does_not_moderate(table):

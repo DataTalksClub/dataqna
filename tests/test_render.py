@@ -81,4 +81,10 @@ def test_cohost_page_focuses_the_code_field():
 def test_cohost_error_is_shown_with_the_form():
     response = render.cohost_page(error="That code is not valid.")
     assert "That code is not valid." in response["body"]
-    assert 'name="code"' in response["body"]
+    assert 'name="passcode"' in response["body"]
+
+
+def test_a_known_link_name_only_asks_for_the_passcode():
+    body = render.cohost_page(name="tonight")["body"]
+    assert 'type="hidden" name="name" value="tonight"' in body
+    assert 'name="passcode"' in body

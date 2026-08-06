@@ -5,34 +5,42 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex">
 <title>{{TITLE}}</title>
-<meta name="theme-color" content="#05070d">
+<meta name="theme-color" content="#ffffff">
 <link rel="icon" href="{{FAVICON}}">
 <link rel="stylesheet" href="/assets/app.css">
 </head>
 <body class="present">
-<div class="present-grid">
-  <div class="present-title" id="room-title"></div>
-
-  <div class="present-main" id="main">
-    <div class="q-text" id="q-text">No questions yet.</div>
-    <div class="q-meta" id="q-meta"></div>
-  </div>
-
-  <aside class="present-side">
-    <h2>Up next · <span id="remaining">0</span></h2>
-    <ul id="upcoming"></ul>
-    <div class="present-join">
+<div class="present-shell">
+  <header class="present-bar">
+    <div class="session" id="session-title"></div>
+    <div class="join">
       <div class="qr" id="qr"></div>
       <div>
         <div class="join-label">Join and ask</div>
         <div class="url" id="join-url"></div>
       </div>
     </div>
-  </aside>
+  </header>
 
-  <div class="present-foot" id="foot">
-    → next · ← back · Enter answered · p pin · h hide · u undo · q QR · f fullscreen · Esc exit
+  <div class="present-body">
+    <main class="present-stage" id="stage">
+      <div class="q-text" id="q-text">No questions yet.</div>
+      <div class="q-meta" id="q-meta"></div>
+    </main>
+
+    <aside class="present-queue">
+      <h2>Up next</h2>
+      <ul id="upcoming"></ul>
+      <div class="queue-empty" id="queue-empty" hidden>Nothing waiting.</div>
+    </aside>
   </div>
+
+  <footer class="present-foot">
+    <span class="progress" id="progress"></span>
+    <span class="hints" id="hints">
+      → next · ← back · Enter answered · p pin · h hide · u undo · q QR · f fullscreen · Esc exit
+    </span>
+  </footer>
 </div>
 
 <div class="present-cue" id="cue"></div>

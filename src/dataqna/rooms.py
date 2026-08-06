@@ -160,8 +160,6 @@ def create(payload, owner_email):
         raise
 
     store.add_admin(room_id, owner_email, role="owner")
-    for email in payload.get("admins") or []:
-        store.add_admin(room_id, str(email).strip().lower())
     return room
 
 
@@ -252,7 +250,7 @@ def public_view(room):
     }
 
 
-def admin_view(room, admins=None):
+def admin_view(room):
     view = public_view(room)
     view.update(
         {
@@ -269,8 +267,6 @@ def admin_view(room, admins=None):
             },
         }
     )
-    if admins is not None:
-        view["admins"] = [item["email"] for item in admins if item.get("role") != "owner"]
     return view
 
 
