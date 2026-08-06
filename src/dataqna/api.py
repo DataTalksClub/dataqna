@@ -1,0 +1,471 @@
+"""The REST API.
+
+Every action in the admin UI is available here. The browser calls these same
+routes with a session cookie; scripts call them with a bearer key. Participant
+routes take neither and are protected by rate limits instead.
+"""
+
+import csv
+import io
+
+from . import config, http, ids, questions, rooms, security, store
+from .http import HttpError
+
+API_PREFIX = "/api/v1"
+
+
+class Identity:
+    """Who is calling, and how much that is worth."""
+
+    def __init__(self, email=None, source="anonymous", key_room_id=None, participant=None):
+        self.email = email
+        self.source = source
+        self.key_room_id = key_room_id
+        self.participant = participant
+
+    @property
+    def authenticated(self):
+        return bool(self.email)
+
+    def require_admin(self, room):
+        if not self.authenticated:
+            raise HttpError(401, "unauthenticated", "Sign in or provide an API key.")
+        if self.key_room_id and self.key_room_id != room["room_id"]:
+            raise HttpError(403, "key_scope", "This API key is scoped to a different room.")
+        if not store.is_admin(room["room_id"], self.email):
+            raise HttpError(403, "forbidden", "You are not an admin of this room.")
+
+    def require_owner(self, room):
+        self.require_admin(room)
+        if room.get("owner") != self.email and self.email not in config.ROOT_ADMINS:
+            raise HttpError(403, "forbidden", "Only the room owner can do this.")
+
+    def require_session(self):
+        if self.source != "session":
+            raise HttpError(403, "session_required", "This action requires a signed-in browser session.")
+
+
+def identify(event):
+    """Resolve the caller from a bearer key, then a session cookie."""
+    authorization = http.header(event, "authorization")
+    if authorization.lower().startswith("bearer "):
+        presented = authorization[7:].strip()
+        record = store.get_api_key(security.hash_api_key(presented))
+        if not record:
+            raise HttpError(401, "invalid_key", "Unknown or revoked API key.")
+        if record.get("expires_at") and int(record["expires_at"]) <= store.now():
+            raise HttpError(401, "expired_key", "This API key has expired.")
+        store.touch_api_key(record["key_hash"])
+        return Identity(
+            email=record["email"], source="key", key_room_id=record.get("room_id") or None
+        )
+
+    email = security.session_email(http.cookie(event, config.SESSION_COOKIE))
+    if email:
+        return Identity(email=email, source="session")
+    return Identity()
+
+
+def ensure_participant(event):
+    """Return (participant_id, set_cookie_or_None)."""
+    token = http.cookie(event, config.PARTICIPANT_COOKIE)
+    participant = security.participant_id(token)
+    if participant:
+        return participant, None
+    token = security.new_participant_token()
+    return security.participant_id(token), http.set_cookie(
+        config.PARTICIPANT_COOKIE, token, max_age=config.PARTICIPANT_TTL_SECONDS
+    )
+
+
+def _require_room(identifier, *, allow_archived=False):
+    room = rooms.load(identifier)
+    if not room:
+        raise HttpError(404, "not_found", "No such room.")
+    if room.get("state") == "archived" and not allow_archived:
+        raise HttpError(410, "archived", "This room has been archived.")
+    return room
+
+
+def _readable(room, identity):
+    """A draft room is invisible to anyone who is not an admin of it."""
+    if room.get("state") != "draft":
+        return
+    if not (identity.authenticated and store.is_admin(room["room_id"], identity.email)):
+        raise HttpError(404, "not_found", "No such room.")
+
+
+def _limit(scope, window, cap):
+    allowed, _ = store.rate_allow(scope, window, cap)
+    if not allowed:
+        raise HttpError(429, "rate_limited", "Too many requests. Wait a moment and try again.")
+
+
+# --- routes -----------------------------------------------------------------
+
+
+def route(event, segments, method, identity):
+    """Dispatch a path already stripped of the /api/v1 prefix."""
+    if segments == ["health"]:
+        return http.json_response(200, {"status": "ok"})
+
+    if segments and segments[0] == "api-keys":
+        return _api_keys(event, segments[1:], method, identity)
+
+    if not segments or segments[0] != "rooms":
+        raise HttpError(404, "not_found", "Unknown endpoint.")
+
+    rest = segments[1:]
+    if not rest:
+        if method == "POST":
+            return _create_room(event, identity)
+        if method == "GET":
+            return _list_rooms(identity)
+        raise HttpError(405, "method_not_allowed", f"{method} is not allowed here.")
+
+    room = _require_room(rest[0], allow_archived=method == "DELETE")
+    tail = rest[1:]
+
+    if not tail:
+        return _room_detail(event, room, method, identity)
+    if tail == ["questions"]:
+        return _questions(event, room, method, identity)
+    if tail == ["questions", "bulk"] and method == "POST":
+        return _bulk(event, room, identity)
+    if len(tail) == 2 and tail[0] == "questions":
+        return _question(event, room, tail[1], method, identity)
+    if len(tail) == 3 and tail[0] == "questions" and tail[2] == "vote":
+        return _vote(event, room, tail[1], method, identity)
+    if tail == ["admins"]:
+        identity.require_admin(room)
+        admins = store.list_admins(room["room_id"])
+        return http.json_response(
+            200,
+            {
+                "owner": room.get("owner"),
+                "admins": [item["email"] for item in admins if item.get("role") != "owner"],
+            },
+        )
+    if len(tail) == 2 and tail[0] == "admins":
+        return _admin_grant(room, tail[1], method, identity)
+    if tail == ["export"]:
+        return _export(event, room, identity)
+
+    raise HttpError(404, "not_found", "Unknown endpoint.")
+
+
+def _create_room(event, identity):
+    if not identity.authenticated:
+        raise HttpError(401, "unauthenticated", "Sign in or provide an API key.")
+    if identity.key_room_id:
+        raise HttpError(403, "key_scope", "This API key is scoped to a single room.")
+    payload = http.body(event)
+
+    idempotency_key = str(payload.get("idempotency_key") or "").strip()
+    if idempotency_key:
+        existing_id = store.claim_idempotency(identity.email, idempotency_key, "pending")
+        if existing_id and existing_id != "pending":
+            existing = store.get_room(existing_id)
+            if existing:
+                return http.json_response(200, rooms.admin_view(existing))
+        # "pending" means an earlier attempt claimed the key and then failed.
+        # Fall through and let this attempt create the room properly.
+
+    room = rooms.create(payload, identity.email)
+    if idempotency_key:
+        store.table().update_item(
+            Key={"PK": f"IDEM#{identity.email}#{idempotency_key}", "SK": "META"},
+            UpdateExpression="SET room_id = :r",
+            ExpressionAttributeValues={":r": room["room_id"]},
+        )
+    return http.json_response(201, rooms.admin_view(room, admins=store.list_admins(room["room_id"])))
+
+
+def _list_rooms(identity):
+    if not identity.authenticated:
+        raise HttpError(401, "unauthenticated", "Sign in or provide an API key.")
+    found = store.rooms_for_user(identity.email)
+    if identity.key_room_id:
+        found = [room for room in found if room["room_id"] == identity.key_room_id]
+    found.sort(key=lambda room: int(room.get("updated_at") or 0), reverse=True)
+    return http.json_response(200, {"items": [rooms.admin_view(room) for room in found]})
+
+
+def _room_detail(event, room, method, identity):
+    if method == "GET":
+        _readable(room, identity)
+        if identity.authenticated and store.is_admin(room["room_id"], identity.email):
+            return http.json_response(
+                200, rooms.admin_view(room, admins=store.list_admins(room["room_id"]))
+            )
+        return http.json_response(200, rooms.public_view(room))
+    if method == "PATCH":
+        identity.require_admin(room)
+        updated = rooms.apply_updates(room, http.body(event))
+        return http.json_response(
+            200, rooms.admin_view(updated, admins=store.list_admins(room["room_id"]))
+        )
+    if method == "DELETE":
+        identity.require_owner(room)
+        if str(http.query(event).get("purge", "")).lower() in ("1", "true", "yes"):
+            store.delete_room(room)
+            return http.json_response(200, {"deleted": True, "purged": True})
+        rooms.transition(room, "archived")
+        return http.json_response(200, {"deleted": True, "purged": False})
+    raise HttpError(405, "method_not_allowed", f"{method} is not allowed here.")
+
+
+def _questions(event, room, method, identity):
+    is_admin = identity.authenticated and store.is_admin(room["room_id"], identity.email)
+    _readable(room, identity)
+
+    if method == "GET":
+        query = http.query(event)
+        sort = query.get("sort")
+        if sort and sort not in ("popular", "recent"):
+            raise HttpError(400, "invalid_request", "sort must be popular or recent")
+        statuses = [s for s in (query.get("status") or "").split(",") if s]
+        if statuses and not is_admin:
+            statuses = [s for s in statuses if s in questions.PUBLIC_STATUSES]
+        participant = security.participant_id(http.cookie(event, config.PARTICIPANT_COOKIE))
+
+        items, counts, tag = questions.collect(
+            room, participant=participant, is_admin=is_admin, sort=sort, statuses=statuses or None
+        )
+        if http.header(event, "if-none-match") == tag:
+            return http.response(304, "", headers={"etag": tag, "cache-control": "no-store"})
+        return http.json_response(
+            200,
+            {"items": items, "counts": counts, "etag": tag, "state": room.get("state")},
+            headers={"etag": tag},
+        )
+
+    if method == "POST":
+        participant, cookie = ensure_participant(event)
+        ip = http.source_ip(event)
+        _limit(f"q:{room['room_id']}:{participant}", 10, 1)
+        _limit(f"qh:{room['room_id']}:{participant}", 3600, 20)
+        if ip:
+            _limit(f"ip:{ip}", 3600, 300)
+        question = questions.submit(room, http.body(event), participant)
+        return http.json_response(
+            201,
+            questions.serialize(question, participant=participant, voted=True),
+            cookies=[cookie] if cookie else None,
+        )
+
+    raise HttpError(405, "method_not_allowed", f"{method} is not allowed here.")
+
+
+def _question(event, room, question_id, method, identity):
+    question = store.get_question(room["room_id"], question_id)
+    if not question or question.get("status") == "deleted":
+        raise HttpError(404, "not_found", "No such question.")
+
+    if method != "PATCH":
+        raise HttpError(405, "method_not_allowed", f"{method} is not allowed here.")
+
+    payload = http.body(event)
+    is_admin = identity.authenticated and store.is_admin(room["room_id"], identity.email)
+    participant = security.participant_id(http.cookie(event, config.PARTICIPANT_COOKIE))
+
+    if not is_admin:
+        # Authors may fix or withdraw their own question, briefly.
+        if not questions.can_author_edit(question, participant):
+            raise HttpError(403, "forbidden", "This question can no longer be changed.")
+
+        if set(payload) - {"text", "status"}:
+            raise HttpError(403, "forbidden", "You may only edit or withdraw your question.")
+        if payload.get("status") not in (None, "deleted"):
+            raise HttpError(403, "forbidden", "You may only withdraw your question.")
+
+    updated = question
+    if "text" in payload:
+        text = str(payload["text"]).strip()
+        limit = int(room.get("settings", {}).get("max_question_length", 500))
+        if not text or len(text) > limit:
+            raise HttpError(400, "invalid_request", f"text must be 1 to {limit} characters")
+        updated = store.update_question(room["room_id"], question_id, {"text": text})
+    if "pinned" in payload:
+        if not is_admin:
+            raise HttpError(403, "forbidden", "Only admins can pin questions.")
+        updated = store.update_question(
+            room["room_id"], question_id, {"pinned": bool(payload["pinned"])}
+        )
+    if "status" in payload:
+        updated = questions.set_status(room, updated, payload["status"])
+
+    return http.json_response(200, questions.serialize(updated, participant=participant, is_admin=is_admin))
+
+
+def _vote(event, room, question_id, method, identity):
+    question = store.get_question(room["room_id"], question_id)
+    if not question or question.get("status") not in questions.PUBLIC_STATUSES:
+        raise HttpError(404, "not_found", "No such question.")
+    if not rooms.accepting_votes(room):
+        raise HttpError(409, "voting_closed", "Voting is closed for this room.")
+
+    participant, cookie = ensure_participant(event)
+    _limit(f"v:{room['room_id']}:{participant}", 3600, 120)
+    cookies = [cookie] if cookie else None
+
+    if method == "POST":
+        store.add_vote(room["room_id"], question_id, participant, ttl=rooms.question_ttl(room))
+        voted = True
+    elif method == "DELETE":
+        store.remove_vote(room["room_id"], question_id, participant)
+        voted = False
+    else:
+        raise HttpError(405, "method_not_allowed", f"{method} is not allowed here.")
+
+    refreshed = store.get_question(room["room_id"], question_id)
+    return http.json_response(
+        200, {"score": int(refreshed.get("score") or 0), "voted": voted}, cookies=cookies
+    )
+
+
+def _bulk(event, room, identity):
+    identity.require_admin(room)
+    payload = http.body(event)
+    action = payload.get("action")
+    ids_ = payload.get("question_ids") or []
+    if not isinstance(ids_, list) or not ids_:
+        raise HttpError(400, "invalid_request", "question_ids must be a non-empty list")
+    if len(ids_) > 100:
+        raise HttpError(400, "invalid_request", "question_ids is limited to 100 per call")
+
+    mapping = {
+        "approve": ("status", "visible"),
+        "answer": ("status", "answered"),
+        "hide": ("status", "hidden"),
+        "delete": ("status", "deleted"),
+        "pin": ("pinned", True),
+        "unpin": ("pinned", False),
+    }
+    if action not in mapping:
+        raise HttpError(400, "invalid_request", f"action must be one of {sorted(mapping)}")
+
+    field, value = mapping[action]
+    results = []
+    for question_id in ids_:
+        question = store.get_question(room["room_id"], question_id)
+        if not question:
+            results.append({"question_id": question_id, "ok": False, "error": "not_found"})
+            continue
+        try:
+            if field == "status":
+                questions.set_status(room, question, value)
+            else:
+                store.update_question(room["room_id"], question_id, {"pinned": value})
+            results.append({"question_id": question_id, "ok": True})
+        except HttpError as exc:
+            results.append({"question_id": question_id, "ok": False, "error": exc.code})
+    return http.json_response(200, {"results": results})
+
+
+def _admin_grant(room, email, method, identity):
+    identity.require_admin(room)
+    email = email.strip().lower()
+    if method == "PUT":
+        if "@" not in email:
+            raise HttpError(400, "invalid_request", "A valid email address is required.")
+        store.add_admin(room["room_id"], email)
+        return http.json_response(200, {"email": email, "role": "admin"})
+    if method == "DELETE":
+        if email == room.get("owner"):
+            raise HttpError(400, "invalid_request", "Transfer ownership before removing the owner.")
+        store.remove_admin(room["room_id"], email)
+        return http.json_response(200, {"email": email, "removed": True})
+    raise HttpError(405, "method_not_allowed", f"{method} is not allowed here.")
+
+
+def _export(event, room, identity):
+    identity.require_admin(room)
+    items, _, _ = questions.collect(room, is_admin=True)
+    fmt = (http.query(event).get("format") or "json").lower()
+    rows = [item for item in items if item["status"] != "deleted"]
+
+    if fmt == "json":
+        return http.json_response(200, {"room": rooms.public_view(room), "questions": rows})
+    if fmt == "csv":
+        buffer = io.StringIO()
+        writer = csv.DictWriter(
+            buffer,
+            fieldnames=["question_id", "text", "author_name", "status", "score", "pinned", "created_at", "answered_at"],
+            extrasaction="ignore",
+        )
+        writer.writeheader()
+        writer.writerows(rows)
+        return http.response(
+            200,
+            buffer.getvalue(),
+            content_type="text/csv; charset=utf-8",
+            headers={"content-disposition": f'attachment; filename="{room["slug"]}.csv"'},
+        )
+    if fmt == "md":
+        lines = [f"# {room.get('title')}", ""]
+        for row in rows:
+            mark = "x" if row["status"] == "answered" else " "
+            who = row["author_name"] or "Anonymous"
+            lines.append(f"- [{mark}] **{row['score']}** — {row['text']} _({who})_")
+        return http.response(200, "\n".join(lines) + "\n", content_type="text/markdown; charset=utf-8")
+
+    raise HttpError(400, "invalid_request", "format must be json, csv, or md")
+
+
+def _api_keys(event, tail, method, identity):
+    if not identity.authenticated:
+        raise HttpError(401, "unauthenticated", "Sign in first.")
+    identity.require_session()
+
+    if not tail:
+        if method == "GET":
+            return http.json_response(
+                200,
+                {
+                    "items": [
+                        {
+                            "key_id": item["key_id"],
+                            "name": item.get("name"),
+                            "room_id": item.get("room_id"),
+                            "created_at": rooms.iso(item.get("created_at")),
+                            "expires_at": rooms.iso(item.get("expires_at")),
+                            "last_used_at": rooms.iso(item.get("last_used_at")),
+                        }
+                        for item in store.list_api_keys(identity.email)
+                    ]
+                },
+            )
+        if method == "POST":
+            payload = http.body(event)
+            key, key_hash = security.new_api_key()
+            record = {
+                "key_id": ids.ulid(),
+                "key_hash": key_hash,
+                "email": identity.email,
+                "name": str(payload.get("name") or "").strip()[:80] or "unnamed",
+                "room_id": str(payload.get("room_id") or "").strip() or None,
+                "created_at": store.now(),
+                "expires_at": rooms.parse_timestamp(payload.get("expires_at"), "expires_at"),
+            }
+            store.put_api_key(record)
+            return http.json_response(
+                201,
+                {
+                    "key_id": record["key_id"],
+                    "key": key,
+                    "name": record["name"],
+                    "room_id": record["room_id"],
+                    "created_at": rooms.iso(record["created_at"]),
+                    "expires_at": rooms.iso(record["expires_at"]),
+                },
+            )
+
+    if len(tail) == 1 and method == "DELETE":
+        for item in store.list_api_keys(identity.email):
+            if item["key_id"] == tail[0]:
+                store.delete_api_key(item["key_hash"])
+                return http.json_response(200, {"deleted": True})
+        raise HttpError(404, "not_found", "No such key.")
+
+    raise HttpError(405, "method_not_allowed", f"{method} is not allowed here.")

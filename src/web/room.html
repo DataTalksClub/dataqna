@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>{{TITLE}}</title>
+<link rel="stylesheet" href="/assets/app.css">
+</head>
+<body>
+<div class="wrap">
+  <header class="room">
+    <h1>{{TITLE}}</h1>
+    <p id="description">{{DESCRIPTION}}</p>
+  </header>
+
+  <div id="banner" class="banner" hidden></div>
+
+  <form id="ask" class="card stack" hidden>
+    <textarea id="text" maxlength="500" placeholder="Ask a question…" aria-label="Your question"></textarea>
+    <div class="counter"><span id="count">0</span>/<span id="max">500</span></div>
+    <div class="row wrapping">
+      <input type="text" id="name" class="grow" maxlength="60" placeholder="Your name (optional)" aria-label="Your name">
+      <button type="submit" id="send">Send</button>
+    </div>
+  </form>
+
+  <div class="tabs" role="tablist">
+    <button role="tab" id="tab-popular" aria-selected="true">Popular</button>
+    <button role="tab" id="tab-recent" aria-selected="false">Recent</button>
+    <button role="tab" id="tab-answered" aria-selected="false" hidden>Answered</button>
+  </div>
+
+  <ul class="questions" id="list"></ul>
+  <div class="empty" id="empty" hidden>No questions yet. Be the first.</div>
+</div>
+
+<div class="toast" id="toast"></div>
+<script id="config" type="application/json">{{CONFIG}}</script>
+<script src="/assets/room.js"></script>
+</body>
+</html>

@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>DataQnA admin</title>
+<link rel="stylesheet" href="/assets/app.css">
+</head>
+<body>
+<div class="wrap wide">
+  <div class="row" style="margin-bottom:18px">
+    <strong class="grow"><a href="/admin" style="text-decoration:none;color:inherit">DataQnA</a></strong>
+    <span class="muted" id="who"></span>
+    <a class="btn ghost small" href="/auth/logout">Sign out</a>
+  </div>
+
+  <div id="view-list" hidden>
+    <div class="card stack">
+      <strong>New room</strong>
+      <input type="text" id="new-title" placeholder="Room title" aria-label="Room title">
+      <div class="row wrapping">
+        <input type="text" id="new-slug" class="grow" placeholder="custom-link (optional)" aria-label="Slug">
+        <select id="new-state" aria-label="Initial state">
+          <option value="open">Open now</option>
+          <option value="draft">Draft</option>
+        </select>
+        <button id="create">Create</button>
+      </div>
+      <div class="row wrapping">
+        <label class="muted">Closes after
+          <select id="new-expiry" aria-label="Expiry">
+            <option value="">never</option>
+            <option value="1">1 hour</option>
+            <option value="2">2 hours</option>
+            <option value="4">4 hours</option>
+            <option value="24">1 day</option>
+            <option value="2880">4 months</option>
+          </select>
+        </label>
+      </div>
+    </div>
+
+    <h2 style="font-size:1.05rem">Rooms</h2>
+    <div id="rooms"></div>
+
+    <div class="card stack">
+      <strong>API keys</strong>
+      <p class="muted" style="margin:0">For scripting rooms and for the DataOps integration. Shown once.</p>
+      <div class="row wrapping">
+        <input type="text" id="key-name" class="grow" placeholder="Key name" aria-label="Key name">
+        <button id="create-key" class="ghost">Create key</button>
+      </div>
+      <div id="key-reveal" hidden></div>
+      <table id="keys"></table>
+    </div>
+  </div>
+
+  <div id="view-room" hidden>
+    <a href="/admin" class="muted" style="text-decoration:none">&larr; All rooms</a>
+    <h1 id="room-title" style="font-size:1.4rem;margin:10px 0 4px"></h1>
+    <div class="muted" id="room-sub" style="margin-bottom:14px"></div>
+
+    <div class="card share">
+      <div class="qr" id="qr"></div>
+      <div class="stack">
+        <div><a id="public-link" href="#" class="mono"></a></div>
+        <div>Join code <code id="join-code"></code></div>
+        <div class="row wrapping">
+          <a id="present" class="btn" href="#">Presentation mode</a>
+          <button id="copy-link" class="ghost small">Copy link</button>
+          <a id="qr-download" class="btn ghost small" href="#" download>Download QR</a>
+          <a id="export" class="btn ghost small" href="#">Export</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="card stack">
+      <div class="row wrapping">
+        <select id="state" aria-label="Room state">
+          <option value="draft">Draft</option>
+          <option value="open">Open</option>
+          <option value="closed">Closed</option>
+        </select>
+        <label class="row"><input type="checkbox" id="questions-open"> <span>Accept questions</span></label>
+        <label class="row"><input type="checkbox" id="voting-open"> <span>Accept votes</span></label>
+        <label class="row"><input type="checkbox" id="moderation"> <span>Review before showing</span></label>
+      </div>
+      <div class="row wrapping">
+        <input type="email" id="admin-email" class="grow" placeholder="Add admin by email" aria-label="Admin email">
+        <button id="add-admin" class="ghost">Add admin</button>
+      </div>
+      <div id="admins" class="muted"></div>
+    </div>
+
+    <div class="tabs" role="tablist">
+      <button role="tab" id="f-all" aria-selected="true">All</button>
+      <button role="tab" id="f-pending" aria-selected="false">Review</button>
+      <button role="tab" id="f-answered" aria-selected="false">Answered</button>
+      <button role="tab" id="f-hidden" aria-selected="false">Hidden</button>
+    </div>
+    <ul class="questions" id="qlist"></ul>
+    <div class="empty" id="qempty" hidden>Nothing here yet.</div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<script src="/assets/admin.js"></script>
+</body>
+</html>

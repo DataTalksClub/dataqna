@@ -1,0 +1,36 @@
+name: Test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v5
+
+      - name: Run tests
+        env:
+          PYTHONPATH: src
+          SESSION_SECRET: test-secret
+          TABLE_NAME: dataqna-test
+          SITE_URL: https://qna.test
+          ROOT_ADMIN: root@datatalks.club
+          AWS_ACCESS_KEY_ID: testing
+          AWS_SECRET_ACCESS_KEY: testing
+          AWS_DEFAULT_REGION: eu-west-1
+        run: |
+          uv run --with boto3 --with moto --with pytest --with pyjwt --with segno \
+            pytest -q
+
+      - uses: aws-actions/setup-sam@v2
+        with:
+          use-installer: true
+
+      - name: Validate template
+        run: sam validate --lint --region eu-west-1

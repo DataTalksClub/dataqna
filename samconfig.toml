@@ -1,0 +1,15 @@
+version = 0.1
+
+[sandbox.global.parameters]
+stack_name = "dataqna"
+region = "eu-west-1"
+
+[sandbox.build.parameters]
+cached = true
+
+[sandbox.deploy.parameters]
+resolve_s3 = true
+capabilities = "CAPABILITY_IAM"
+confirm_changeset = false
+fail_on_empty_changeset = false
+parameter_overrides = "DomainName=qna.dtcdev.click DomainCertificateArn=arn:aws:acm:eu-west-1:817685572750:certificate/da5101db-666f-49da-a76b-e2c781afdd6b HostedZoneId=Z05963572WVWFHDQZH5NE AuthBaseUrl=https://auth.dtcdev.click AuthClientId=1dna0tpeb3294v04sutjk62nt8 AuthIssuer=https://cognito-idp.us-east-1.amazonaws.com/us-east-1_H7nJu52Bs AuthJwksUrl=https://cognito-idp.us-east-1.amazonaws.com/us-east-1_H7nJu52Bs/.well-known/jwks.json RootAdmin=alexey@datatalks.club"

@@ -40,6 +40,17 @@ need moderation rights are handled by creating a Cognito password user for them 
 the shared pool (`admin-create-user`, documented in `aws-infra/sandbox/auth`), not
 by weakening the room's authorization model.
 
+The shared pool is used by five other services, so a password account must not
+become a skeleton key. `dataqna` is therefore the only app client in the pool that
+accepts `COGNITO` as an identity provider; every other client is Google-only. A
+password user can obtain a token for DataQnA and for nothing else. This matters
+because at least one sibling service treats any valid pool token as full admin
+with no email allowlist of its own — see `aws-infra/sandbox/dataqna/README.md`.
+
+Two admins exist today: `alexey@datatalks.club` (Google) and
+`realmistic@gmail.com` (password user, created suppressed and invited once the
+site went live).
+
 ## 3. Rooms
 
 A room is one Q&A session. It owns its questions, its settings, and its admin list.
@@ -225,13 +236,15 @@ The list refreshes on the same polling loop, but the question currently on scree
 never moves underneath the host — reordering applies to the upcoming list only, and
 takes effect when they advance.
 
-## 8. Host page (optional, section 16)
+## 8. The permanent link
 
-A permanent link that always points at whatever room is live right now:
-`https://qna.dtcdev.click/@alexey` redirects to the host's currently open room, or
-shows a short list when several are open, or a "nothing live right now" message.
-This makes it possible to print one URL in a podcast description or a course
-syllabus and never update it again.
+`https://qna.dtcdev.click/live` always points at whatever room is open right now.
+It redirects to the open room, lists them when several are open, and shows a
+"nothing live right now" message when none are. `/` behaves identically.
+
+This is the URL to print in a podcast description or a course syllabus and never
+update again. A room that has expired or been closed drops out of `/live`
+automatically, so nothing has to be tidied up after an event.
 
 ## 9. API
 
@@ -277,14 +290,15 @@ for deployment.
                            │
               API Gateway HTTP API (qna.dtcdev.click)
                            │
-        ┌──────────────────┼──────────────────┐
-        ▼                  ▼                  ▼
-   PublicFunction     AdminFunction      ApiFunction
-   /r/*  /api/v1/     /admin/*           /api/v1/rooms*
-   rooms/*/questions  /auth/*            (bearer key)
-   (participants)     (session cookie)
-        │                  │                  │
-        └──────────────────┼──────────────────┘
+        ┌──────────────────┴──────────────────┐
+        ▼                                     ▼
+   PublicFunction                       AdminFunction
+   /  /live  /health                    /admin/*
+   /r/*  /assets/*                      /auth/*  (OIDC)
+   /api/v1/*                            presentation mode
+   read-write on the table              read-only on the table
+        │                                     │
+        └──────────────────┬──────────────────┘
                            ▼
                 DynamoDB  table: dataqna
                    GSI1 · TTL · on-demand
@@ -292,14 +306,22 @@ for deployment.
                     CloudWatch alarms
 ```
 
-Three functions rather than one, split by trust boundary: the participant path is
-unauthenticated and takes all the traffic, the admin path holds the session
-signing key and the Cognito client, and the API path validates bearer keys. Each
-gets only the IAM it needs, and a burst of participants cannot throttle admin
-access.
+Two functions, split by traffic profile rather than by the three-way split an
+earlier draft of this document proposed. The participant path carries essentially
+all of the load; the admin console carries almost none but must stay responsive
+during an event, and it is the only place the OIDC client and the token exchange
+live. Splitting the REST API off as a third function was dropped: the admin UI and
+scripts call exactly the same routes, so it would have duplicated the whole
+surface for no isolation that the other two do not already provide.
 
-Static assets (`app.css`, `app.js`) are served by the public function from the
-deployment package, as in dapier. No build step, no bundler, no CDN in v1.
+The honest limitation of two functions: `PublicFunction` verifies session cookies,
+so it holds the same signing secret as `AdminFunction`. The boundary that does
+hold is that no unauthenticated path can reach the Cognito client or exchange a
+code, and that `AdminFunction` has read-only IAM on the table — every write goes
+through the function whose authorization rules are exercised by the test suite.
+
+Static assets ship inside the deployment package and are served by the public
+function. No build step, no bundler, no CDN.
 
 Region `eu-west-1`, matching the other services. The Cognito pool it authenticates
 against lives in `us-east-1` and is not owned by this stack.
@@ -415,20 +437,30 @@ accounts, no email addresses, no tracking, no third-party scripts, no analytics.
 Retention is explicit per room and enforced by TTL. Exports let a host keep what
 they need after the room's data is gone.
 
-## 16. Open questions
+## 16. Decided, and still open
 
-1. **Domain.** `qna.dtcdev.click` is the sandbox pattern. Podcast listeners and
-   course participants will see this URL — is a public-facing domain wanted
-   instead, and if so which?
-2. **Host page (section 8).** Confirm whether the permanent `/@handle` link is
-   wanted for v1 or deferred.
-3. **Slido import.** Is there value in importing existing Slido rooms' questions
-   before the subscription lapses, or is the archive not needed?
-4. **Question ordering during presentation.** Currently the host advances manually.
-   An alternative is auto-advance to the highest-scoring unanswered question,
-   which is livelier but can move under the host mid-sentence.
-5. **Public room directory.** Should there be a page listing currently open rooms,
-   or do rooms stay unlisted and shared only by link?
+Settled during the build:
+
+- **Domain** is `qna.dtcdev.click`.
+- **The permanent link** is `/live`, not a per-host `/@handle` (section 8).
+- **Presentation advances manually.** Auto-advance to the top unanswered question
+  is livelier but moves the screen under the host mid-sentence.
+
+Still open:
+
+1. **Blanket access for the second admin.** `realmistic@gmail.com` can sign in, but
+   holds no room grants yet — access is given one room at a time from the People
+   field or the API. Making them a second entry in the `RootAdmin` stack parameter
+   would grant admin on every room, current and future. That is a parameter change,
+   not a code change; it is left off by default because it is the larger grant.
+2. **Slido import.** Worth pulling the existing rooms' questions across before the
+   subscription lapses, or is the archive not needed?
+3. **Public room directory.** Rooms are currently unlisted and shared only by link,
+   with `/live` as the one public entry point. A browsable index of open rooms is
+   possible but is a different privacy posture.
+4. **DataOps integration.** The API is in place and key-authenticated; what DataOps
+   should actually do with it — pull questions after an event, create rooms from
+   the course schedule, or both — is not specified yet.
 
 ## 17. Later, not now
 

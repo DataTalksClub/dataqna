@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>{{TITLE}}</title>
+<link rel="stylesheet" href="/assets/app.css">
+</head>
+<body class="present">
+<div class="present-grid">
+  <div class="present-main">
+    <div class="q-text" id="q-text">No questions yet.</div>
+    <div class="q-meta" id="q-meta"></div>
+  </div>
+
+  <aside class="present-side">
+    <h2>Up next · <span id="remaining">0</span></h2>
+    <ol id="upcoming"></ol>
+    <div class="present-join">
+      <div class="qr" id="qr"></div>
+      <div>
+        <div class="url" id="join-url"></div>
+        <div class="code" id="join-code"></div>
+      </div>
+    </div>
+  </aside>
+
+  <div class="present-foot">
+    → next · ← back · Enter answered · p pin · h hide · q QR · f fullscreen · Esc exit
+  </div>
+</div>
+
+<div class="present-overlay" id="overlay">
+  <div class="qr" id="qr-big"></div>
+  <div class="url" id="overlay-url"></div>
+</div>
+
+<script id="config" type="application/json">{{CONFIG}}</script>
+<script src="/assets/present.js"></script>
+</body>
+</html>

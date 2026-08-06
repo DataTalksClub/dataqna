@@ -1,0 +1,41 @@
+"""Runtime configuration, read once per container from the environment."""
+
+import os
+
+
+def _clean(name, default=""):
+    return os.environ.get(name, default).strip()
+
+
+TABLE_NAME = _clean("TABLE_NAME", "dataqna")
+SITE_URL = _clean("SITE_URL", "https://qna.dtcdev.click").rstrip("/")
+
+AUTH_BASE_URL = _clean("AUTH_BASE_URL", "https://auth.dtcdev.click").rstrip("/")
+AUTH_CLIENT_ID = _clean("AUTH_CLIENT_ID")
+AUTH_ISSUER = _clean("AUTH_ISSUER").rstrip("/")
+AUTH_JWKS_URL = _clean("AUTH_JWKS_URL") or (
+    f"{AUTH_ISSUER}/.well-known/jwks.json" if AUTH_ISSUER else ""
+)
+AUTH_CALLBACK_URL = _clean("AUTH_CALLBACK_URL") or f"{SITE_URL}/auth/callback"
+
+SECRET_ARN = _clean("SESSION_SECRET_ARN")
+
+SESSION_COOKIE = "dq_session"
+OIDC_COOKIE = "dq_oidc"
+PARTICIPANT_COOKIE = "dq_p"
+
+SESSION_TTL_SECONDS = 12 * 60 * 60
+PARTICIPANT_TTL_SECONDS = 400 * 24 * 60 * 60
+OIDC_TTL_SECONDS = 600
+
+# Bootstrap owners: admins of every room, so a freshly deployed stack is
+# reachable before any grant exists. Comma-separated, and deliberately short —
+# everyone else gets access one room at a time.
+ROOT_ADMINS = frozenset(
+    part.strip().lower()
+    for part in _clean("ROOT_ADMIN", "alexey@datatalks.club").split(",")
+    if part.strip()
+)
+
+MAX_QUESTION_LENGTH_LIMIT = 2000
+MAX_NAME_LENGTH = 60
