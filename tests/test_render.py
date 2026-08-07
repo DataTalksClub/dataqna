@@ -15,7 +15,7 @@ def room(**overrides):
 def test_room_page_carries_theme_and_icon():
     body = render.room_page(room(), config_payload={"room_id": "01K3"})["body"]
     assert 'name="theme-color"' in body
-    assert "prefers-color-scheme: dark" in body
+    assert 'class="theme-dark"' not in body  # light unless the visitor pins dark
     assert 'rel="icon"' in body
     assert "data:image/svg+xml" in body
 

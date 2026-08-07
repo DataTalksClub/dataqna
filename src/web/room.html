@@ -8,23 +8,20 @@
 <meta property="og:title" content="{{TITLE}}">
 <meta property="og:description" content="Ask and upvote questions — live.">
 <meta property="og:type" content="website">
-<meta name="theme-color" content="#5951e8" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#332b8c" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#5951e8">
 <!-- The class means nothing until app.css arrives, and until then the UA
-     paints its own canvas — white, full screen, on every dark-mode load with a
-     cold cache. color-scheme is what the UA reads without a stylesheet. -->
-<style>:root { color-scheme: light dark; }</style>
+     paints its own canvas. Light is the default, so this is what it says;
+     the script below overrides it when dark is pinned. -->
+<style>:root { color-scheme: light; }</style>
 <script>
 /* Apply a pinned theme before first paint, so there is no flash. */
 (function () {
   try {
-    var t = localStorage.getItem("dq_theme");
-    if (t !== "light" && t !== "dark") return;
-    document.documentElement.classList.add("theme-" + t);
-    document.documentElement.style.colorScheme = t;
-    var c = t === "dark" ? "#332b8c" : "#5951e8";
+    if (localStorage.getItem("dq_theme") !== "dark") return;
+    document.documentElement.classList.add("theme-dark");
+    document.documentElement.style.colorScheme = "dark";
     var metas = document.querySelectorAll('meta[name="theme-color"]');
-    for (var i = 0; i < metas.length; i++) metas[i].setAttribute("content", c);
+    for (var i = 0; i < metas.length; i++) metas[i].setAttribute("content", "#332b8c");
   } catch (e) {}
 })();
 </script>

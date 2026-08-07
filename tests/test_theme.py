@@ -16,10 +16,6 @@ CSS = render.asset_bytes("app.css").decode()
 
 LIGHT = re.search(r"/\* Semantic mapping: light\. \*/(.*?)\n}", CSS, re.S).group(1)
 DARK = re.search(r"^html\.theme-dark \{(.*?)^}", CSS, re.S | re.M).group(1)
-MEDIA_DARK = re.search(
-    r"@media \(prefers-color-scheme: dark\) \{\s*html:not\(\.theme-light\) \{(.*?)\n  }",
-    CSS, re.S,
-).group(1)
 
 
 def tokens(block):
@@ -76,11 +72,12 @@ def first_stop(gradient):
 THEMES = {"light": LIGHT, "dark": DARK}
 
 
-def test_the_two_dark_blocks_stay_identical():
-    """One is for the system preference and one for the pin, and every change
-    has to land in both. Nothing but this catches a change made to one."""
-    strip = lambda block: re.sub(r"\s+", " ", re.sub(r"/\*.*?\*/", "", block, flags=re.S)).strip()
-    assert strip(DARK) == strip(MEDIA_DARK)
+def test_light_is_what_a_link_opens_in():
+    """Dark is opt-in, for everyone, whatever their device prefers. A room link
+    goes to people who did not choose to be here; it opens the same for all of
+    them, and the toggle is how anyone changes that."""
+    assert "prefers-color-scheme: dark" not in CSS
+    assert CSS.count("html.theme-dark {") == 1, "dark is mapped in more than one place"
 
 
 def test_ink_is_legible_on_every_filled_control():
@@ -166,7 +163,7 @@ def test_the_room_address_bar_matches_the_band_it_sits_under():
     """The meta is a hand-written copy of a token, so it drifts silently."""
     room = render.asset_bytes("room.html").decode()
     band = first_stop(resolve(DARK, "hero-bg"))
-    assert f'content="{band}" media="(prefers-color-scheme: dark)"' in room
+    assert f'setAttribute("content", "{band}")' in room
     assert f'data-theme-dark="{band}"' in room
 
 

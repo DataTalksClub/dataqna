@@ -54,10 +54,14 @@ that takes `--on-accent` may paint itself with `--accent`.
 
 ## 3. Themes
 
-Light and dark are both first-class. `prefers-color-scheme` chooses by default, and
-a page can pin one with `html.theme-light` / `html.theme-dark`. The pin lives in
+**Light is the default, for everyone, whatever their device prefers.** A room link
+is handed to a hall full of people who did not choose to be here, and it should
+open the same way for all of them — the same way it looked on the slide it was
+scanned from. `prefers-color-scheme` is not consulted anywhere. Dark is opt-in,
+mapped once under `html.theme-dark`, and it is the only value ever written to
 `localStorage` under `dq_theme` (`dq_present_theme` for presentation mode, which is
-its own surface with its own default).
+its own surface with its own default). Switching back to light clears the key
+rather than storing "light".
 
 **Every page carries a toggle** — a `[data-theme-toggle]` button — and the logic
 behind it lives once, in `theme.js`. It used to live in `room.js` and `admin.js` as
@@ -68,25 +72,22 @@ button and a `<script src="/assets/theme.js" defer>`. `<html>` may carry
 the room sets them to its hero band, everything else defaults to the page
 background.
 
-Toggling to whatever the device already prefers **releases** the pin rather than
-freezing it, so one curious tap does not stop a phone following sunset. The toggle
-also repaints when the system preference changes under an unpinned page.
-
 Three things have to happen before first paint, and a deferred asset is far too
 late for any of them, so each `<head>` carries them inline: `color-scheme`, so the
-UA paints the right canvas *before the stylesheet exists* — without it every
-dark-mode load on a cold cache flashes full-screen white; the `theme-*` class; and
-the `theme-color` metas. The static templates carry their own copy; `render.py`
+UA paints the right canvas *before the stylesheet exists* — without it a pinned
+dark load on a cold cache flashes full-screen white; the `theme-dark` class; and
+the `theme-color` meta. The static templates carry their own copy; `render.py`
 injects `THEME_CANVAS` and `THEME_SCRIPT` into `_shell`.
 
 Presentation mode pins **light**, deliberately: a projector renders white as "screen
 off", and dark slides wash out in a lit room. That is a different decision rather
 than a variation on this one, so it keeps its own script and its own storage key.
 
-The dark mapping is duplicated — once under `@media (prefers-color-scheme: dark)`
-and once under `html.theme-dark`. **Keep the two blocks identical.** CSS has no way
-to express "this media query or this class" for a custom-property block without
-repeating it; `tests/test_theme.py` fails if they drift.
+The dark mapping lives in exactly one place, `html.theme-dark`. It used to be
+duplicated under `@media (prefers-color-scheme: dark)` as well, with a standing
+instruction to keep the two identical; making light the default removed the media
+query and the hazard with it. `tests/test_theme.py` fails if a second mapping
+appears.
 
 ## 4. Colour and contrast
 

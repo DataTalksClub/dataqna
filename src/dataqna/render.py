@@ -33,26 +33,21 @@ FAVICON = (
     " stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"
 )
 
-THEME_META = (
-    '<meta name="theme-color" content="#f6f8fb" media="(prefers-color-scheme: light)">'
-    '<meta name="theme-color" content="#0d1220" media="(prefers-color-scheme: dark)">'
-)
+THEME_META = '<meta name="theme-color" content="#f6f8fb">'
 
-# The class does nothing until app.css lands; color-scheme is what stops the
-# UA painting a white canvas in the meantime.
-THEME_CANVAS = "<style>:root{color-scheme:light dark}</style>"
+# The class does nothing until app.css lands; color-scheme is what the UA reads
+# in the meantime, and light is what it should read.
+THEME_CANVAS = "<style>:root{color-scheme:light}</style>"
 
-# Applies a theme the visitor pinned elsewhere (the room or admin toggle)
-# before first paint, so server-rendered pages match without a flash.
+# Applies a pinned dark theme before first paint, so server-rendered pages match
+# without a flash. Light needs nothing: it is the default.
 THEME_SCRIPT = (
     "<script>(function(){try{"
-    'var t=localStorage.getItem("dq_theme");'
-    'if(t!=="light"&&t!=="dark")return;'
-    'document.documentElement.classList.add("theme-"+t);'
-    "document.documentElement.style.colorScheme=t;"
-    'var c=t==="dark"?"#0d1220":"#f6f8fb";'
+    'if(localStorage.getItem("dq_theme")!=="dark")return;'
+    'document.documentElement.classList.add("theme-dark");'
+    'document.documentElement.style.colorScheme="dark";'
     "var m=document.querySelectorAll('meta[name=\"theme-color\"]');"
-    'for(var i=0;i<m.length;i++)m[i].setAttribute("content",c);'
+    'for(var i=0;i<m.length;i++)m[i].setAttribute("content","#0d1220");'
     "}catch(e){}})();</script>"
 )
 

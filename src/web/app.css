@@ -3,9 +3,11 @@
    The system, in brief: raw color ramps (slate for neutrals, navy for dark
    surfaces, blurple for the accent) feed semantic tokens (--bg, --text,
    --accent…), and components only ever touch the semantic layer. Themes are
-   just alternative mappings: prefers-color-scheme picks one by default, a
-   visible toggle pins one with html.theme-light / html.theme-dark, and the
-   pin is applied before first paint by an inline script in each page's head.
+   just alternative mappings. Light is the default one, for everybody, whatever
+   their device prefers: a link here is handed to a room full of people who did
+   not choose to be here, and it should open the same way for all of them. A
+   visible toggle pins dark with html.theme-dark, and the pin is applied before
+   first paint by an inline script in each page's head.
    Space runs on a 4px scale, type on a modular scale with tight tracking on
    headings, motion is 120–260ms and always behind prefers-reduced-motion.
 
@@ -142,100 +144,53 @@
   --shadow-md: 0 2px 5px -1px rgba(26, 31, 54, .08), 0 8px 20px -6px rgba(26, 31, 54, .1);
 }
 
-/* Semantic mapping: dark. Duplicated below for html.theme-dark — keep the
-   two blocks identical. */
-@media (prefers-color-scheme: dark) {
-  html:not(.theme-light) {
-    color-scheme: dark;
-    --bg: var(--navy-950);
-    /* Raised a step: the card-to-page difference was 4.5 L*, against a page
-       too dark for a shadow to add anything on top of it. */
-    --surface: #1a2136;
-    --surface-2: var(--navy-850);
-    --raised: #28304a;
-    --sunken: var(--navy-950);
-    /* A field darker than the surface it sits on reads as a hole. Light has
-       field and surface both white; dark keeps the same relationship. */
-    --field: var(--navy-850);
-    --border: var(--navy-700);
-    --text: var(--navy-50);
-    --muted: var(--navy-300);
-    --brand: var(--blurple-400);
-    /* Periwinkle reads on navy; it cannot take ink. White on it is 2.49:1, and
-       dark ink on it turns the Send button into a pale chip on a black page —
-       a light-mode control pasted into dark. So text and stroke take the pale
-       value and fills take the brand purple, which is 5.57:1 under white here
-       exactly as it is in light. */
-    --accent: var(--blurple-400);
-    --accent-hover: #a5b0ff;
-    --accent-fill: var(--blurple-600);
-    /* Hover goes brighter in dark, where light goes deeper. */
-    --accent-fill-hover: var(--blurple-500);
-    /* blurple-850 was 1.23:1 on the surface — the pressed state of an icon
-       toggle rested entirely on its glyph going periwinkle. */
-    --accent-soft: #2a3160;
-    --accent-line: var(--navy-500);
-    --on-accent: #ffffff;
-    --danger: #ff8a8a;
-    --danger-fill: #c62f2f;
-    /* Pastels inverted badly: at L* 16-17 with full chroma these were lighter
-       and louder than every surface, and outshone the brand itself. Brought to
-       roughly surface lightness with half the chroma. */
-    --danger-soft: #2e1f2a;
-    --ok: #63d58e;
-    --ok-soft: #16281f;
-    --warn: #f0b366;
-    --warn-soft: #2a2318;
-    /* The band is the brand, in both themes. A navy panel here was 1.21:1
-       against the page — no band at all, and the composer has nothing to climb
-       into. Dark does not need less colour, it needs the same hue at lower
-       lightness: white is 11.26:1 on this, hero-muted is 7.59:1. */
-    --hero-bg: linear-gradient(135deg, #332b8c, #241f57);
-    --hero-text: #ffffff;
-    --hero-muted: #cdd2f7;
-    --hero-chip: rgba(255, 255, 255, .14);
-    --hero-line: rgba(255, 255, 255, .35);
-    --toast-bg: #2c3550;
-    --toast-text: var(--text);
-    --toast-line: rgba(255, 255, 255, .16);
-    --qr-ink: #ffffff;
-    --qr-paper: transparent;
-    /* Black on near-black is worth 2.6 L*. Elevation here comes from the
-       surface being lighter, so the small shadow is honestly nothing; the
-       large one stays for things that genuinely float. */
-    --shadow-sm: none;
-    --shadow-md: 0 12px 32px -12px rgba(0, 0, 0, .8);
-  }
-}
-
+/* Semantic mapping: dark. Opt-in only — light is what a link opens in, so
+   `prefers-color-scheme` no longer selects this; the toggle does. */
 html.theme-dark {
   color-scheme: dark;
   --bg: var(--navy-950);
+  /* Raised a step: the card-to-page difference was 4.5 L*, against a page
+     too dark for a shadow to add anything on top of it. */
   --surface: #1a2136;
   --surface-2: var(--navy-850);
   --raised: #28304a;
   --sunken: var(--navy-950);
+  /* A field darker than the surface it sits on reads as a hole. Light has
+     field and surface both white; dark keeps the same relationship. */
   --field: var(--navy-850);
   --border: var(--navy-700);
   --text: var(--navy-50);
   --muted: var(--navy-300);
   --brand: var(--blurple-400);
+  /* Periwinkle reads on navy; it cannot take ink. White on it is 2.49:1, and
+     dark ink on it turns the Send button into a pale chip on a black page —
+     a light-mode control pasted into dark. So text and stroke take the pale
+     value and fills take the brand purple, which is 5.57:1 under white here
+     exactly as it is in light. */
   --accent: var(--blurple-400);
   --accent-hover: #a5b0ff;
   --accent-fill: var(--blurple-600);
+  /* Hover goes brighter in dark, where light goes deeper. */
   --accent-fill-hover: var(--blurple-500);
-
+  /* blurple-850 was 1.23:1 on the surface — the pressed state of an icon
+     toggle rested entirely on its glyph going periwinkle. */
   --accent-soft: #2a3160;
   --accent-line: var(--navy-500);
   --on-accent: #ffffff;
   --danger: #ff8a8a;
   --danger-fill: #c62f2f;
-
+  /* Pastels inverted badly: at L* 16-17 with full chroma these were lighter
+     and louder than every surface, and outshone the brand itself. Brought to
+     roughly surface lightness with half the chroma. */
   --danger-soft: #2e1f2a;
   --ok: #63d58e;
   --ok-soft: #16281f;
   --warn: #f0b366;
   --warn-soft: #2a2318;
+  /* The band is the brand, in both themes. A navy panel here was 1.21:1
+     against the page — no band at all, and the composer has nothing to climb
+     into. Dark does not need less colour, it needs the same hue at lower
+     lightness: white is 11.26:1 on this, hero-muted is 7.59:1. */
   --hero-bg: linear-gradient(135deg, #332b8c, #241f57);
   --hero-text: #ffffff;
   --hero-muted: #cdd2f7;
@@ -246,6 +201,9 @@ html.theme-dark {
   --toast-line: rgba(255, 255, 255, .16);
   --qr-ink: #ffffff;
   --qr-paper: transparent;
+  /* Black on near-black is worth 2.6 L*. Elevation here comes from the
+     surface being lighter, so the small shadow is honestly nothing; the
+     large one stays for things that genuinely float. */
   --shadow-sm: none;
   --shadow-md: 0 12px 32px -12px rgba(0, 0, 0, .8);
 }

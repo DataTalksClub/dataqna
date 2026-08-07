@@ -228,7 +228,10 @@ updates by polling; there is no navigation away from it.
   is not told the routes exist, and both enforce access themselves regardless.
 
 The page is legible on a phone held in one hand in a dark room, which is the actual
-usage context. Dark mode follows the system preference.
+usage context. It opens in light mode for everyone regardless of what their device
+prefers — a room link reaches people who did not choose to be here, and it should
+look the way it looked on the slide they scanned it from. The header toggle is how
+anyone changes that, and the choice sticks.
 
 **Updates.** The client polls `GET /api/v1/rooms/{id}/questions` every 4 seconds
 while the tab is visible and every 30 seconds when it is hidden, sending
