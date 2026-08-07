@@ -135,7 +135,8 @@
   --toast-text: var(--bg);
   --toast-line: transparent;
   /* The QR is drawn in the page's own ink on the page's own background, like
-     any other mark. One pair, three places it appears. */
+     any other mark: a light page is already paper. Dark maps this pair
+     differently — see the note there. */
   --qr-ink: var(--text);
   --qr-paper: transparent;
   /* Stripe-style elevation: a hairline border does the outlining, so the
@@ -199,8 +200,15 @@ html.theme-dark {
   --toast-bg: #2c3550;
   --toast-text: var(--text);
   --toast-line: rgba(255, 255, 255, .16);
+  /* A dark page is not paper, so here the code gets its own: the brand band.
+     A white plate glared at a darkened room, a grey one matched nothing, and
+     bare white modules on the surface had no edges and no object to be — so
+     the plate borrows the hero gradient, which is already how this product
+     paints the one thing it wants everyone to look at. White modules are
+     11.3:1 on the gradient's lightest stop. That keeps the dark code
+     reversed — the trade-off §4 of docs/design-system.md walks through. */
   --qr-ink: #ffffff;
-  --qr-paper: transparent;
+  --qr-paper: var(--hero-bg);
   /* Black on near-black is worth 2.6 L*. Elevation here comes from the
      surface being lighter, so the small shadow is honestly nothing; the
      large one stays for things that genuinely float. */
@@ -633,16 +641,12 @@ label.check { min-height: 44px; cursor: pointer; }
 input[type=checkbox] { width: 18px; height: 18px; accent-color: var(--accent-fill); }
 
 .share { display: flex; gap: var(--space-4); align-items: flex-start; flex-wrap: wrap; }
-/* No plate. The modules are drawn in the page's ink on the page's background,
-   so the code belongs to the theme instead of being a card laid on top of it —
-   which in dark meant either a white rectangle or, dimmed, a grey slab that
-   matched nothing.
-
-   A reversed code is not universally readable and this one is deliberately
-   reversed, so the margin has to come from elsewhere: the padding below is the
-   quiet zone (segno adds four modules of its own on top of it), and dark uses
-   pure white rather than the slightly-softened body ink. Decoders were checked
-   rather than assumed — see docs/design-system.md. */
+/* The code is ink on paper, and the theme decides what paper is: in light the
+   page itself, in dark the hero gradient — a plate, but the brand's, not a
+   white rectangle glaring at a darkened room. The padding is quiet zone on
+   top of segno's four modules, and in dark it is what keeps the modules off
+   the plate's rounded corners. The dark code is reversed, deliberately —
+   decoders were checked rather than assumed, see docs/design-system.md. */
 .share .qr {
   width: 132px;
   height: 132px;

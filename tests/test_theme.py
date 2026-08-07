@@ -167,14 +167,27 @@ def test_the_room_address_bar_matches_the_band_it_sits_under():
     assert f'data-theme-dark="{band}"' in room
 
 
-def test_the_qr_has_the_contrast_a_reversed_code_needs():
-    """The code has no plate — it is ink on whatever surface it lands on — and
-    in dark it is reversed. Weaker decoders already struggle with a reversed
-    code, so the one thing left to give them is contrast; this is the floor
-    below which that stops being true."""
-    surfaces = ("bg", "surface")
-    for name, block in THEMES.items():
-        assert resolve(block, "qr-paper") == "transparent", f"{name}: QR has a plate again"
-        for surface in surfaces:
-            ratio = contrast(resolve(block, "qr-ink"), resolve(block, surface))
-            assert ratio >= 10, f"{name}: QR on {surface} is only {ratio:.2f}:1"
+def test_the_light_qr_is_ink_on_the_page():
+    """In light the page is already paper, so the code takes no plate and is
+    drawn in the page's own ink — which keeps it a normal dark-on-light code
+    that every decoder reads. The floor is well past AA because a camera is
+    less forgiving than an eye."""
+    assert resolve(LIGHT, "qr-paper") == "transparent", "light: QR grew a plate"
+    for surface in ("bg", "surface"):
+        ratio = contrast(resolve(LIGHT, "qr-ink"), resolve(LIGHT, surface))
+        assert ratio >= 10, f"light: QR on {surface} is only {ratio:.2f}:1"
+
+
+def test_the_dark_qr_is_printed_on_the_brand_band():
+    """A dark page is not paper, so the code brings its own: the hero
+    gradient, the one plate that is neither a white slab glaring at a dark
+    room nor a grey one that matches nothing. The plate must stay the hero's
+    — a hand-copied gradient would drift when the band moves — and the ink
+    must clear a reversed code's contrast floor on every stop, because the
+    modules land on all of them."""
+    assert resolve(DARK, "qr-paper") == resolve(DARK, "hero-bg"), "dark: the QR plate is not the hero band"
+    stops = re.findall(r"#[0-9a-fA-F]{6}", resolve(DARK, "hero-bg"))
+    assert len(stops) >= 2, "dark: the hero band lost its gradient"
+    for stop in stops:
+        ratio = contrast(resolve(DARK, "qr-ink"), stop)
+        assert ratio >= 10, f"dark: QR ink on hero stop {stop} is only {ratio:.2f}:1"

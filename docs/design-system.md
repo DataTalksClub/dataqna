@@ -109,14 +109,27 @@ Two results are load-bearing and easy to undo by accident:
   figure/ground separation in L\* alongside the text ratios, for both themes, and
   that the band keeps the brand hue rather than going neutral.
 
-The QR has no plate. It is drawn in the page's ink on the page's background —
-`--qr-ink` / `--qr-paper`, the latter `transparent` in both themes — so in dark it
-is a white code on the dark surface rather than a card laid on top of the design.
-`qr.py` emits `currentColor` for exactly this.
+The QR is one pair of tokens, `--qr-ink` / `--qr-paper`, and the theme decides
+what paper is. In light the page itself is paper: no plate, the code is drawn in
+the page's ink like any other mark, and stays a normal dark-on-light code that
+everything decodes. A dark page is not paper, so there the code brings its own —
+`--qr-paper` maps to `--hero-bg`, and white modules sit on the brand gradient.
+`qr.py` emits `currentColor` on a transparent ground for exactly this.
 
-That makes the dark code **reversed**, which is worth being precise about, because
-decoders differ and the first version of this decision got it wrong by testing
-one of them:
+Three dark treatments were tried and rejected before this one: dark-on-white,
+which projects a glaring white slab at a darkened room; dark ink on a dimmed
+grey plate, which reads as a slab that matches nothing on the page; and bare
+white modules on the surface, which have high contrast and no object to be —
+an unframed spray with no quiet zone and no relationship to the cards around
+it. The hero band is the one plate that answers all three at once: it gives
+the code edges, a radius, and a colour the page already speaks — it is how
+this product paints the thing it wants everyone to look at, and the join code
+*is* that thing. The container's padding is quiet zone on top of segno's four
+modules, and it keeps the modules off the plate's rounded corners.
+
+That keeps the dark code **reversed**, which is worth being precise about,
+because decoders differ and the first version of this decision got it wrong by
+testing one of them:
 
 | Decoder | Normal | Reversed |
 |---------|--------|----------|
@@ -127,9 +140,12 @@ The reversal is in the QR spec, and the decoders people actually point at a scre
 — phone camera apps, Lens, WeChat — handle it. OpenCV's built-in detector is an
 older, weaker algorithm and does not. So this is a real but narrow risk, carried
 deliberately, and mitigated by giving the code everything else it wants: pure
-white ink rather than the softened body colour, and padding on the container as a
-quiet zone on top of segno's own four modules. `tests/test_theme.py` holds the
-contrast floor.
+white ink at 11.3:1 on the gradient's lightest stop, and generous quiet zone.
+Rendered screenshots of all three placements were decoded rather than assumed:
+the WeChat decoder reads the dark code at every size down to the full-screen
+overlay scaled to 12%, and the light code decodes with both decoders.
+`tests/test_theme.py` holds the contrast floor on every gradient stop and fails
+if the plate stops being the hero's.
 
 If a reversed code ever does prove to be a problem in the field, `--qr-ink` and
 `--qr-paper` are the two values to change and nothing else moves.
