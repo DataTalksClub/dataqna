@@ -6,9 +6,11 @@
    moves underneath the host — the ranking only matters again once they
    return to the list.
 
-   Clicking is the interaction model: the card carries the one action that runs
-   the session (mark answered), everything view-level lives in the toolbar —
-   moderation stays in the room console. The only keys are the conventional ones —
+   Clicking is the interaction model: the card carries the actions that run the
+   session (pin, mark answered), everything view-level lives in the toolbar —
+   hiding is moderation and stays in the room console. The pinned state shows
+   in the button, not as a second glyph beside the author. The only keys are
+   the conventional ones —
    arrows move the selection, Esc backs out of spotlight or the overlay. */
 (function () {
   "use strict";
@@ -28,6 +30,7 @@
     chevron: '<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" ' +
       'stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
       '<path d="M6 14l6-7 6 7"/></svg>',
+    pin: svg('<path d="M9 4h6"/><path d="M10 4v5l-3 3v2h10v-2l-3-3V4"/><path d="M12 14v7"/>'),
     check: svg('<path d="M20 6 9 17l-5-5"/>'),
     focus: svg('<path d="M4 8V6a2 2 0 0 1 2-2h2"/><path d="M16 4h2a2 2 0 0 1 2 2v2"/>' +
       '<path d="M20 16v2a2 2 0 0 1-2 2h-2"/><path d="M8 20H6a2 2 0 0 1-2-2v-2"/>' +
@@ -160,6 +163,11 @@
 
   function markAnswered(item) { removal(item, "answered", "answered", "Marked answered"); }
 
+  function togglePin(item) {
+    if (state.busy[item.question_id]) return;
+    performAction(item, "pin", { pinned: !item.pinned });
+  }
+
   /* One level of undo costs nothing and saves the projected moment. */
   function undo() {
     if (!state.lastAction) return;
@@ -242,8 +250,12 @@
 
     var actions = document.createElement("div");
     actions.className = "p-actions";
-    var buttons = { answered: iconButton("Mark answered", I.check, function () { markAnswered(item); }) };
+    var buttons = {
+      pin: iconButton(item.pinned ? "Unpin" : "Pin", I.pin, function () { togglePin(item); }, !!item.pinned),
+      answered: iconButton("Mark answered", I.check, function () { markAnswered(item); })
+    };
     applyBusy(item, buttons);
+    actions.appendChild(buttons.pin);
     actions.appendChild(buttons.answered);
 
     li.appendChild(score);
@@ -339,7 +351,10 @@
     var next = iconButton("Next question", I.right, function () { step(1); });
     prev.disabled = at <= 0;
     next.disabled = at === -1 || at >= list.length - 1;
-    var buttons = { answered: iconButton("Mark answered", I.check, function () { markAnswered(item); }) };
+    var buttons = {
+      pin: iconButton(item.pinned ? "Unpin" : "Pin", I.pin, function () { togglePin(item); }, !!item.pinned),
+      answered: iconButton("Mark answered", I.check, function () { markAnswered(item); })
+    };
     applyBusy(item, buttons);
 
     var back = document.createElement("button");
@@ -353,6 +368,7 @@
     var gap1 = document.createElement("span");
     gap1.className = "spacer";
     actions.appendChild(gap1);
+    actions.appendChild(buttons.pin);
     actions.appendChild(buttons.answered);
     var gap2 = document.createElement("span");
     gap2.className = "spacer";

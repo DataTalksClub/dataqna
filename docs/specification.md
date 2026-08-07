@@ -294,10 +294,10 @@ no questions yet, the join card takes over the whole screen.
 Clicking is the interaction model — every action is a visible control, nothing
 is reachable only by keyboard:
 
-- **On each card**: mark answered, and nothing else — one always-visible icon
-  button with an accessible name. Pinning and hiding are moderation and stay in
-  the room console, off the projected screen; the card is for running the
-  session, not curating it.
+- **On each card**: pin and mark answered, as always-visible icon buttons with
+  accessible names. Hiding is moderation and stays in the room console, off the
+  projected screen. Pinned shows as the pressed state of its own button and
+  nowhere else — a second pin glyph beside the author said the same thing twice.
 - **In the toolbar** (bottom of the frame): undo, spotlight (a toggle — in it
   says "All questions"), the full-screen QR overlay, the light/dark theme
   toggle (light is the projector default), and browser fullscreen. Leaving is
