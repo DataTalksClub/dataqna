@@ -99,6 +99,41 @@ def test_a_taken_link_name_is_refused(table):
     assert excinfo.value.status == 409
 
 
+def test_the_owner_sees_the_invites_they_created(table):
+    room = make_room()
+    invite_for(room, name="ivan")
+    response = call(["rooms", room["room_id"], "cohosts"], "GET", identity=owner())
+    assert response["statusCode"] == 200
+    assert [item["name"] for item in json.loads(response["body"])["items"]] == ["ivan"]
+
+
+def test_an_invite_from_before_the_split_does_not_break_the_list(table):
+    """A single-`code` invite predates link-plus-passcode and cannot be redeemed.
+
+    It has no name to redeem through, so listing it would offer the owner a row
+    with both halves missing — and reading it as though it had them took the
+    whole People panel down with a 500.
+    """
+    room = make_room()
+    invite_for(room, name="ivan")
+    store.table().put_item(
+        Item={
+            "PK": f"ROOM#{room['room_id']}",
+            "SK": "COHOST#01OLDONE",
+            "entity": "cohost_invite",
+            "invite_id": "01OLDONE",
+            "room_id": room["room_id"],
+            "code": "JBBD-6WC4-BKG7",
+            "label": "Ivan",
+            "created_at": 1786023800,
+        }
+    )
+
+    response = call(["rooms", room["room_id"], "cohosts"], "GET", identity=owner())
+    assert response["statusCode"] == 200
+    assert [item["name"] for item in json.loads(response["body"])["items"]] == ["ivan"]
+
+
 def test_guessing_is_rate_limited_per_address(table):
     room = make_room()
     invite = invite_for(room)

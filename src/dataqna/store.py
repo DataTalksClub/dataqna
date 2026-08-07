@@ -356,7 +356,13 @@ def list_cohost_invites(room_id):
     items = table().query(
         KeyConditionExpression=Key("PK").eq(_room_pk(room_id)) & Key("SK").begins_with("COHOST#")
     )["Items"]
-    return sorted(items, key=lambda item: item.get("created_at", 0), reverse=True)
+    # Invites written before the split into a link name and a passcode carry a
+    # single `code` and neither field. Nothing can redeem one — redemption goes
+    # through the name pointer, and they never claimed a name — so they are
+    # dropped here rather than shown as a row with two empty halves. They leave
+    # on their own TTL.
+    live = [item for item in items if item.get("name") and item.get("passcode")]
+    return sorted(live, key=lambda item: item.get("created_at", 0), reverse=True)
 
 
 def get_cohost_invite(room_id, invite_id):
