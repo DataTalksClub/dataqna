@@ -43,9 +43,14 @@ the semantic layer. That is the one rule worth enforcing.
 ### Semantic tokens
 
 `--bg` `--surface` `--surface-2` `--field` `--border` `--text` `--muted` `--brand`
-`--accent` `--accent-hover` `--accent-soft` `--accent-line` `--on-accent`
-`--danger` `--ok` `--warn` (each with a `-soft` background pair) `--shadow-sm`
-`--shadow-md`.
+`--accent` `--accent-hover` `--accent-fill` `--accent-fill-hover` `--accent-soft`
+`--accent-line` `--on-accent` `--danger` `--danger-fill` `--ok` `--warn` (each with
+a `-soft` background pair) `--shadow-sm` `--shadow-md`.
+
+`--accent` is the brand as text and stroke on a page background; `--accent-fill` is
+the brand as a mass that has to carry ink. Light maps both to `--blurple-600`, so a
+fill written as `var(--accent)` looks correct until dark maps them apart. Nothing
+that takes `--on-accent` may paint itself with `--accent`.
 
 ## 3. Themes
 
@@ -77,10 +82,15 @@ Two results are load-bearing and easy to undo by accident:
 - **`--blurple-500` (`#635BFF`) is 4.70:1 on white.** Stripe's signature hue passes,
   but reads thin at body size. It stays decorative as `--brand`; interactive fills
   and text use `--blurple-600` (5.57:1).
-- **White on the dark-theme accent is 2.49:1** — far below AA. Dark ink on it is
-  7.5:1. This is why `--on-accent` exists instead of a hard-coded `#fff`, and why
-  `tests/test_render.py` asserts on it. Do not delete that test; it protects a bug
-  that shipped once already.
+- **White on `--blurple-400` is 2.49:1** — far below AA, which is why the dark
+  theme's *text* accent is that value and its *fill* is `--blurple-600`, white on it
+  at 5.57:1 in both themes. The earlier answer — keep one accent and give it dark
+  ink — cleared AA and produced a pale chip with black ink on a black page. Passing
+  contrast was never the question the button was failing.
+- **The dark hero band was 1.21:1 against the page.** No text sat on it, so every
+  ratio passed and the band was still not visible. `tests/test_theme.py` checks
+  figure/ground separation in L\* alongside the text ratios, for both themes, and
+  that the band keeps the brand hue rather than going neutral.
 
 QR modules stay ink-on-white in every theme, including dark presentation mode. An
 inverted QR scans unreliably on a lot of phones.

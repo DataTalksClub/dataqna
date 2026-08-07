@@ -59,10 +59,15 @@ def test_hidden_attribute_is_forced_over_button_display():
     assert "[hidden] { display: none !important; }" in css
 
 
-def test_dark_mode_button_text_uses_the_on_accent_token():
+def test_filled_controls_never_paint_themselves_with_the_text_accent():
+    """`--accent` is the brand as text; `--accent-fill` is it as a mass.
+
+    They are the same value in light, so a fill written as `var(--accent)` looks
+    right until dark maps them apart — and then it is a pale chip with dark ink
+    on a black page. Contrast for the pair is checked in test_theme.
+    """
     css = render.asset_bytes("app.css").decode()
-    assert "--on-accent" in css
-    # White on the dark-theme accent is 2.49:1, below AA; the token maps to ink.
+    assert "background: var(--accent);" not in css
     assert "color: var(--on-accent);" in css
 
 

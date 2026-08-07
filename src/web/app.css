@@ -96,12 +96,21 @@
   --text: var(--slate-900);
   --muted: var(--slate-600);
   --brand: var(--blurple-500);
+  /* Two jobs, two tokens. `accent` is the brand as text and stroke, on a page
+     background; `accent-fill` is the brand as a mass that has to carry ink.
+     In light one value does both, and naming them apart costs nothing. In dark
+     no single value can: light enough to read on navy is too light to take
+     white. Keeping them separate is what lets the dark theme use the same
+     purple for its buttons as this one. */
   --accent: var(--blurple-600);
   --accent-hover: var(--blurple-700);
+  --accent-fill: var(--blurple-600);
+  --accent-fill-hover: var(--blurple-700);
   --accent-soft: var(--blurple-100);
   --accent-line: var(--blurple-200);
   --on-accent: #ffffff;
   --danger: #c62f2f;
+  --danger-fill: #c62f2f;
   --danger-soft: #fdeded;
   --ok: #1d7a3d;
   --ok-soft: #e7f5ec;
@@ -133,25 +142,35 @@
     --text: var(--navy-50);
     --muted: var(--navy-300);
     --brand: var(--blurple-400);
+    /* Periwinkle reads on navy; it cannot take ink. White on it is 2.49:1, and
+       dark ink on it turns the Send button into a pale chip on a black page —
+       a light-mode control pasted into dark. So text and stroke take the pale
+       value and fills take the brand purple, which is 5.57:1 under white here
+       exactly as it is in light. */
     --accent: var(--blurple-400);
     --accent-hover: #a5b0ff;
+    --accent-fill: var(--blurple-600);
+    /* Hover goes brighter in dark, where light goes deeper. */
+    --accent-fill-hover: var(--blurple-500);
     --accent-soft: var(--blurple-850);
     --accent-line: var(--navy-500);
-    /* White on periwinkle is 2.49:1 — far below AA. Dark ink is 7.5:1. */
-    --on-accent: var(--navy-950);
+    --on-accent: #ffffff;
     --danger: #ff8a8a;
+    --danger-fill: #c62f2f;
     --danger-soft: #3a2126;
     --ok: #63d58e;
     --ok-soft: #17301f;
     --warn: #f0b366;
     --warn-soft: #332510;
-    /* Dark hero: a quiet navy panel, not a glowing band. Navy-50 is 13.2:1
-       on navy-850, navy-300 is 6.1:1. */
-    --hero-bg: linear-gradient(135deg, var(--navy-850), var(--navy-900));
-    --hero-text: var(--navy-50);
-    --hero-muted: var(--navy-300);
-    --hero-chip: rgba(255, 255, 255, .07);
-    --hero-line: var(--navy-500);
+    /* The band is the brand, in both themes. A navy panel here was 1.21:1
+       against the page — no band at all, and the composer has nothing to climb
+       into. Dark does not need less colour, it needs the same hue at lower
+       lightness: white is 11.26:1 on this, hero-muted is 7.59:1. */
+    --hero-bg: linear-gradient(135deg, #332b8c, #241f57);
+    --hero-text: #ffffff;
+    --hero-muted: #cdd2f7;
+    --hero-chip: rgba(255, 255, 255, .14);
+    --hero-line: rgba(255, 255, 255, .35);
     --shadow-sm: 0 1px 2px rgba(0, 0, 0, .4), 0 1px 3px rgba(0, 0, 0, .3);
     --shadow-md: 0 2px 6px rgba(0, 0, 0, .45), 0 10px 24px -6px rgba(0, 0, 0, .4);
   }
@@ -169,20 +188,23 @@ html.theme-dark {
   --brand: var(--blurple-400);
   --accent: var(--blurple-400);
   --accent-hover: #a5b0ff;
+  --accent-fill: var(--blurple-600);
+  --accent-fill-hover: var(--blurple-500);
   --accent-soft: var(--blurple-850);
   --accent-line: var(--navy-500);
-  --on-accent: var(--navy-950);
+  --on-accent: #ffffff;
   --danger: #ff8a8a;
+  --danger-fill: #c62f2f;
   --danger-soft: #3a2126;
   --ok: #63d58e;
   --ok-soft: #17301f;
   --warn: #f0b366;
   --warn-soft: #332510;
-  --hero-bg: linear-gradient(135deg, var(--navy-850), var(--navy-900));
-  --hero-text: var(--navy-50);
-  --hero-muted: var(--navy-300);
-  --hero-chip: rgba(255, 255, 255, .07);
-  --hero-line: var(--navy-500);
+  --hero-bg: linear-gradient(135deg, #332b8c, #241f57);
+  --hero-text: #ffffff;
+  --hero-muted: #cdd2f7;
+  --hero-chip: rgba(255, 255, 255, .14);
+  --hero-line: rgba(255, 255, 255, .35);
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, .4), 0 1px 3px rgba(0, 0, 0, .3);
   --shadow-md: 0 2px 6px rgba(0, 0, 0, .45), 0 10px 24px -6px rgba(0, 0, 0, .4);
 }
@@ -337,7 +359,7 @@ button, .btn {
   min-height: 44px;
   border-radius: var(--radius-md);
   border: 1px solid transparent;
-  background: var(--accent);
+  background: var(--accent-fill);
   color: var(--on-accent);
   cursor: pointer;
   text-decoration: none;
@@ -349,7 +371,7 @@ button, .btn {
   box-shadow: var(--shadow-sm);
 }
 button:disabled { opacity: .5; cursor: default; }
-button:not(:disabled):hover, .btn:hover { background: var(--accent-hover); }
+button:not(:disabled):hover, .btn:hover { background: var(--accent-fill-hover); }
 
 button.ghost, .btn.ghost {
   background: var(--surface);
@@ -381,7 +403,7 @@ button.small, .btn.small { padding: var(--space-1) var(--space-3); font-size: va
   border-color: var(--accent-line);
 }
 
-button.danger { background: var(--danger); color: var(--on-accent); }
+button.danger { background: var(--danger-fill); color: var(--on-accent); }
 button.danger:not(:disabled):hover { background: var(--danger); filter: brightness(.92); }
 /* Armed: the "are you sure" state of a destructive two-tap. */
 button.arm, .arm { background: var(--danger-soft); color: var(--danger); border-color: var(--danger); }
@@ -609,7 +631,7 @@ details.card[open] > summary::after { transform: translateY(2px) rotate(225deg);
 .details-body { padding: var(--space-1) var(--space-4) var(--space-4); }
 
 label.check { min-height: 44px; cursor: pointer; }
-input[type=checkbox] { width: 18px; height: 18px; accent-color: var(--accent); }
+input[type=checkbox] { width: 18px; height: 18px; accent-color: var(--accent-fill); }
 
 .share { display: flex; gap: var(--space-4); align-items: flex-start; flex-wrap: wrap; }
 /* QR modules stay ink-on-white in every theme (also in presentation mode
@@ -755,11 +777,11 @@ li.q .tag.hidden { background: var(--warn-soft); color: var(--warn); }
 }
 .vote:not(:disabled):hover { background: var(--accent-soft); }
 .vote[aria-pressed=true] {
-  background: var(--accent);
-  border-color: var(--accent);
+  background: var(--accent-fill);
+  border-color: var(--accent-fill);
   color: var(--on-accent);
 }
-.vote[aria-pressed=true]:not(:disabled):hover { background: var(--accent); }
+.vote[aria-pressed=true]:not(:disabled):hover { background: var(--accent-fill); }
 .vote:disabled { border-color: var(--border); color: var(--muted); }
 /* The admin list reuses this shape to display a score. It is not a control. */
 .vote.static { border-color: var(--border); color: var(--muted); background: transparent; min-height: 36px; }
@@ -1040,7 +1062,7 @@ ol.present-list {
   display: inline-flex;
   align-items: center;
   gap: var(--space-2);
-  background: var(--accent);
+  background: var(--accent-fill);
   color: var(--on-accent);
   border-radius: var(--radius-full);
   padding: var(--space-2) var(--space-5);
