@@ -92,6 +92,11 @@
   --surface: #ffffff;
   --surface-2: var(--slate-100);
   --field: #ffffff;
+  /* Elevation, named by direction rather than by shade. `surface-2` was doing
+     both jobs, and the two themes order it oppositely against `surface`, so a
+     raised thing built from it came out sunken in dark. */
+  --raised: #ffffff;
+  --sunken: var(--slate-100);
   --border: var(--slate-200);
   --text: var(--slate-900);
   --muted: var(--slate-600);
@@ -123,6 +128,10 @@
   --hero-muted: #ecedff;
   --hero-chip: rgba(255, 255, 255, .14);
   --hero-line: rgba(255, 255, 255, .45);
+  /* The inverted pill that carries a toast. */
+  --toast-bg: var(--text);
+  --toast-text: var(--bg);
+  --toast-line: transparent;
   /* Stripe-style elevation: a hairline border does the outlining, so the
      shadows stay layered and low-opacity. */
   --shadow-sm: 0 1px 1px rgba(26, 31, 54, .04), 0 1px 3px rgba(26, 31, 54, .06);
@@ -135,9 +144,15 @@
   html:not(.theme-light) {
     color-scheme: dark;
     --bg: var(--navy-950);
-    --surface: var(--navy-900);
+    /* Raised a step: the card-to-page difference was 4.5 L*, against a page
+       too dark for a shadow to add anything on top of it. */
+    --surface: #1a2136;
     --surface-2: var(--navy-850);
-    --field: #10162a;
+    --raised: #28304a;
+    --sunken: var(--navy-950);
+    /* A field darker than the surface it sits on reads as a hole. Light has
+       field and surface both white; dark keeps the same relationship. */
+    --field: var(--navy-850);
     --border: var(--navy-700);
     --text: var(--navy-50);
     --muted: var(--navy-300);
@@ -152,16 +167,21 @@
     --accent-fill: var(--blurple-600);
     /* Hover goes brighter in dark, where light goes deeper. */
     --accent-fill-hover: var(--blurple-500);
-    --accent-soft: var(--blurple-850);
+    /* blurple-850 was 1.23:1 on the surface — the pressed state of an icon
+       toggle rested entirely on its glyph going periwinkle. */
+    --accent-soft: #2a3160;
     --accent-line: var(--navy-500);
     --on-accent: #ffffff;
     --danger: #ff8a8a;
     --danger-fill: #c62f2f;
-    --danger-soft: #3a2126;
+    /* Pastels inverted badly: at L* 16-17 with full chroma these were lighter
+       and louder than every surface, and outshone the brand itself. Brought to
+       roughly surface lightness with half the chroma. */
+    --danger-soft: #2e1f2a;
     --ok: #63d58e;
-    --ok-soft: #17301f;
+    --ok-soft: #16281f;
     --warn: #f0b366;
-    --warn-soft: #332510;
+    --warn-soft: #2a2318;
     /* The band is the brand, in both themes. A navy panel here was 1.21:1
        against the page — no band at all, and the composer has nothing to climb
        into. Dark does not need less colour, it needs the same hue at lower
@@ -171,17 +191,25 @@
     --hero-muted: #cdd2f7;
     --hero-chip: rgba(255, 255, 255, .14);
     --hero-line: rgba(255, 255, 255, .35);
-    --shadow-sm: 0 1px 2px rgba(0, 0, 0, .4), 0 1px 3px rgba(0, 0, 0, .3);
-    --shadow-md: 0 2px 6px rgba(0, 0, 0, .45), 0 10px 24px -6px rgba(0, 0, 0, .4);
+    --toast-bg: #2c3550;
+    --toast-text: var(--text);
+    --toast-line: rgba(255, 255, 255, .16);
+    /* Black on near-black is worth 2.6 L*. Elevation here comes from the
+       surface being lighter, so the small shadow is honestly nothing; the
+       large one stays for things that genuinely float. */
+    --shadow-sm: none;
+    --shadow-md: 0 12px 32px -12px rgba(0, 0, 0, .8);
   }
 }
 
 html.theme-dark {
   color-scheme: dark;
   --bg: var(--navy-950);
-  --surface: var(--navy-900);
+  --surface: #1a2136;
   --surface-2: var(--navy-850);
-  --field: #10162a;
+  --raised: #28304a;
+  --sunken: var(--navy-950);
+  --field: var(--navy-850);
   --border: var(--navy-700);
   --text: var(--navy-50);
   --muted: var(--navy-300);
@@ -190,23 +218,28 @@ html.theme-dark {
   --accent-hover: #a5b0ff;
   --accent-fill: var(--blurple-600);
   --accent-fill-hover: var(--blurple-500);
-  --accent-soft: var(--blurple-850);
+
+  --accent-soft: #2a3160;
   --accent-line: var(--navy-500);
   --on-accent: #ffffff;
   --danger: #ff8a8a;
   --danger-fill: #c62f2f;
-  --danger-soft: #3a2126;
+
+  --danger-soft: #2e1f2a;
   --ok: #63d58e;
-  --ok-soft: #17301f;
+  --ok-soft: #16281f;
   --warn: #f0b366;
-  --warn-soft: #332510;
+  --warn-soft: #2a2318;
   --hero-bg: linear-gradient(135deg, #332b8c, #241f57);
   --hero-text: #ffffff;
   --hero-muted: #cdd2f7;
   --hero-chip: rgba(255, 255, 255, .14);
   --hero-line: rgba(255, 255, 255, .35);
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, .4), 0 1px 3px rgba(0, 0, 0, .3);
-  --shadow-md: 0 2px 6px rgba(0, 0, 0, .45), 0 10px 24px -6px rgba(0, 0, 0, .4);
+  --toast-bg: #2c3550;
+  --toast-text: var(--text);
+  --toast-line: rgba(255, 255, 255, .16);
+  --shadow-sm: none;
+  --shadow-md: 0 12px 32px -12px rgba(0, 0, 0, .8);
 }
 
 /* ---------------------------------------------------------------- base */
@@ -670,7 +703,7 @@ input[type=checkbox] { width: 18px; height: 18px; accent-color: var(--accent-fil
   width: max-content;
   max-width: 100%;
   overflow-x: auto;
-  background: var(--surface-2);
+  background: var(--sunken);
   border: 1px solid var(--border);
   border-radius: var(--radius-full);
 }
@@ -689,7 +722,7 @@ input[type=checkbox] { width: 18px; height: 18px; accent-color: var(--accent-fil
 .tabs button:not(:disabled):hover { background: transparent; color: var(--text); }
 .tabs button[aria-pressed=true],
 .tabs button[aria-pressed=true]:not(:disabled):hover {
-  background: var(--surface);
+  background: var(--raised);
   color: var(--text);
   box-shadow: var(--shadow-sm);
 }
@@ -819,11 +852,11 @@ li.q .tag.hidden { background: var(--warn-soft); color: var(--warn); }
   align-items: center;
   gap: var(--space-3);
   max-width: calc(100vw - var(--space-6));
-  background: var(--text);
-  color: var(--bg);
+  background: var(--toast-bg);
+  color: var(--toast-text);
   padding: var(--space-2) var(--space-4);
   border-radius: var(--radius-full);
-  box-shadow: var(--shadow-md);
+  box-shadow: var(--shadow-md), inset 0 0 0 1px var(--toast-line);
   font-size: var(--text-sm);
   opacity: 0;
   pointer-events: none;
@@ -834,8 +867,8 @@ li.q .tag.hidden { background: var(--warn-soft); color: var(--warn); }
 /* The undo that rides a toast: same inverted palette, real button. */
 .toast button {
   background: transparent;
-  border: 1px solid var(--bg);
-  color: var(--bg);
+  border: 1px solid var(--toast-text);
+  color: var(--toast-text);
   box-shadow: none;
   min-height: 44px;
   padding: var(--space-1) var(--space-3);
@@ -1125,11 +1158,11 @@ ol.present-list {
   display: flex;
   align-items: center;
   gap: var(--space-3);
-  background: var(--text);
-  color: var(--bg);
+  background: var(--toast-bg);
+  color: var(--toast-text);
   padding: var(--space-2) var(--space-4);
   border-radius: var(--radius-full);
-  box-shadow: var(--shadow-md);
+  box-shadow: var(--shadow-md), inset 0 0 0 1px var(--toast-line);
   font-size: var(--text-sm);
   white-space: nowrap;
   opacity: 0;
@@ -1140,8 +1173,8 @@ ol.present-list {
 .present-cue.show { opacity: 1; pointer-events: auto; }
 .present-cue button {
   background: transparent;
-  border: 1px solid var(--bg);
-  color: var(--bg);
+  border: 1px solid var(--toast-text);
+  color: var(--toast-text);
   box-shadow: none;
   min-height: 36px;
   padding: var(--space-1) var(--space-3);
