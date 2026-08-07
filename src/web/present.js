@@ -122,7 +122,16 @@
     node.classList.remove("show");
   }
 
-  /* ---- actions: optimistic, shared shape with the admin console ---- */
+  /* ---- actions ----
+
+     Optimistic to the point of hiding the network entirely. A pin lands
+     pinned, an answered card leaves, both on the tap: a spinner on a
+     projected screen is a stall the room watches the host sit through, and
+     the delay it reports is not one they can do anything about. The request
+     still goes out — `state.busy` holds the poll off it — and a refusal
+     rolls the change back and says so in the cue. The console keeps its
+     spinners; that surface is the host's alone, and there a slow network
+     should read as busy rather than broken. */
 
   function performAction(item, name, payload, options) {
     options = options || {};
@@ -217,15 +226,6 @@
     return button;
   }
 
-  function applyBusy(item, buttons) {
-    var acting = state.busy[item.question_id];
-    if (!acting) return;
-    Object.keys(buttons).forEach(function (key) {
-      buttons[key].disabled = true;
-      if (key === acting) buttons[key].classList.add("busy");
-    });
-  }
-
   function buildRow(item) {
     var li = document.createElement("li");
     li.dataset.qid = item.question_id;
@@ -254,7 +254,6 @@
       pin: iconButton(item.pinned ? "Unpin" : "Pin", I.pin, function () { togglePin(item); }, !!item.pinned),
       answered: iconButton("Mark answered", I.check, function () { markAnswered(item); })
     };
-    applyBusy(item, buttons);
     actions.appendChild(buttons.pin);
     actions.appendChild(buttons.answered);
 
@@ -355,7 +354,6 @@
       pin: iconButton(item.pinned ? "Unpin" : "Pin", I.pin, function () { togglePin(item); }, !!item.pinned),
       answered: iconButton("Mark answered", I.check, function () { markAnswered(item); })
     };
-    applyBusy(item, buttons);
 
     var back = document.createElement("button");
     back.type = "button";
