@@ -340,6 +340,17 @@ def _cohost_name_pk(room_id, name):
     return f"COHOSTNAME#{room_id}#{normalize_cohost_name(name)}"
 
 
+def _legacy_cohost_name_pk(name):
+    """Where a name pointer lived while names were unique across the whole site.
+
+    Re-keying the namespace stranded every pointer already written: the invite
+    still had its name and passcode, and the gate still asked for them, but the
+    lookup went to a key nothing had ever written. Read-side only — nothing
+    claims one of these any more, and they leave on their own TTL.
+    """
+    return f"COHOSTNAME#{normalize_cohost_name(name)}"
+
+
 def claim_cohost_name(name, room_id, invite_id):
     item = {
         "PK": _cohost_name_pk(room_id, name),
@@ -378,25 +389,41 @@ def revoke_cohost_invite(room_id, invite_id):
     if not invite:
         return False
     table().delete_item(Key={"PK": _room_pk(room_id), "SK": f"COHOST#{invite_id}"})
-    # Invites from before the link-name split have no name to release.
+    # Invites from before the link-name split have no name to release. Those
+    # from before the scoping have one under the old key, and revoking has to
+    # reach it or the name stays redeemable. That key is shared across rooms,
+    # so it is only ours to delete when it names this invite.
     if invite.get("name"):
-        table().delete_item(
-            Key={"PK": _cohost_name_pk(room_id, invite["name"]), "SK": "META"}
+        table().delete_item(Key={"PK": _cohost_name_pk(room_id, invite["name"]), "SK": "META"})
+        legacy = {"PK": _legacy_cohost_name_pk(invite["name"]), "SK": "META"}
+        _conditional(
+            table().delete_item,
+            Key=legacy,
+            ConditionExpression="invite_id = :id",
+            ExpressionAttributeValues={":id": invite_id},
         )
     return True
 
 
 def resolve_cohost_name(room_id, name):
-    """Find a room's invite by its link name. Says nothing about the passcode."""
+    """Find a room's invite by its link name. Says nothing about the passcode.
+
+    Falls back to the pre-scoping key so invites handed out before the change
+    still open. The pointer has to name this room either way: a global name is
+    exactly what the scoping removed, and honouring one across rooms would put
+    it back.
+    """
     normalized = normalize_cohost_name(name)
     if not normalized:
         return None
-    pointer = table().get_item(
-        Key={"PK": _cohost_name_pk(room_id, normalized), "SK": "META"}
-    ).get("Item")
-    if not pointer or pointer.get("entity") != "cohost_pointer":
-        return None
-    return get_cohost_invite(pointer["room_id"], pointer["invite_id"])
+    for key in (_cohost_name_pk(room_id, normalized), _legacy_cohost_name_pk(normalized)):
+        pointer = table().get_item(Key={"PK": key, "SK": "META"}).get("Item")
+        if not pointer or pointer.get("entity") != "cohost_pointer":
+            continue
+        if pointer.get("room_id") != room_id:
+            continue
+        return get_cohost_invite(pointer["room_id"], pointer["invite_id"])
+    return None
 
 
 # --- api keys ---------------------------------------------------------------
