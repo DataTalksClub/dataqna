@@ -18,9 +18,6 @@
   var I = {
     check: svg('<path d="M20 6 9 17l-5-5"/>'),
     pin: svg('<path d="M9 4h6"/><path d="M10 4v5l-3 3v2h10v-2l-3-3V4"/><path d="M12 14v7"/>'),
-    eyeOff: svg('<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 ' +
-      '5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 ' +
-      '3.19"/><path d="M14.12 14.12a3 3 0 1 1-4.24-4.24"/><path d="m1 1 22 22"/>'),
     trash: svg('<path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>' +
       '<path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M10 11v6"/><path d="M14 11v6"/>')
   };
@@ -277,16 +274,13 @@
     all: ["No questions yet",
       "Share the link below — questions appear the moment they are asked."],
     answered: ["Nothing answered yet",
-      "Mark a question answered and it moves to this tab."],
-    hidden: ["Nothing hidden",
-      "Hide a question to park it here without deleting it."]
+      "Mark a question answered and it moves to this tab."]
   };
 
   function renderQuestions() {
     var filtered = state.items.filter(function (item) {
-      if (state.filter === "all") return item.status === "visible" || item.status === "answered";
       if (state.filter === "answered") return item.status === "answered";
-      return item.status === "hidden";
+      return item.status === "visible" || item.status === "answered";
     });
     if (state.filter === "all") {
       // The console's job is what to answer next: done items sink below the
@@ -322,7 +316,6 @@
       // position or hue alone.
       if (item.pinned) meta.appendChild(tag("pinned", "Pinned"));
       if (item.status === "answered") meta.appendChild(tag("answered", "Answered"));
-      if (item.status === "hidden") meta.appendChild(tag("hidden", "Hidden"));
 
       var score = document.createElement("div");
       // Displays a score; it is not a control, so it must not look like one.
@@ -343,12 +336,7 @@
         item.status === "answered"
           ? ["Unanswer", I.check, { status: "visible" }, true]
           : ["Mark answered", I.check, { status: "answered" }, false],
-        [item.pinned ? "Unpin" : "Pin", I.pin, { pinned: !item.pinned }, !!item.pinned],
-        item.status === "hidden"
-          ? ["Restore", I.eyeOff, { status: "visible" }, true]
-          // Hiding removes the card from the current tab, so the undo rides
-          // the confirmation toast — one tap to reverse.
-          : ["Hide", I.eyeOff, { status: "hidden" }, false, "Question hidden"]
+        [item.pinned ? "Unpin" : "Pin", I.pin, { pinned: !item.pinned }, !!item.pinned]
       ].forEach(function (entry) {
         actions.appendChild(actionButton(item, entry[0], entry[1], entry[2], entry[3], entry[4]));
       });
@@ -393,7 +381,7 @@
     button.innerHTML = icon;
     button.setAttribute("aria-label", name);
     button.title = name;
-    // Answered, pinned, hidden are toggles; pressed shows which side is on.
+    // Answered and pinned are toggles; pressed shows which side is on.
     button.setAttribute("aria-pressed", pressed ? "true" : "false");
     if (state.busy[item.question_id]) {
       button.disabled = true;
@@ -414,7 +402,7 @@
     // An in-flight optimistic change must not be stomped by the poll.
     if (Object.keys(state.busy).length) return Promise.resolve();
     var headers = state.etag ? { "if-none-match": state.etag } : {};
-    return request("/rooms/" + roomId + "/questions?status=visible,answered,hidden", { headers: headers })
+    return request("/rooms/" + roomId + "/questions?status=visible,answered", { headers: headers })
       .then(function (body) {
         if (body.unchanged) return;
         if (Object.keys(state.busy).length) return;
@@ -459,7 +447,7 @@
 
   function selectFilter(name) {
     state.filter = name;
-    ["all", "answered", "hidden"].forEach(function (key) {
+    ["all", "answered"].forEach(function (key) {
       $("f-" + key).setAttribute("aria-pressed", key === name ? "true" : "false");
     });
     renderQuestions();
@@ -485,7 +473,7 @@
       navigator.clipboard.writeText(state.room.url).then(function () { toast("Link copied"); });
     });
     $("create-cohost").addEventListener("click", createCohost);
-    ["all", "answered", "hidden"].forEach(function (key) {
+    ["all", "answered"].forEach(function (key) {
       $("f-" + key).addEventListener("click", function () { selectFilter(key); });
     });
   } else {

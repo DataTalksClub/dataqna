@@ -381,7 +381,6 @@ def _bulk(event, room, identity):
 
     mapping = {
         "answer": ("status", "answered"),
-        "hide": ("status", "hidden"),
         "delete": ("status", "deleted"),
         "pin": ("pinned", True),
         "unpin": ("pinned", False),

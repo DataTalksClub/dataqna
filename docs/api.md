@@ -218,7 +218,7 @@ Public for `open` and `closed` rooms. This is the endpoint the room page polls.
 | Query | Default | Meaning |
 |-------|---------|---------|
 | `sort` | room's `default_sort` | `popular` or `recent` |
-| `status` | `visible,answered` | Repeatable. `hidden` and `deleted` require admin |
+| `status` | `visible,answered` | Repeatable. `deleted` requires admin |
 | `limit` | 100 | Max 500 |
 | `cursor` | — | From `next_cursor` |
 
@@ -265,7 +265,7 @@ once. Starts at `score` 1 — the author's own.
 
 ### `PATCH /rooms/{room}/questions/{question_id}`
 
-Admins set `status` (`visible`, `answered`, `hidden`, `deleted`), `pinned`, or
+Admins set `status` (`visible`, `answered`, `deleted`), `pinned`, or
 `text` — the last for fixing a typo before it goes on screen, not for changing what
 someone asked.
 
@@ -294,7 +294,7 @@ Admin. One call for end-of-session cleanup.
 { "question_ids": ["01K3...", "01K4..."], "action": "answer" }
 ```
 
-Actions: `answer`, `hide`, `delete`, `pin`, `unpin`. Max 100 ids.
+Actions: `answer`, `delete`, `pin`, `unpin`. Max 100 ids.
 Returns per-id results; a failure on one does not roll back the rest.
 
 ## API keys

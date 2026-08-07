@@ -5,7 +5,7 @@ import hashlib
 from . import config, ids, rooms, store
 from .http import HttpError
 
-STATUSES = ("visible", "answered", "hidden", "deleted")
+STATUSES = ("visible", "answered", "deleted")
 PUBLIC_STATUSES = ("visible", "answered")
 
 EDIT_WINDOW_SECONDS = 300
@@ -88,9 +88,9 @@ def set_status(room, question, target):
         store.bump_counter(room_id, "q_answered", 1)
     if current == "answered" and target != "answered":
         store.bump_counter(room_id, "q_answered", -1)
-    if target in ("hidden", "deleted") and current not in ("hidden", "deleted"):
+    if target == "deleted" and current != "deleted":
         store.bump_counter(room_id, "q_total", -1)
-    if current in ("hidden", "deleted") and target not in ("hidden", "deleted"):
+    if current == "deleted" and target != "deleted":
         store.bump_counter(room_id, "q_total", 1)
     return updated
 

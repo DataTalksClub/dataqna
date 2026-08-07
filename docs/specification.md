@@ -49,7 +49,7 @@ A room admin generates a **co-host invite**: a name and a passcode. The name goe
 in the link — `/r/<slug>/cohost/<name>` — and is not secret; the passcode is
 three groups of four characters, like `Q7K2-M9XR-T8VB`, drawn from an alphabet
 with no glyph you can misread or mishear. Both together let someone moderate
-that one room: answer, pin, hide, edit for typos, and run presentation mode.
+that one room: answer, pin, delete, edit for typos, and run presentation mode.
 They need no account, no email address, and no prior relationship with the
 organization.
 
@@ -155,7 +155,7 @@ Retention deletes data; expiry only stops accepting it.
 There is deliberately no pre-publication review queue and no pause switch for
 questions or votes: an open room accepts both, a closed room accepts neither.
 A question is visible to everyone the moment it is asked. Moderation happens
-after the fact — `hidden` removes anything that needs removing — and closing
+after the fact — `deleted` removes anything that needs removing — and closing
 the room is how a session stops.
 
 ## 4. Questions
@@ -177,15 +177,13 @@ first.
 |-------|------------------------|--------|
 | `visible` | Everyone | Submission |
 | `answered` | Everyone, marked | Admin |
-| `hidden` | Nobody | Admin |
 | `deleted` | Nobody | Admin, or the author within the edit window |
 
-An earlier version had a `pending` state feeding a review queue. It is gone,
-and nothing reads it: the four states above are the whole set.
-
-`hidden` and `deleted` differ in intent: `hidden` is moderation (the record stays,
-marked as removed), `deleted` is withdrawal (the row is dropped). Neither is
-recoverable through the UI.
+Two earlier states are gone. `pending` fed a review queue; `hidden` was a
+removal that did not remove — the question left the room and stayed in a tab
+nobody ever went back to, so it was the same decision as deleting with a pile
+of admin left over. There is one way to take a question away, it is called
+delete, and it is not recoverable through the UI.
 
 ### 4.3 Ranking
 
@@ -197,7 +195,7 @@ Pinned questions are held at the top of both orderings, in pin order. A host use
 this to keep a seed question or a topic marker visible.
 
 Score is the upvote count. There are no downvotes: they turn a question queue into
-a popularity contest with a losing side, and the host already has `hidden` for
+a popularity contest with a losing side, and the host already has `deleted` for
 anything that needs removing.
 
 ### 4.4 Voting
@@ -281,7 +279,7 @@ where it is needed without any of the bookkeeping that made it unattractive.
   state, with question and unanswered counts. "New room" opens a form covering the
   settings in section 3.3.
 - **Room detail** — leads with the queue: the same question list as the public
-  page plus per-question controls (mark answered, pin, hide, delete, edit for
+  page plus per-question controls (mark answered, pin, delete, edit for
   typos), inside the first screenful on a phone. The header carries the two
   mid-session controls — presentation mode and copy link. Everything done once
   before an event — the share panel (public URL, QR downloads), settings, and
@@ -336,7 +334,7 @@ Two conventional keys survive because they need no teaching: the arrow keys move
 the selection (or walk the ranking in spotlight), and `Esc` closes the QR
 overlay or leaves the spotlight. Everything else is a button.
 
-The list refreshes on the polling loop; answered and hidden questions visibly
+The list refreshes on the polling loop; answered and deleted questions visibly
 leave it, and rank changes animate so movement is legible. The spotlit question
 never moves underneath the host — ranking applies again once they return to the
 list.
@@ -509,7 +507,7 @@ Enforced with conditional counter items in DynamoDB, keyed by a truncated window
 with a TTL a little longer than the window. Exceeding a limit returns `429` with
 `Retry-After`.
 
-When a room is under active abuse, `hidden` removes individual questions and
+When a room is under active abuse, `deleted` removes individual questions and
 closing the room stops submissions and votes outright while leaving it
 readable. There is deliberately no finer switch — see section 3.3.
 

@@ -102,7 +102,7 @@ primary (filled); secondary actions are quieter but discoverable.
 
 ### 7. State clarity
 
-Pinned, answered, pending, hidden, voted, selected, busy, disabled — each state
+Pinned, answered, voted, selected, busy, disabled — each state
 is legible without relying on color alone (badge text, icon, position, or
 weight also changes), and no two states share a treatment. An in-flight action
 shows feedback within 100ms of the tap (optimistic change or busy indicator).

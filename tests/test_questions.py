@@ -97,12 +97,25 @@ def test_marking_answered_updates_counters(table):
     assert int(refreshed["q_answered"]) == 1
 
 
-def test_hidden_questions_disappear_for_participants(table):
+def test_deleted_questions_disappear_for_participants(table):
+    """Deleting is the only removal there is, so it has to be a real one —
+    including for the participant who asked."""
     room = make_room()
     question = questions.submit(room, {"text": "spam"}, "p1")
-    questions.set_status(room, store.get_question(room["room_id"], question["question_id"]), "hidden")
+    questions.set_status(room, store.get_question(room["room_id"], question["question_id"]), "deleted")
     items, _, _ = questions.collect(room, participant="p1")
     assert items == []
+
+
+def test_hiding_is_not_a_status_anybody_can_reach(table):
+    """It was a third way to remove a question that did not remove it. The
+    console had a tab for the pile it made, which nobody ever emptied."""
+    room = make_room()
+    question = questions.submit(room, {"text": "spam"}, "p1")
+    stored = store.get_question(room["room_id"], question["question_id"])
+    with pytest.raises(HttpError):
+        questions.set_status(room, stored, "hidden")
+    assert "hidden" not in questions.STATUSES
 
 
 def test_etag_changes_when_a_score_changes(table):
