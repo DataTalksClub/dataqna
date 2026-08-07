@@ -112,24 +112,27 @@ def main():
 
         # Co-host invites: a link that names one, and a passcode that opens it.
         invite = requests.post(f"{api}/rooms/{room_id}/cohosts", headers=admin_headers,
-                               json={"label": "verifier"}, timeout=20)
+                               json={"name": "verifier"}, timeout=20)
         check("co-host invite creation", invite.status_code == 201, invite.text[:200])
         name, passcode = invite.json()["name"], invite.json()["passcode"]
         check("the join link does not carry the passcode",
               passcode not in invite.json()["join_url"])
 
+        join_url = f"{base}/r/{slug}/cohost/{name}"
+        check("the join link is scoped to its session", invite.json()["join_url"] == join_url)
+
         leaked = requests.Session()
-        link_only = leaked.get(f"{base}/cohost/{name}", timeout=20, allow_redirects=False)
+        link_only = leaked.get(join_url, timeout=20, allow_redirects=False)
         check("the link alone only asks for the passcode",
               link_only.status_code == 200 and "dq_cohost" not in leaked.cookies)
-        wrong = leaked.post(f"{base}/cohost", timeout=20, allow_redirects=False,
-                            data={"name": name, "passcode": "WRONG-WRONG-WRNG"})
+        wrong = leaked.post(join_url, timeout=20, allow_redirects=False,
+                            data={"passcode": "WRONG-WRONG-WRNG"})
         check("a wrong passcode is refused",
               wrong.status_code == 403 and "dq_cohost" not in leaked.cookies)
 
         cohost = requests.Session()
-        redeemed = cohost.post(f"{base}/cohost", timeout=20, allow_redirects=False,
-                               data={"name": name, "passcode": passcode})
+        redeemed = cohost.post(join_url, timeout=20, allow_redirects=False,
+                               data={"passcode": passcode})
         check("link and passcode together redeem to the session",
               redeemed.status_code == 302 and room_id in redeemed.headers.get("location", ""))
         check("co-host cookie is issued", "dq_cohost" in cohost.cookies)
@@ -151,8 +154,8 @@ def main():
         no_rooms = cohost.get(f"{api}/rooms", timeout=20)
         check("co-host cannot list rooms", no_rooms.status_code == 401)
 
-        unknown = requests.post(f"{base}/cohost", timeout=20, allow_redirects=False,
-                                data={"name": "no-such-invite", "passcode": passcode})
+        unknown = requests.post(f"{base}/r/{slug}/cohost/no-such-invite", timeout=20,
+                                allow_redirects=False, data={"passcode": passcode})
         check("an unknown link name is refused", unknown.status_code == 403)
 
         requests.delete(f"{api}/rooms/{room_id}/cohosts/{invite.json()['invite_id']}",

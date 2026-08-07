@@ -118,16 +118,10 @@ Resources:
           Properties: {ApiId: !Ref Api, Path: '/assets/{proxy+}', Method: GET}
         Rooms:
           Type: HttpApi
-          Properties: {ApiId: !Ref Api, Path: '/r/{proxy+}', Method: GET}
+          Properties: {ApiId: !Ref Api, Path: '/r/{proxy+}', Method: ANY}
         Api:
           Type: HttpApi
           Properties: {ApiId: !Ref Api, Path: '/api/v1/{proxy+}', Method: ANY}
-        CohostEntry:
-          Type: HttpApi
-          Properties: {ApiId: !Ref Api, Path: /cohost, Method: ANY}
-        CohostLink:
-          Type: HttpApi
-          Properties: {ApiId: !Ref Api, Path: '/cohost/{proxy+}', Method: ANY}
 
   AdminFunction:
     Type: AWS::Serverless::Function
