@@ -345,7 +345,7 @@ def _question(event, room, question_id, method, identity):
 
 def _vote(event, room, question_id, method, identity):
     question = store.get_question(room["room_id"], question_id)
-    if not question or questions.status_of(question) not in questions.PUBLIC_STATUSES:
+    if not question or question.get("status") not in questions.PUBLIC_STATUSES:
         raise HttpError(404, "not_found", "No such question.")
     if not rooms.accepting_votes(room):
         raise HttpError(409, "voting_closed", "Voting is closed for this room.")

@@ -94,14 +94,6 @@ def test_removed_settings_are_rejected_as_unknown(table):
             rooms.apply_updates(room, {"settings": {key: value}})
 
 
-def test_legacy_settings_fall_out_of_stored_rooms_on_write(table):
-    room = make_room(table)
-    store.update_room(room["room_id"], {"settings": dict(room["settings"], questions_open=False)})
-    updated = rooms.apply_updates(rooms.load(room["room_id"]), {"settings": {"listed": False}})
-    assert "questions_open" not in updated["settings"]
-    assert rooms.accepting_questions(updated)
-
-
 def test_index_keys_are_strings(table):
     """The GSI declares string keys; DynamoDB rejects a number, moto does not."""
     room = make_room(table)

@@ -180,10 +180,8 @@ first.
 | `hidden` | Nobody | Admin |
 | `deleted` | Nobody | Admin, or the author within the edit window |
 
-An earlier version had a `pending` state feeding a review queue; it is gone,
-and any stored row still carrying it is read as `visible` — those are
-questions someone asked and nobody rejected, and there is no control left
-that could release them.
+An earlier version had a `pending` state feeding a review queue. It is gone,
+and nothing reads it: the four states above are the whole set.
 
 `hidden` and `deleted` differ in intent: `hidden` is moderation (the record stays,
 marked as removed), `deleted` is withdrawal (the row is dropped). Neither is

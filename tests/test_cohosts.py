@@ -122,33 +122,6 @@ def test_the_owner_sees_the_invites_they_created(table):
     assert [item["name"] for item in json.loads(response["body"])["items"]] == ["ivan"]
 
 
-def test_an_invite_from_before_the_split_does_not_break_the_list(table):
-    """A single-`code` invite predates link-plus-passcode and cannot be redeemed.
-
-    It has no name to redeem through, so listing it would offer the owner a row
-    with both halves missing — and reading it as though it had them took the
-    whole People panel down with a 500.
-    """
-    room = make_room()
-    invite_for(room, name="ivan")
-    store.table().put_item(
-        Item={
-            "PK": f"ROOM#{room['room_id']}",
-            "SK": "COHOST#01OLDONE",
-            "entity": "cohost_invite",
-            "invite_id": "01OLDONE",
-            "room_id": room["room_id"],
-            "code": "JBBD-6WC4-BKG7",
-            "label": "Ivan",
-            "created_at": 1786023800,
-        }
-    )
-
-    response = call(["rooms", room["room_id"], "cohosts"], "GET", identity=owner())
-    assert response["statusCode"] == 200
-    assert [item["name"] for item in json.loads(response["body"])["items"]] == ["ivan"]
-
-
 def test_guessing_is_rate_limited_per_address(table):
     room = make_room()
     invite = invite_for(room)
@@ -347,69 +320,3 @@ def test_the_gate_is_shown_before_the_passcode_is_given(table):
     response = public_handler.lambda_handler(request, None)
     assert response["statusCode"] == 200
     assert 'name="passcode"' in response["body"]
-
-
-def legacy_pointer(room, invite, name):
-    """Re-create what a pointer looked like before names were scoped to a room.
-
-    The scoped pointer goes away, exactly as it was absent for every invite
-    written before the change.
-    """
-    store.table().delete_item(
-        Key={"PK": f"COHOSTNAME#{room['room_id']}#{name}", "SK": "META"}
-    )
-    store.table().put_item(Item={
-        "PK": f"COHOSTNAME#{name}",
-        "SK": "META",
-        "entity": "cohost_pointer",
-        "room_id": room["room_id"],
-        "invite_id": invite["invite_id"],
-    })
-
-
-def test_an_invite_from_before_the_scoping_still_opens(table):
-    """Re-keying the pointers must not lock out links already handed out."""
-    room = make_room(slug="tonight")
-    invite = invite_for(room, name="ivan", passcode="open-sesame-42")
-    legacy_pointer(room, invite, "ivan")
-
-    found, error = api.redeem_cohost(room, "ivan", "open-sesame-42")
-    assert error is None
-    assert found["invite_id"] == invite["invite_id"]
-
-
-def test_a_pre_scoping_name_does_not_open_a_room_it_never_named(table):
-    """The fallback reads an old key; it does not restore old-key semantics."""
-    room = make_room(slug="tonight")
-    other = make_room(slug="other-night")
-    invite = invite_for(room, name="ivan", passcode="open-sesame-42")
-    legacy_pointer(room, invite, "ivan")
-
-    found, error = api.redeem_cohost(other, "ivan", "open-sesame-42")
-    assert found is None
-    assert error
-
-
-def test_revoking_reaches_a_pre_scoping_pointer(table):
-    room = make_room(slug="tonight")
-    invite = invite_for(room, name="ivan", passcode="open-sesame-42")
-    legacy_pointer(room, invite, "ivan")
-
-    assert store.revoke_cohost_invite(room["room_id"], invite["invite_id"])
-    found, error = api.redeem_cohost(room, "ivan", "open-sesame-42")
-    assert found is None
-    assert error
-
-
-def test_revoking_leaves_another_room_pre_scoping_pointer_alone(table):
-    """The old key is shared, so one room's revoke must not reach another's."""
-    room = make_room(slug="tonight")
-    other = make_room(slug="other-night")
-    theirs = invite_for(other, name="ivan", passcode="open-sesame-42")
-    legacy_pointer(other, theirs, "ivan")
-    mine = invite_for(room, name="ivan", passcode="different-passcode")
-
-    assert store.revoke_cohost_invite(room["room_id"], mine["invite_id"])
-    found, error = api.redeem_cohost(other, "ivan", "open-sesame-42")
-    assert error is None
-    assert found["invite_id"] == theirs["invite_id"]

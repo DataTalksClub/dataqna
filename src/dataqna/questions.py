@@ -15,18 +15,6 @@ def _bad(message, code="invalid_request"):
     return HttpError(400, code, message)
 
 
-def status_of(question):
-    """A question's status, with history smoothed over.
-
-    Moderation was removed from the product, but rows written while it
-    existed may still carry `pending`. They were questions someone asked and
-    nobody ever rejected, so they read as `visible` — the alternative is a
-    question that stays invisible forever with no control left to release it.
-    """
-    status = question.get("status")
-    return "visible" if status == "pending" else status
-
-
 def submit(room, payload, participant):
     if not rooms.accepting_questions(room):
         raise HttpError(409, "questions_closed", "This room is not accepting questions.")
@@ -74,7 +62,7 @@ def submit(room, payload, participant):
 def can_author_edit(question, participant, now=None):
     if not participant or question.get("participant") != participant:
         return False
-    if status_of(question) != "visible":
+    if question.get("status") != "visible":
         return False
     if int(question.get("score") or 0) > 1:
         return False
@@ -84,7 +72,7 @@ def can_author_edit(question, participant, now=None):
 def set_status(room, question, target):
     if target not in STATUSES:
         raise _bad(f"status must be one of {list(STATUSES)}")
-    current = status_of(question)
+    current = question.get("status")
     if current == target:
         return question
 
@@ -108,7 +96,7 @@ def set_status(room, question, target):
 
 
 def visible_to(question, participant, is_admin):
-    status = status_of(question)
+    status = question.get("status")
     if is_admin:
         return status != "deleted"
     return status in PUBLIC_STATUSES
@@ -131,7 +119,7 @@ def serialize(question, *, participant=None, voted=False, is_admin=False, now=No
         "question_id": question["question_id"],
         "text": question.get("text"),
         "author_name": question.get("author_name"),
-        "status": status_of(question),
+        "status": question.get("status"),
         "score": int(question.get("score") or 0),
         "pinned": bool(question.get("pinned")),
         "created_at": rooms.iso(question.get("created_at")),
@@ -166,7 +154,7 @@ def collect(room, *, participant=None, is_admin=False, sort=None, statuses=None)
     for question in raw:
         if not visible_to(question, participant, is_admin):
             continue
-        if allowed and status_of(question) not in allowed:
+        if allowed and question.get("status") not in allowed:
             continue
         visible.append(question)
 
@@ -183,7 +171,7 @@ def collect(room, *, participant=None, is_admin=False, sort=None, statuses=None)
         for question in ordered
     ]
     counts = {
-        "visible": sum(1 for q in visible if status_of(q) == "visible"),
-        "answered": sum(1 for q in visible if status_of(q) == "answered"),
+        "visible": sum(1 for q in visible if q.get("status") == "visible"),
+        "answered": sum(1 for q in visible if q.get("status") == "answered"),
     }
     return items, counts, etag(ordered)

@@ -38,9 +38,8 @@ def _bad(message, code="invalid_request"):
 
 
 def clean_settings(raw, base=None):
-    # Rebuilt from the known keys, so settings removed from the product
-    # (moderation, questions_open, voting_open) fall out of stored rooms on
-    # their next write instead of lingering forever.
+    # Rebuilt from the known keys, so what is stored is exactly what the
+    # product defines — an unknown key is a mistake, not something to keep.
     base = base or {}
     settings = {key: base.get(key, value) for key, value in DEFAULT_SETTINGS.items()}
     for key, value in (raw or {}).items():
