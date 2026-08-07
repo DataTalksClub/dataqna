@@ -23,11 +23,7 @@ def _cohost_of(event, room_id):
     claim = security.cohost_claim(http.cookie(event, config.COHOST_COOKIE))
     if not claim or claim.get("room_id") != room_id:
         return False
-    invite = store.get_cohost_invite(room_id, claim.get("invite_id"))
-    if not invite:
-        return False
-    expires_at = invite.get("expires_at")
-    return not (expires_at and int(expires_at) <= store.now())
+    return bool(store.get_cohost_invite(room_id, claim.get("invite_id")))
 
 
 def _login(event):

@@ -45,11 +45,19 @@ Guest hosts are handled without accounts at all. See section 2.1.
 
 ### 2.1 Co-hosts
 
-A room admin generates a **co-host code** — three groups of four characters, like
-`Q7K2-M9XR-T8VB`, drawn from an alphabet with no glyph you can misread or mishear.
-Anyone holding it can moderate that one room: answer, pin, hide, edit for
-typos, and run presentation mode. They need no account, no email address, and no
-prior relationship with the organization.
+A room admin generates a **co-host invite**: a name and a passcode. The name goes
+in the link — `/r/<slug>/cohost/<name>` — and is not secret; the passcode is
+three groups of four characters, like `Q7K2-M9XR-T8VB`, drawn from an alphabet
+with no glyph you can misread or mishear. Both together let someone moderate
+that one room: answer, pin, hide, edit for typos, and run presentation mode.
+They need no account, no email address, and no prior relationship with the
+organization.
+
+Splitting the invite in two is what makes forwarding the link harmless: the link
+says which invite you mean, the passcode is what opens it, and they travel by
+different routes. The link carries its room, so a name only has to be unique
+inside one session — two sessions can each have an `ivan` — and the URL says
+which session it opens rather than looking like a claim on the whole site.
 
 What a co-host code deliberately cannot do:
 
@@ -65,14 +73,20 @@ Cognito password accounts in the shared pool, which meant one service's guest wa
 an identity in a pool five other services trust — a large mechanism, and a large
 blast radius, for what is really "let this person help me run tonight's Q&A".
 
-Codes expire after 30 days by default, and revoking one takes effect on the next
-request rather than at the end of a session.
+An invite has no expiry. It is valid exactly as long as the session it belongs
+to, because that is the question a host can actually answer — "is Ivan still
+helping me run this?" — where "has it been thirty days?" is one they would have
+to look up. Revoking is how an invite ends, and it takes effect on the next
+request rather than at the end of a session. The redeemed cookie does expire, at
+thirty days, because a signed cookie has to say when it stops being valid;
+redeeming the same link again is free.
 
-The code is stored in the clear under the room's partition, because a host has to
-be able to read it back and say it out loud a second time; it is only ever
+The passcode is stored in the clear under the room's partition, because a host
+has to be able to read it back and say it out loud a second time; it is only ever
 returned through admin-authorized endpoints. The lookup pointer used at
-redemption is keyed by the code's hash, so resolving a code needs no scan and the
-pointer items reveal nothing by themselves.
+redemption is keyed by the room and the name together, so resolving a link needs
+no scan, and a wrong name and a wrong passcode fail identically — the form cannot
+be used to discover which invites exist.
 
 ## 3. Rooms
 
@@ -425,12 +439,11 @@ One DynamoDB table, `dataqna`, on-demand, TTL on `ttl`, point-in-time recovery o
 |--------|----|----|--------|--------|
 | Room | `ROOM#<room_id>` | `META` | `STATE#<state>` | `<updated_at>` |
 | Slug pointer | `SLUG#<slug>` | `META` | — | — |
-| Code pointer | `CODE#<code>` | `META` | — | — |
 | Question | `ROOM#<room_id>` | `Q#<question_id>` | — | — |
 | Vote | `ROOM#<room_id>` | `V#<question_id>#<participant_id>` | — | — |
 | Admin grant | `ROOM#<room_id>` | `ADMIN#<email>` | `USER#<email>` | `ROOM#<room_id>` |
 | Co-host invite | `ROOM#<room_id>` | `COHOST#<invite_id>` | — | — |
-| Co-host pointer | `COHOST#<sha256(code)>` | `META` | — | — |
+| Co-host pointer | `COHOSTNAME#<room_id>#<name>` | `META` | — | — |
 | API key | `KEY#<sha256>` | `META` | `USER#<email>` | `KEY#<key_id>` |
 | Rate counter | `RATE#<scope>` | `<window>` | — | — |
 | Idempotency | `IDEM#<email>#<key>` | `META` | — | — |

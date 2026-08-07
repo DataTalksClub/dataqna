@@ -153,28 +153,21 @@ def _shell(title, inner, *, status=200):
     return http.html_response(status, _stamp(body))
 
 
-def cohost_page(error=None, name=""):
+def cohost_page(room, error=None, name=""):
     """The passcode gate.
 
-    The link names an invite; it does not open it. This page is what turns a
-    forwarded link into nothing much.
+    The link names an invite within one session; it does not open it. This page
+    is what turns a forwarded link into nothing much.
     """
     message = f'<div class="banner warn">{html.escape(error)}</div>' if error else ""
-    known = bool(name)
-    name_field = (
-        f'<input type="hidden" name="name" value="{html.escape(name)}">'
-        if known
-        else '<input type="text" name="name" autocomplete="off" spellcheck="false"'
-        ' maxlength="48" placeholder="Invite link name" aria-label="Invite link name"'
-        ' class="mono">'
-    )
+    action = f"/r/{html.escape(room.get('slug') or '')}/cohost/{html.escape(name)}"
     inner = f"""{BRAND}
 <h1 style="font-size:1.5rem;letter-spacing:-.01em">Co-host access</h1>
-<p class="muted">Enter the passcode the host gave you. It lets you run one
-session — its questions, settings, and presentation mode. No account needed.</p>
-<form method="POST" action="/cohost" class="card stack">
+<p class="muted">Enter the passcode the host gave you. It lets you run
+{html.escape(room.get("title") or "this session")} — its questions, settings,
+and presentation mode. No account needed.</p>
+<form method="POST" action="{action}" class="card stack">
   {message}
-  {name_field}
   <input type="text" name="passcode" autocomplete="off" autocapitalize="characters"
          autofocus spellcheck="false" maxlength="40" placeholder="XXXX-XXXX-XXXX"
          aria-label="Passcode" class="mono">

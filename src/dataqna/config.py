@@ -26,8 +26,10 @@ PARTICIPANT_COOKIE = "dq_p"
 COHOST_COOKIE = "dq_cohost"
 
 SESSION_TTL_SECONDS = 12 * 60 * 60
+# How long a redeemed invite keeps its cookie. The invite itself does not
+# expire — it lasts as long as the room, and revoking is how it ends — but a
+# signed cookie has to say when it stops being valid. Redeeming again is free.
 COHOST_TTL_SECONDS = 30 * 24 * 60 * 60
-COHOST_DEFAULT_VALID_DAYS = 30
 PARTICIPANT_TTL_SECONDS = 400 * 24 * 60 * 60
 OIDC_TTL_SECONDS = 600
 

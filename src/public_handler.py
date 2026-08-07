@@ -129,30 +129,27 @@ def _serve_home(event):
     return render.directory_page(live, recent, signed_in=email)
 
 
-def _serve_cohost(event, path):
-    """Redeem an invite: the link names it, the passcode opens it."""
-    method = http.method(event)
-    name = ""
-    if path.startswith("/cohost/"):
-        import urllib.parse
+def _serve_cohost(event, identifier, name):
+    """Redeem an invite: the link names it, the passcode opens it.
 
-        name = urllib.parse.unquote(path[len("/cohost/"):]).strip("/")
-    elif method == "GET":
-        name = http.query(event).get("name", "")
+    The link carries its room, so a name only has to be unique inside one
+    session and the URL says which session it opens.
+    """
+    room = rooms.load(identifier)
+    if not room or room.get("state") == "draft":
+        return render.notice("Room not found", "This link does not point at an active Q&A.", status=404)
 
-    if method != "POST":
-        return render.cohost_page(name=name)
+    if http.method(event) != "POST":
+        return render.cohost_page(room, name=name)
 
     fields = _form_fields(event)
-    invite, room, error = api.redeem_cohost(
-        fields.get("name", name), fields.get("passcode", ""), source_ip=http.source_ip(event)
+    invite, error = api.redeem_cohost(
+        room, name, fields.get("passcode", ""), source_ip=http.source_ip(event)
     )
     if error:
-        return render.cohost_page(error=error, name=fields.get("name", name))
+        return render.cohost_page(room, error=error, name=name)
 
-    expires_at = invite.get("expires_at")
-    remaining = int(expires_at) - store.now() if expires_at else config.COHOST_TTL_SECONDS
-    ttl = max(60, min(config.COHOST_TTL_SECONDS, remaining))
+    ttl = config.COHOST_TTL_SECONDS
     token = security.new_cohost_token(room["room_id"], invite["invite_id"], ttl)
     return http.redirect(
         f"/admin/rooms/{room['room_id']}",
@@ -219,9 +216,6 @@ def lambda_handler(event, _context):
         if path == "/":
             return _serve_home(event)
 
-        if path == "/cohost" or path.startswith("/cohost/"):
-            return _serve_cohost(event, path)
-
         # The permanent link to whatever is on right now, for podcast notes
         # and slides that must not be edited per episode.
         if path == "/live":
@@ -232,9 +226,16 @@ def lambda_handler(event, _context):
             if rest.endswith("/qr.svg") or rest.endswith("/qr.png"):
                 identifier, _, filename = rest.rpartition("/")
                 return _serve_qr(identifier, filename.split(".")[-1], http.query(event))
-            if "/" in rest:
+            identifier, slash, tail = rest.partition("/")
+            if slash:
+                if tail.startswith("cohost/"):
+                    import urllib.parse
+
+                    name = urllib.parse.unquote(tail[len("cohost/"):]).strip("/")
+                    if name and "/" not in name:
+                        return _serve_cohost(event, identifier, name)
                 return http.response(404, "Not found")
-            return _serve_room(event, rest)
+            return _serve_room(event, identifier)
 
         return render.notice("Not found", "Nothing lives at this address.", status=404)
 

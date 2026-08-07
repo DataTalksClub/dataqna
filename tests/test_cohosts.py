@@ -4,7 +4,8 @@ import json
 
 import pytest
 
-from dataqna import api, rooms, security, store
+import public_handler
+from dataqna import api, config, rooms, security, store
 from dataqna.http import HttpError
 from tests.test_api import call, event, owner, OWNER
 
@@ -30,9 +31,8 @@ def cohost_identity(room, invite):
 
 def test_an_invite_is_a_link_plus_a_separate_passcode(table):
     room = make_room()
-    invite = invite_for(room, label="Guest host")
-    assert invite["label"] == "Guest host"
-    assert invite["join_url"].endswith(invite["name"])
+    invite = invite_for(room)
+    assert invite["join_url"].endswith(f"/r/{room['slug']}/cohost/{invite['name']}")
     # The URL must not carry the secret, or forwarding it would be enough.
     assert invite["passcode"] not in invite["join_url"]
     assert invite["passcode"].count("-") == 2
@@ -43,26 +43,25 @@ def test_an_invite_is_a_link_plus_a_separate_passcode(table):
 def test_the_link_alone_does_not_get_anybody_in(table):
     room = make_room()
     invite = invite_for(room)
-    _, _, error = api.redeem_cohost(invite["name"], "")
+    _, error = api.redeem_cohost(room, invite["name"], "")
     assert error
-    _, _, error = api.redeem_cohost(invite["name"], "WRONG-GUESS-HERE")
+    _, error = api.redeem_cohost(room, invite["name"], "WRONG-GUESS-HERE")
     assert error
 
 
 def test_the_right_link_and_passcode_together_work(table):
     room = make_room()
     invite = invite_for(room)
-    found, resolved, error = api.redeem_cohost(invite["name"], invite["passcode"])
+    found, error = api.redeem_cohost(room, invite["name"], invite["passcode"])
     assert error is None
     assert found["invite_id"] == invite["invite_id"]
-    assert resolved["room_id"] == room["room_id"]
 
 
 def test_the_passcode_is_forgiving_about_case_and_dashes(table):
     room = make_room()
     invite = invite_for(room)
     sloppy = invite["passcode"].replace("-", "").lower()
-    _, _, error = api.redeem_cohost(invite["name"].upper(), f"  {sloppy}  ")
+    _, error = api.redeem_cohost(room, invite["name"].upper(), f"  {sloppy}  ")
     assert error is None
 
 
@@ -70,8 +69,8 @@ def test_a_wrong_link_and_a_wrong_passcode_look_identical(table):
     """Otherwise the form becomes an oracle for which link names exist."""
     room = make_room()
     invite = invite_for(room)
-    _, _, unknown_link = api.redeem_cohost("no-such-invite", invite["passcode"])
-    _, _, wrong_pass = api.redeem_cohost(invite["name"], "NOPE-NOPE-NOPE")
+    _, unknown_link = api.redeem_cohost(room, "no-such-invite", invite["passcode"])
+    _, wrong_pass = api.redeem_cohost(room, invite["name"], "NOPE-NOPE-NOPE")
     assert unknown_link == wrong_pass
 
 
@@ -79,8 +78,8 @@ def test_an_admin_can_preset_both_halves(table):
     room = make_room()
     invite = invite_for(room, name="tonight", passcode="open-sesame-42")
     assert invite["name"] == "tonight"
-    assert invite["join_url"].endswith("/cohost/tonight")
-    _, _, error = api.redeem_cohost("tonight", "open-sesame-42")
+    assert invite["join_url"].endswith(f"/r/{room['slug']}/cohost/tonight")
+    _, error = api.redeem_cohost(room, "tonight", "open-sesame-42")
     assert error is None
 
 
@@ -97,6 +96,22 @@ def test_a_taken_link_name_is_refused(table):
     with pytest.raises(HttpError) as excinfo:
         invite_for(room, name="tonight")
     assert excinfo.value.status == 409
+
+
+def test_the_same_name_is_free_in_another_session(table):
+    """A name is part of its room's link, so it is only spoken for there."""
+    first = make_room(slug="monday")
+    second = make_room(slug="tuesday")
+    invite_for(first, name="ivan")
+    assert invite_for(second, name="ivan")["name"] == "ivan"
+
+
+def test_an_invite_from_another_session_does_not_open_this_one(table):
+    first = make_room(slug="monday")
+    second = make_room(slug="tuesday")
+    invite = invite_for(first, name="ivan")
+    _, error = api.redeem_cohost(second, "ivan", invite["passcode"])
+    assert error
 
 
 def test_the_owner_sees_the_invites_they_created(table):
@@ -138,7 +153,7 @@ def test_guessing_is_rate_limited_per_address(table):
     room = make_room()
     invite = invite_for(room)
     errors = [
-        api.redeem_cohost(invite["name"], "WRONG-WRONG-WRNG", source_ip="203.0.113.9")[2]
+        api.redeem_cohost(room, invite["name"], "WRONG-WRONG-WRNG", source_ip="203.0.113.9")[1]
         for _ in range(12)
     ]
     assert any("Too many attempts" in error for error in errors)
@@ -253,15 +268,18 @@ def test_revoking_an_invite_takes_effect_immediately(table):
 
     call(["rooms", room["room_id"], "cohosts", invite["invite_id"]], "DELETE", identity=owner())
     assert not identity.moderates(room)
-    assert store.resolve_cohost_name(invite["name"]) is None
-    _, _, error = api.redeem_cohost(invite["name"], invite["passcode"])
+    assert store.resolve_cohost_name(room["room_id"], invite["name"]) is None
+    _, error = api.redeem_cohost(room, invite["name"], invite["passcode"])
     assert error
 
 
-def test_expired_code_does_not_moderate(table):
+def test_an_invite_lasts_as_long_as_the_session(table):
+    """There is no expiry to outlive — revoking is the only way one ends."""
     room = make_room()
-    invite = invite_for(room, expires_at=store.now() - 1)
-    assert not cohost_identity(room, invite).moderates(room)
+    invite = invite_for(room)
+    assert "expires_at" not in invite
+    assert store.get_cohost_invite(room["room_id"], invite["invite_id"]).get("ttl") is None
+    assert cohost_identity(room, invite).moderates(room)
 
 
 def test_cohost_sees_the_room_but_not_the_admin_list(table):
@@ -303,3 +321,29 @@ def test_a_forged_cohost_cookie_is_rejected(table):
 def test_a_session_token_cannot_be_used_as_a_cohost_token(table):
     room = make_room()
     assert security.cohost_claim(security.new_session_token(OWNER)) is None
+
+
+def test_the_link_carries_its_room_and_opens_only_that_room(table):
+    """A name is unique within a session, so the URL has to say which session."""
+    room = make_room(slug="tonight")
+    invite = invite_for(room, name="ivan", passcode="open-sesame-42")
+
+    request = event("POST", cookies=[])
+    request["rawPath"] = f"/r/tonight/cohost/ivan"
+    request["body"] = "passcode=open-sesame-42"
+    response = public_handler.lambda_handler(request, None)
+
+    assert response["statusCode"] == 302
+    assert response["headers"]["location"] == f"/admin/rooms/{room['room_id']}"
+    assert any(config.COHOST_COOKIE in cookie for cookie in response["cookies"])
+    assert invite["name"] == "ivan"
+
+
+def test_the_gate_is_shown_before_the_passcode_is_given(table):
+    make_room(slug="tonight")
+    invite_for(make_room(slug="tonight-2"), name="ivan")
+    request = event("GET", cookies=[])
+    request["rawPath"] = "/r/tonight/cohost/ivan"
+    response = public_handler.lambda_handler(request, None)
+    assert response["statusCode"] == 200
+    assert 'name="passcode"' in response["body"]

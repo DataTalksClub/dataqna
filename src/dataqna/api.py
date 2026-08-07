@@ -48,11 +48,7 @@ class Identity:
         """Re-checked against storage, so revoking a code takes effect at once."""
         if not self.cohost or self.cohost.get("room_id") != room["room_id"]:
             return False
-        invite = store.get_cohost_invite(room["room_id"], self.cohost.get("invite_id"))
-        if not invite:
-            return False
-        expires_at = invite.get("expires_at")
-        return not (expires_at and int(expires_at) <= store.now())
+        return bool(store.get_cohost_invite(room["room_id"], self.cohost.get("invite_id")))
 
     def is_admin_of(self, room):
         if not self.authenticated or not self._key_allows(room):
@@ -416,10 +412,8 @@ def _cohost_view(room, invite):
         "invite_id": invite["invite_id"],
         "name": invite["name"],
         "passcode": invite["passcode"],
-        "label": invite.get("label"),
-        "join_url": f"{config.SITE_URL}/cohost/{invite['name']}",
+        "join_url": f"{config.SITE_URL}/r/{room.get('slug')}/cohost/{invite['name']}",
         "created_at": rooms.iso(invite.get("created_at")),
-        "expires_at": rooms.iso(invite.get("expires_at")),
     }
 
 
@@ -435,10 +429,6 @@ def _cohosts(event, room, method, identity):
 
     if method == "POST":
         payload = http.body(event)
-        expires_at = rooms.parse_timestamp(payload.get("expires_at"), "expires_at")
-        if expires_at is None:
-            expires_at = store.now() + config.COHOST_DEFAULT_VALID_DAYS * 86400
-
         passcode = str(payload.get("passcode") or "").strip() or security.new_cohost_code()
         if len(passcode) < 6:
             raise HttpError(400, "invalid_request", "A passcode must be at least 6 characters.")
@@ -451,13 +441,14 @@ def _cohosts(event, room, method, identity):
             )
 
         invite_id = ids.ulid()
-        ttl = expires_at + 86400
         name = requested or security.new_cohost_name()
-        if not store.claim_cohost_name(name, room["room_id"], invite_id, ttl=ttl):
+        if not store.claim_cohost_name(name, room["room_id"], invite_id):
             if requested:
-                raise HttpError(409, "name_taken", f"The link name '{name}' is already in use.")
+                raise HttpError(
+                    409, "name_taken", f"This session already has a link named '{name}'."
+                )
             name = security.new_cohost_name()
-            if not store.claim_cohost_name(name, room["room_id"], invite_id, ttl=ttl):
+            if not store.claim_cohost_name(name, room["room_id"], invite_id):
                 raise HttpError(503, "name_exhausted", "Could not allocate a link name. Try again.")
 
         invite = {
@@ -465,11 +456,8 @@ def _cohosts(event, room, method, identity):
             "room_id": room["room_id"],
             "name": name,
             "passcode": passcode,
-            "label": str(payload.get("label") or "").strip()[:80] or None,
             "created_by": identity.email,
             "created_at": store.now(),
-            "expires_at": expires_at,
-            "ttl": ttl,
         }
         store.put_cohost_invite(invite)
         return http.json_response(201, _cohost_view(room, invite))
@@ -477,13 +465,13 @@ def _cohosts(event, room, method, identity):
     raise HttpError(405, "method_not_allowed", f"{method} is not allowed here.")
 
 
-def redeem_cohost(name, passcode, source_ip=""):
-    """Validate a link name and its passcode together.
+def redeem_cohost(room, name, passcode, source_ip=""):
+    """Validate a link name and its passcode together, within one room.
 
-    Returns (invite, room, error_message). The link alone proves nothing: it
-    names an invite, and the passcode is what grants access. Failures are
-    deliberately indistinguishable, so this cannot be used to discover which
-    link names exist.
+    Returns (invite, error_message). The link alone proves nothing: it names an
+    invite, and the passcode is what grants access. Failures are deliberately
+    indistinguishable, so this cannot be used to discover which link names
+    exist.
     """
     generic = "That link and passcode do not match. Check them with the host."
 
@@ -491,24 +479,19 @@ def redeem_cohost(name, passcode, source_ip=""):
     if source_ip:
         allowed, _ = store.rate_allow(f"cohost:{source_ip}", 300, 10)
         if not allowed:
-            return None, None, "Too many attempts. Wait a few minutes and try again."
+            return None, "Too many attempts. Wait a few minutes and try again."
 
-    invite = store.resolve_cohost_name(name)
+    if not room or room.get("state") == "archived":
+        return None, "That session is no longer available."
+
+    invite = store.resolve_cohost_name(room["room_id"], name)
     if not invite:
-        return None, None, generic
+        return None, generic
     if not security.constant_time_equals(
         store.normalize_cohost_code(passcode), store.normalize_cohost_code(invite["passcode"])
     ):
-        return None, None, generic
-
-    expires_at = invite.get("expires_at")
-    if expires_at and int(expires_at) <= store.now():
-        return None, None, "That invite has expired. Ask the host for a new one."
-
-    room = rooms.load(invite["room_id"])
-    if not room or room.get("state") == "archived":
-        return None, None, "That session is no longer available."
-    return invite, room, None
+        return None, generic
+    return invite, None
 
 
 def _api_keys(event, tail, method, identity):

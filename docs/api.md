@@ -158,51 +158,56 @@ between requests.
 `{ "email": "..." }` — owner only. Transfers ownership; the previous owner stays as
 an admin.
 
-## Co-host codes
+## Co-host invites
 
-A co-host code grants moderation and presentation rights for one room, to someone
-with no account. Only room admins can create, read, or revoke them — a co-host
+A co-host invite grants moderation and presentation rights for one room, to
+someone with no account. It is a name, which goes in the link, plus a passcode,
+which does not. Only room admins can create, read, or revoke them — a co-host
 cannot reach any of these endpoints.
 
 ### `POST /rooms/{room}/cohosts`
 
 ```json
-{ "label": "guest host", "expires_at": "2026-09-05T00:00:00Z" }
+{ "name": "ivan", "passcode": "open-sesame-42" }
 ```
 
-Both fields optional; `expires_at` defaults to 30 days out. `201`:
+Both optional: an omitted `name` gets a readable two-word one, an omitted
+`passcode` gets a generated one. A passcode must be at least 6 characters; a name
+must be 3-48 characters of lowercase letters, digits, and hyphens, and unique
+within this room — `409 name_taken` if it is already used here. `201`:
 
 ```json
 {
   "invite_id": "01K3QJA...",
-  "code": "Q7K2-M9XR-T8VB",
-  "label": "guest host",
-  "join_url": "https://qna.dtcdev.click/cohost/Q7K2-M9XR-T8VB",
-  "created_at": "2026-08-06T10:15:00Z",
-  "expires_at": "2026-09-05T00:00:00Z"
+  "name": "ivan",
+  "passcode": "Q7K2-M9XR-T8VB",
+  "join_url": "https://qna.dtcdev.click/r/tonight/cohost/ivan",
+  "created_at": "2026-08-06T10:15:00Z"
 }
 ```
 
-Send the recipient the `join_url`, or read the `code` out and let them enter it at
-`https://qna.dtcdev.click/cohost`. Codes are matched without regard to case,
-dashes, or surrounding spaces.
+Send the recipient the `join_url` and the `passcode`, by different routes if it
+matters: the link alone opens nothing. Passcodes are matched without regard to
+case, dashes, or surrounding spaces. An invite has no expiry — it lasts as long
+as the room, and revoking is how it ends.
 
 ### `GET /rooms/{room}/cohosts`
 
-Lists the room's codes in full, so a host can re-share one they have mislaid.
+Lists the room's invites in full, passcodes included, so a host can re-share one
+they have mislaid.
 
 ### `DELETE /rooms/{room}/cohosts/{invite_id}`
 
 Revokes. Effective on the co-host's next request, not at the end of their session.
 
-### Redeeming — `GET /cohost/{code}`
+### Redeeming — `GET /r/{slug}/cohost/{name}`
 
-Not part of the JSON API. Validates the code, sets a room-scoped cookie, and
-redirects to that room's moderation view. `GET /cohost` renders a form for typing
-a code in by hand; `POST /cohost` accepts it as `code`.
+Not part of the JSON API. Renders a form asking for the passcode; `POST` to the
+same URL with `passcode` validates the pair, sets a room-scoped cookie, and
+redirects to that room's moderation view.
 
-An unknown, revoked, or expired code returns `403` with the entry form and an
-explanation, and sets no cookie.
+A wrong name and a wrong passcode fail identically, with `403`, the form, and no
+cookie — the page cannot be used to find out which invites exist.
 
 ## Questions
 

@@ -72,19 +72,24 @@ def test_notice_always_offers_a_way_out():
     assert "/live" in body
 
 
+COHOST_ROOM = {"slug": "tonight-live", "title": "Tonight"}
+
+
 def test_cohost_page_focuses_the_code_field():
-    body = render.cohost_page()["body"]
+    body = render.cohost_page(COHOST_ROOM, name="ivan")["body"]
     assert "autofocus" in body
-    assert render.cohost_page(error="Bad code")["statusCode"] == 403
+    assert render.cohost_page(COHOST_ROOM, error="Bad code")["statusCode"] == 403
 
 
 def test_cohost_error_is_shown_with_the_form():
-    response = render.cohost_page(error="That code is not valid.")
+    response = render.cohost_page(COHOST_ROOM, error="That code is not valid.")
     assert "That code is not valid." in response["body"]
     assert 'name="passcode"' in response["body"]
 
 
-def test_a_known_link_name_only_asks_for_the_passcode():
-    body = render.cohost_page(name="tonight")["body"]
-    assert 'type="hidden" name="name" value="tonight"' in body
-    assert 'name="passcode"' in body
+def test_the_gate_asks_only_for_the_passcode_and_names_the_session():
+    """The link carries the room and the invite, so only the secret is missing."""
+    body = render.cohost_page(COHOST_ROOM, name="ivan")["body"]
+    assert 'action="/r/tonight-live/cohost/ivan"' in body
+    assert 'name="name"' not in body
+    assert "Tonight" in body

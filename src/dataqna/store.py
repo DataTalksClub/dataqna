@@ -331,22 +331,23 @@ def put_cohost_invite(invite):
     item["PK"] = _room_pk(invite["room_id"])
     item["SK"] = f"COHOST#{invite['invite_id']}"
     item["entity"] = "cohost_invite"
-    if invite.get("ttl"):
-        item["ttl"] = invite["ttl"]
     table().put_item(Item=item)
     return invite
 
 
-def claim_cohost_name(name, room_id, invite_id, ttl=None):
+def _cohost_name_pk(room_id, name):
+    """Scoped to the room, so a name only has to be free within its session."""
+    return f"COHOSTNAME#{room_id}#{normalize_cohost_name(name)}"
+
+
+def claim_cohost_name(name, room_id, invite_id):
     item = {
-        "PK": f"COHOSTNAME#{normalize_cohost_name(name)}",
+        "PK": _cohost_name_pk(room_id, name),
         "SK": "META",
         "entity": "cohost_pointer",
         "room_id": room_id,
         "invite_id": invite_id,
     }
-    if ttl:
-        item["ttl"] = ttl
     return _conditional(
         table().put_item, Item=item, ConditionExpression="attribute_not_exists(PK)"
     )
@@ -377,19 +378,21 @@ def revoke_cohost_invite(room_id, invite_id):
     if not invite:
         return False
     table().delete_item(Key={"PK": _room_pk(room_id), "SK": f"COHOST#{invite_id}"})
-    table().delete_item(
-        Key={"PK": f"COHOSTNAME#{normalize_cohost_name(invite['name'])}", "SK": "META"}
-    )
+    # Invites from before the link-name split have no name to release.
+    if invite.get("name"):
+        table().delete_item(
+            Key={"PK": _cohost_name_pk(room_id, invite["name"]), "SK": "META"}
+        )
     return True
 
 
-def resolve_cohost_name(name):
-    """Find an invite by its link name. Says nothing about the passcode."""
+def resolve_cohost_name(room_id, name):
+    """Find a room's invite by its link name. Says nothing about the passcode."""
     normalized = normalize_cohost_name(name)
     if not normalized:
         return None
     pointer = table().get_item(
-        Key={"PK": f"COHOSTNAME#{normalized}", "SK": "META"}
+        Key={"PK": _cohost_name_pk(room_id, normalized), "SK": "META"}
     ).get("Item")
     if not pointer or pointer.get("entity") != "cohost_pointer":
         return None

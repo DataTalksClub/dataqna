@@ -215,7 +215,7 @@
       $("cohosts-empty").hidden = !!items.length;
       if (!items.length) return;
       var table = $("cohosts");
-      table.innerHTML = "<tr><th>Link</th><th>Passcode</th><th>For</th><th>Valid until</th><th></th></tr>";
+      table.innerHTML = "<tr><th>Name</th><th>Passcode</th><th></th></tr>";
       items.forEach(function (invite) {
         var row = table.insertRow();
         var nameCell = row.insertCell();
@@ -224,8 +224,6 @@
         var passCell = row.insertCell();
         passCell.className = "mono";
         passCell.textContent = invite.passcode;
-        row.insertCell().textContent = invite.label || "—";
-        row.insertCell().textContent = (invite.expires_at || "").slice(0, 10) || "no expiry";
 
         var cell = row.insertCell();
         var copy = document.createElement("button");
@@ -254,12 +252,11 @@
     request("/rooms/" + roomId + "/cohosts", {
       method: "POST",
       body: JSON.stringify({
-        label: $("cohost-label").value.trim() || null,
         name: $("cohost-name").value.trim() || null,
         passcode: $("cohost-passcode").value.trim() || null
       })
     }).then(function (invite) {
-      ["cohost-label", "cohost-name", "cohost-passcode"].forEach(function (id) { $(id).value = ""; });
+      ["cohost-name", "cohost-passcode"].forEach(function (id) { $(id).value = ""; });
       toast("Invite created — passcode " + invite.passcode);
       loadCohosts();
     }).catch(fail);
