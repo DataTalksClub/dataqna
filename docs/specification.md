@@ -220,12 +220,14 @@ updates by polling; there is no navigation away from it.
   only place edit and withdraw controls appear.
 - **Question list** — text, author name or "Anonymous", relative timestamp, upvote
   button with count. The participant's own votes are shown as pressed.
-- **Present** — a link into presentation mode in the header, rendered only for
-  whoever already moderates the room. A host who has been handed the audience
-  link is one tap from the projected screen instead of hunting the session down
-  again through `/admin` while the room watches. The page is `no-store`, so it
-  can differ per viewer; everyone else is not told the route exists, and
-  `/present` enforces access itself regardless.
+- **Host icons** — a cog into the room's console and a screen into presentation
+  mode, in the header, rendered only for whoever already moderates the room. A
+  host who has been handed the audience link is one tap from either instead of
+  hunting the session down again through `/admin` while the room watches. They
+  sit at the weight of the theme toggle beside them: the audience outnumbers
+  the host on this page, and nothing here should read louder than the question
+  composer. The page is `no-store`, so it can differ per viewer; everyone else
+  is not told the routes exist, and both enforce access themselves regardless.
 
 The page is legible on a phone held in one hand in a dark room, which is the actual
 usage context. Dark mode follows the system preference.

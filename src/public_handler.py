@@ -14,7 +14,7 @@ logging.getLogger().setLevel(logging.INFO)
 ASSETS = {"app.css", "room.js", "admin.js", "present.js", "qna.js"}
 
 
-def _room_config(room, participant, present_url=None):
+def _room_config(room, participant, host_links=None):
     return {
         "room_id": room["room_id"],
         "slug": room.get("slug"),
@@ -24,24 +24,31 @@ def _room_config(room, participant, present_url=None):
         "can_ask": rooms.accepting_questions(room),
         "can_vote": rooms.accepting_votes(room),
         "banner": _banner(room),
-        "present_url": present_url,
+        "host_links": host_links,
     }
 
 
-def _present_url(event, room):
-    """The way into presentation mode for whoever is already running the room.
+def _host_links(event, room):
+    """The two ways back for whoever is already running the room.
 
     A host who is handed the audience link has no route to their own console
     from it, and finding the room again through /admin mid-session is the kind
-    of fumbling an audience watches. The page is no-store, so this can differ
-    per viewer; anyone else gets nothing, and /present enforces access itself
+    of fumbling an audience watches. The console is the one they want when a
+    question needs moderating; presentation mode is the one they want when the
+    projector goes up. The page is no-store, so this can differ per viewer;
+    anyone else gets nothing, and both destinations enforce access themselves
     either way.
     """
     try:
         identity = api.identify(event)
     except HttpError:
         return None
-    return f"/admin/rooms/{room['room_id']}/present" if identity.moderates(room) else None
+    if not identity.moderates(room):
+        return None
+    return {
+        "console": f"/admin/rooms/{room['room_id']}",
+        "present": f"/admin/rooms/{room['room_id']}/present",
+    }
 
 
 def _banner(room):
@@ -72,7 +79,7 @@ def _serve_room(event, identifier):
 
     return render.room_page(
         room,
-        config_payload=_room_config(room, participant, _present_url(event, room)),
+        config_payload=_room_config(room, participant, _host_links(event, room)),
         cookies=cookies,
     )
 

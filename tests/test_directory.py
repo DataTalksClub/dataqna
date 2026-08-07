@@ -113,8 +113,10 @@ def room_page(slug, cookies=None):
     return public_handler.lambda_handler(request, None)
 
 
-def test_a_host_on_the_audience_page_gets_a_way_into_presentation_mode(table):
-    """Handed the link they gave the room, a host can still start presenting.
+def test_a_host_on_the_audience_page_gets_both_ways_back(table):
+    """Handed the link they gave the room, a host can still reach their own
+    screens: the console when a question needs attention, presentation mode
+    when the projector goes up.
 
     Otherwise the only route is finding the session again through /admin, which
     is a search the audience watches them do.
@@ -124,10 +126,14 @@ def test_a_host_on_the_audience_page_gets_a_way_into_presentation_mode(table):
     config_blob = json.loads(
         room_page("tonight", cookies=[cookie])["body"].split('type="application/json">')[1].split("</script>")[0]
     )
-    assert config_blob["present_url"] == f"/admin/rooms/{room['room_id']}/present"
+    assert config_blob["host_links"] == {
+        "console": f"/admin/rooms/{room['room_id']}",
+        "present": f"/admin/rooms/{room['room_id']}/present",
+    }
 
 
-def test_the_audience_is_not_told_where_presentation_mode_is(table):
+def test_the_audience_is_not_told_where_the_host_screens_are(table):
     make_room(slug="tonight")
     body = room_page("tonight")["body"]
     assert "/present" not in body
+    assert "/admin/rooms" not in body

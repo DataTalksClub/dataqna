@@ -17,6 +17,17 @@
   var MOON = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" ' +
     'stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
     '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';
+  // The host's two ways back. A cog for the console and a screen for the
+  // projector: both are read at a glance mid-session, which is more than a
+  // word-shaped button gets on a page whose job is the question composer.
+  var COG = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" ' +
+    'stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+    '<circle cx="12" cy="12" r="3.25"/><path d="M12 2.5l1.5 2.6a7.6 7.6 0 0 1 1.9.8l2.9-.8 1.7 3-2 2.2a7.6 ' +
+    '7.6 0 0 1 0 2l2 2.2-1.7 3-2.9-.8a7.6 7.6 0 0 1-1.9.8L12 21.5l-1.5-2.6a7.6 7.6 0 0 1-1.9-.8l-2.9.8-1.7-3 ' +
+    '2-2.2a7.6 7.6 0 0 1 0-2l-2-2.2 1.7-3 2.9.8a7.6 7.6 0 0 1 1.9-.8z"/></svg>';
+  var SCREEN = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" ' +
+    'stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+    '<rect x="2.5" y="4" width="19" height="13" rx="2"/><path d="M9 21h6M12 17v4"/></svg>';
 
   var el = {
     ask: document.getElementById("ask"),
@@ -34,6 +45,7 @@
     liveCount: document.getElementById("live-count"),
     toast: document.getElementById("toast"),
     themeToggle: document.getElementById("theme-toggle"),
+    console: document.getElementById("console"),
     present: document.getElementById("present"),
     tabs: {
       popular: document.getElementById("tab-popular"),
@@ -465,9 +477,13 @@
     el.themeToggle.addEventListener("click", toggleTheme);
 
     // Sent only to whoever already moderates this room, and the page is
-    // no-store, so it never reaches the audience.
-    if (CONFIG.present_url) {
-      el.present.href = CONFIG.present_url;
+    // no-store, so they never reach the audience.
+    if (CONFIG.host_links) {
+      el.console.href = CONFIG.host_links.console;
+      el.console.innerHTML = COG;
+      el.console.hidden = false;
+      el.present.href = CONFIG.host_links.present;
+      el.present.innerHTML = SCREEN;
       el.present.hidden = false;
     }
 
