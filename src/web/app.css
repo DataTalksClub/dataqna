@@ -314,6 +314,22 @@ svg { flex: 0 0 auto; }
   background: transparent;
 }
 .hero .icon-btn:not(:disabled):hover { background: var(--hero-chip); }
+/* Only the host ever sees this, so it sits at the same weight as the theme
+   toggle beside it rather than competing with the question composer. */
+.hero-present {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  min-height: 36px;
+  padding: 0 var(--space-3);
+  border: 1px solid var(--hero-line);
+  border-radius: var(--radius-md);
+  color: var(--hero-text);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  text-decoration: none;
+}
+.hero-present:hover { background: var(--hero-chip); }
 @media (prefers-reduced-motion: no-preference) {
   .hero-kicker .dot { animation: live-pulse 2.4s var(--ease-out) infinite; }
 }

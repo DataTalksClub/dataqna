@@ -34,6 +34,7 @@
     liveCount: document.getElementById("live-count"),
     toast: document.getElementById("toast"),
     themeToggle: document.getElementById("theme-toggle"),
+    present: document.getElementById("present"),
     tabs: {
       popular: document.getElementById("tab-popular"),
       recent: document.getElementById("tab-recent"),
@@ -462,6 +463,13 @@
   function init() {
     paintThemeToggle();
     el.themeToggle.addEventListener("click", toggleTheme);
+
+    // Sent only to whoever already moderates this room, and the page is
+    // no-store, so it never reaches the audience.
+    if (CONFIG.present_url) {
+      el.present.href = CONFIG.present_url;
+      el.present.hidden = false;
+    }
 
     if (CONFIG.can_ask) {
       el.ask.hidden = false;

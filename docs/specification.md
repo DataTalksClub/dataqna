@@ -208,6 +208,12 @@ updates by polling; there is no navigation away from it.
   only place edit and withdraw controls appear.
 - **Question list** — text, author name or "Anonymous", relative timestamp, upvote
   button with count. The participant's own votes are shown as pressed.
+- **Present** — a link into presentation mode in the header, rendered only for
+  whoever already moderates the room. A host who has been handed the audience
+  link is one tap from the projected screen instead of hunting the session down
+  again through `/admin` while the room watches. The page is `no-store`, so it
+  can differ per viewer; everyone else is not told the route exists, and
+  `/present` enforces access itself regardless.
 
 The page is legible on a phone held in one hand in a dark room, which is the actual
 usage context. Dark mode follows the system preference.
@@ -306,6 +312,11 @@ is reachable only by keyboard:
 - Marking answered applies optimistically and offers **undo** both in the
   toolbar and in the confirmation cue — mis-taps are likelier with buttons than
   they were with keys.
+- No spinners here, unlike the console. A pin lands pinned and an answered card
+  leaves on the tap, with nothing disabled while the request is in flight: a
+  stall on a projected screen is one the whole room watches the host sit
+  through, over a delay none of them can do anything about. A refusal rolls the
+  change back and says so in the cue.
 
 Two conventional keys survive because they need no teaching: the arrow keys move
 the selection (or walk the ranking in spotlight), and `Esc` closes the QR

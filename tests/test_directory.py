@@ -105,3 +105,29 @@ def test_listed_defaults_to_true_and_is_validated(table):
 
     with pytest.raises(HttpError):
         rooms.apply_updates(room, {"settings": {"listed": "yes"}})
+
+
+def room_page(slug, cookies=None):
+    request = event("GET", cookies=cookies or [])
+    request["rawPath"] = f"/r/{slug}"
+    return public_handler.lambda_handler(request, None)
+
+
+def test_a_host_on_the_audience_page_gets_a_way_into_presentation_mode(table):
+    """Handed the link they gave the room, a host can still start presenting.
+
+    Otherwise the only route is finding the session again through /admin, which
+    is a search the audience watches them do.
+    """
+    room = make_room(slug="tonight")
+    cookie = f"{config.SESSION_COOKIE}={security.new_session_token(OWNER)}"
+    config_blob = json.loads(
+        room_page("tonight", cookies=[cookie])["body"].split('type="application/json">')[1].split("</script>")[0]
+    )
+    assert config_blob["present_url"] == f"/admin/rooms/{room['room_id']}/present"
+
+
+def test_the_audience_is_not_told_where_presentation_mode_is(table):
+    make_room(slug="tonight")
+    body = room_page("tonight")["body"]
+    assert "/present" not in body
