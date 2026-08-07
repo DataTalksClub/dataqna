@@ -929,10 +929,18 @@ ol.present-list {
   flex: 0 1 auto;
   min-height: 0;
   overflow-y: auto;
+  /* Both animations transform a card out of the box for a moment — a leaving
+     card slides right, a re-ranked one starts at its old row — and the
+     scrollbars that overflow raises flickered across the projected frame for
+     the length of every animation. The list scrolls by touch on the host's
+     phone and never on the projector, so the bars have no work to do. */
+  overflow-x: hidden;
+  scrollbar-width: none;
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
 }
+.present-list::-webkit-scrollbar { display: none; }
 .present-list li {
   flex: 0 0 auto;
   display: flex;
@@ -1023,7 +1031,12 @@ ol.present-list {
   gap: var(--space-6);
   padding: var(--space-4) var(--space-6);
   overflow-y: auto;
+  /* The swap nudges the question down before it fades in, which is enough to
+     raise a scrollbar on the projected frame. Same reasoning as the list. */
+  overflow-x: hidden;
+  scrollbar-width: none;
 }
+.present-stage::-webkit-scrollbar { display: none; }
 .present-stage .q-text {
   font-size: clamp(1.8rem, 4.2vw, 3.8rem);
   font-weight: 650;
