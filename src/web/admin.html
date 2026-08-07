@@ -7,6 +7,10 @@
 <title>DataQnA admin</title>
 <meta name="theme-color" content="#f6f8fb" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0d1220" media="(prefers-color-scheme: dark)">
+<!-- The class means nothing until app.css arrives, and until then the UA
+     paints its own canvas — white, full screen, on every dark-mode load with a
+     cold cache. color-scheme is what the UA reads without a stylesheet. -->
+<style>:root { color-scheme: light dark; }</style>
 <script>
 /* Apply a pinned theme before first paint, so there is no flash. */
 (function () {
@@ -14,6 +18,7 @@
     var t = localStorage.getItem("dq_theme");
     if (t !== "light" && t !== "dark") return;
     document.documentElement.classList.add("theme-" + t);
+    document.documentElement.style.colorScheme = t;
     var c = t === "dark" ? "#0d1220" : "#f6f8fb";
     var metas = document.querySelectorAll('meta[name="theme-color"]');
     for (var i = 0; i < metas.length; i++) metas[i].setAttribute("content", c);
@@ -26,9 +31,9 @@
 <body>
 <div class="wrap wide">
   <div class="row" style="margin-bottom:16px">
-    <span class="grow"><a class="brand" href="/admin"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 14l6-7 6 7"/></svg>DataQnA</a></span>
+    <span class="grow"><a class="brand" href="/" title="DataQnA home"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 14l6-7 6 7"/></svg>DataQnA</a></span>
     <span class="muted" id="who"></span>
-    <button type="button" id="theme-toggle" class="icon-btn" aria-label="Switch to dark theme"></button>
+    <button type="button" data-theme-toggle class="icon-btn" aria-label="Switch to dark theme"></button>
     <a class="btn ghost small" href="/auth/logout">Sign out</a>
   </div>
 
@@ -142,6 +147,7 @@
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 <script src="/assets/qna.js"></script>
+<script src="/assets/theme.js" defer></script>
 <script src="/assets/admin.js"></script>
 </body>
 </html>

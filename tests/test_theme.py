@@ -125,3 +125,46 @@ def test_hero_text_is_legible_on_the_band():
         for token, floor in (("hero-text", 4.5), ("hero-muted", 4.5)):
             ratio = contrast(resolve(block, token), band)
             assert ratio >= floor, f"{name}: {token} on the hero is {ratio:.2f}:1"
+
+
+def test_every_page_with_a_toggle_loads_the_script_that_works_it():
+    """The toggle is markup on four surfaces and logic in one file.
+
+    It used to be logic in two files, which is why the front page had no
+    toggle at all: adding one meant a third copy of the same thirty lines.
+    """
+    pages = {name: render.asset_bytes(name).decode()
+             for name in ("room.html", "admin.html")}
+    pages["directory"] = render.directory_page([], [])["body"]
+    pages["notice"] = render.notice("Gone", "Nothing here.")["body"]
+    pages["cohost gate"] = render.cohost_page(
+        {"room_id": "1", "slug": "s", "title": "T", "state": "open"}, name="ivan"
+    )["body"]
+
+    for name, body in pages.items():
+        assert "data-theme-toggle" in body, f"{name} has no theme toggle"
+        assert "/assets/theme.js" in body, f"{name} never loads theme.js"
+
+
+def test_the_toggle_script_is_actually_servable():
+    assert render.asset_bytes("theme.js"), "theme.js is not on disk"
+    import public_handler
+    assert "theme.js" in public_handler.ASSETS, "theme.js is not served"
+
+
+def test_pages_declare_a_canvas_colour_before_the_stylesheet():
+    """`class="theme-dark"` means nothing until app.css lands, and on a cold
+    cache that is long enough for the UA to paint a full screen of white."""
+    bodies = [render.asset_bytes(name).decode() for name in ("room.html", "admin.html", "present.html")]
+    bodies.append(render.notice("Gone", "Nothing here.")["body"])
+    for body in bodies:
+        head = body.split("/assets/app.css")[0]
+        assert "color-scheme" in head, "no color-scheme before the stylesheet"
+
+
+def test_the_room_address_bar_matches_the_band_it_sits_under():
+    """The meta is a hand-written copy of a token, so it drifts silently."""
+    room = render.asset_bytes("room.html").decode()
+    band = first_stop(resolve(DARK, "hero-bg"))
+    assert f'content="{band}" media="(prefers-color-scheme: dark)"' in room
+    assert f'data-theme-dark="{band}"' in room

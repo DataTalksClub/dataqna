@@ -38,6 +38,10 @@ THEME_META = (
     '<meta name="theme-color" content="#0d1220" media="(prefers-color-scheme: dark)">'
 )
 
+# The class does nothing until app.css lands; color-scheme is what stops the
+# UA painting a white canvas in the meantime.
+THEME_CANVAS = "<style>:root{color-scheme:light dark}</style>"
+
 # Applies a theme the visitor pinned elsewhere (the room or admin toggle)
 # before first paint, so server-rendered pages match without a flash.
 THEME_SCRIPT = (
@@ -45,6 +49,7 @@ THEME_SCRIPT = (
     'var t=localStorage.getItem("dq_theme");'
     'if(t!=="light"&&t!=="dark")return;'
     'document.documentElement.classList.add("theme-"+t);'
+    "document.documentElement.style.colorScheme=t;"
     'var c=t==="dark"?"#0d1220":"#f6f8fb";'
     "var m=document.querySelectorAll('meta[name=\"theme-color\"]');"
     'for(var i=0;i<m.length;i++)m[i].setAttribute("content",c);'
@@ -52,10 +57,18 @@ THEME_SCRIPT = (
 )
 
 BRAND = (
-    '<a class="brand" href="/live">'
+    '<a class="brand" href="/">'
     '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor"'
     ' stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'
     '<path d="M6 14l6-7 6 7"/></svg>DataQnA</a>'
+)
+
+# theme.js fills the glyph in. Every page that can be someone's first — the
+# front page most of all — needs somewhere to change their mind about the
+# theme, not just the ones with a bundle of their own.
+THEME_TOGGLE = (
+    '<button type="button" data-theme-toggle class="icon-btn"'
+    ' aria-label="Switch to dark theme"></button>'
 )
 
 _cache = {}
@@ -82,7 +95,7 @@ def version():
     global _version
     if _version is None:
         digest = hashlib.sha256()
-        for name in sorted(("app.css", "room.js", "admin.js", "present.js", "qna.js")):
+        for name in sorted(("app.css", "theme.js", "room.js", "admin.js", "present.js", "qna.js")):
             digest.update(asset_bytes(name) or b"")
         _version = digest.hexdigest()[:10]
     return _version
@@ -146,10 +159,12 @@ def _shell(title, inner, *, status=200):
 <meta name="robots" content="noindex">
 <title>{html.escape(title)}</title>
 {THEME_META}
+{THEME_CANVAS}
 {THEME_SCRIPT}
 <link rel="icon" href="{FAVICON}">
 <link rel="stylesheet" href="/assets/app.css"></head>
-<body><div class="wrap">{inner}</div></body></html>"""
+<body><div class="wrap">{inner}</div>
+<script src="/assets/theme.js" defer></script></body></html>"""
     return http.html_response(status, _stamp(body))
 
 
@@ -161,7 +176,8 @@ def cohost_page(room, error=None, name=""):
     """
     message = f'<div class="banner warn">{html.escape(error)}</div>' if error else ""
     action = f"/r/{html.escape(room.get('slug') or '')}/cohost/{html.escape(name)}"
-    inner = f"""{BRAND}
+    inner = f"""<div class="row" style="margin-bottom:22px">
+<span class="grow">{BRAND}</span>{THEME_TOGGLE}</div>
 <h1 style="font-size:1.5rem;letter-spacing:-.01em">Co-host access</h1>
 <p class="muted">Enter the passcode the host gave you. It lets you run
 {html.escape(room.get("title") or "this session")} — its questions, settings,
@@ -197,6 +213,7 @@ def directory_page(live, recent, *, signed_in=None):
     parts = [
         '<div class="row" style="margin-bottom:22px">',
         f'<span class="grow">{BRAND}</span>',
+        THEME_TOGGLE,
     ]
     if signed_in:
         parts.append('<a class="btn small" href="/admin">Your sessions</a>')
@@ -241,7 +258,8 @@ def directory_page(live, recent, *, signed_in=None):
 
 def notice(title, message, *, status=200, link=None):
     target, label = (link[1], link[0]) if link else ("/live", "See what's live")
-    inner = f"""{BRAND}
+    inner = f"""<div class="row" style="margin-bottom:22px">
+<span class="grow">{BRAND}</span>{THEME_TOGGLE}</div>
 <div class="empty">
 <h2 style="font-size:1.3rem">{html.escape(title)}</h2>
 <p>{html.escape(message)}</p>

@@ -11,7 +11,7 @@ from dataqna.http import HttpError
 
 logging.getLogger().setLevel(logging.INFO)
 
-ASSETS = {"app.css", "room.js", "admin.js", "present.js", "qna.js"}
+ASSETS = {"app.css", "theme.js", "room.js", "admin.js", "present.js", "qna.js"}
 
 
 def _room_config(room, participant, host_links=None):
@@ -194,7 +194,8 @@ def _serve_live():
         for room in open_rooms
     )
     inner = (
-        f'{render.BRAND}'
+        '<div class="row" style="margin-bottom:22px">'
+        f'<span class="grow">{render.BRAND}</span>{render.THEME_TOGGLE}</div>'
         '<h1 style="font-size:1.5rem;letter-spacing:-.01em">Live right now</h1>'
         f"{items}"
     )

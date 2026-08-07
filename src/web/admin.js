@@ -16,9 +16,6 @@
   /* The moderation glyphs are presentation mode's, verbatim: the host runs
      both surfaces in the same session, so one vocabulary. */
   var I = {
-    sun: svg('<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 ' +
-      '17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/>'),
-    moon: svg('<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>'),
     check: svg('<path d="M20 6 9 17l-5-5"/>'),
     pin: svg('<path d="M9 4h6"/><path d="M10 4v5l-3 3v2h10v-2l-3-3V4"/><path d="M12 14v7"/>'),
     eyeOff: svg('<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 ' +
@@ -79,32 +76,6 @@
     span.className = "tag" + (kind ? " " + kind : "");
     span.textContent = label;
     return span;
-  }
-
-  /* ---- theme: system by default, pinned once the user picks ---- */
-
-  function effectiveTheme() {
-    var root = document.documentElement.classList;
-    if (root.contains("theme-dark")) return "dark";
-    if (root.contains("theme-light")) return "light";
-    return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
-  }
-
-  function paintThemeToggle() {
-    var dark = effectiveTheme() === "dark";
-    $("theme-toggle").innerHTML = dark ? I.sun : I.moon;
-    $("theme-toggle").setAttribute("aria-label", dark ? "Switch to light theme" : "Switch to dark theme");
-  }
-
-  function toggleTheme() {
-    var next = effectiveTheme() === "dark" ? "light" : "dark";
-    document.documentElement.classList.remove("theme-dark", "theme-light");
-    document.documentElement.classList.add("theme-" + next);
-    try { localStorage.setItem("dq_theme", next); } catch (e) {}
-    var color = next === "dark" ? "#0d1220" : "#f6f8fb";
-    var metas = document.querySelectorAll('meta[name="theme-color"]');
-    Array.prototype.forEach.call(metas, function (meta) { meta.setAttribute("content", color); });
-    paintThemeToggle();
   }
 
   /* ---- room list ---- */
@@ -496,8 +467,6 @@
 
   /* ---- boot ---- */
 
-  paintThemeToggle();
-  $("theme-toggle").addEventListener("click", toggleTheme);
 
   if (roomId) {
     $("view-room").hidden = false;

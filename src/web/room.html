@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme-dark="#332b8c" data-theme-light="#5951e8">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -9,7 +9,11 @@
 <meta property="og:description" content="Ask and upvote questions — live.">
 <meta property="og:type" content="website">
 <meta name="theme-color" content="#5951e8" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#1d2438" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#332b8c" media="(prefers-color-scheme: dark)">
+<!-- The class means nothing until app.css arrives, and until then the UA
+     paints its own canvas — white, full screen, on every dark-mode load with a
+     cold cache. color-scheme is what the UA reads without a stylesheet. -->
+<style>:root { color-scheme: light dark; }</style>
 <script>
 /* Apply a pinned theme before first paint, so there is no flash. */
 (function () {
@@ -17,7 +21,8 @@
     var t = localStorage.getItem("dq_theme");
     if (t !== "light" && t !== "dark") return;
     document.documentElement.classList.add("theme-" + t);
-    var c = t === "dark" ? "#1d2438" : "#5951e8";
+    document.documentElement.style.colorScheme = t;
+    var c = t === "dark" ? "#332b8c" : "#5951e8";
     var metas = document.querySelectorAll('meta[name="theme-color"]');
     for (var i = 0; i < metas.length; i++) metas[i].setAttribute("content", c);
   } catch (e) {}
@@ -33,7 +38,7 @@
       <span class="hero-kicker"><span class="dot" aria-hidden="true"></span>Live Q&amp;A</span>
       <a id="console" class="btn icon-btn" hidden aria-label="Room settings" title="Room settings"></a>
       <a id="present" class="btn icon-btn" hidden aria-label="Presentation mode" title="Presentation mode"></a>
-      <button type="button" id="theme-toggle" class="icon-btn" aria-label="Switch to dark theme"></button>
+      <button type="button" data-theme-toggle class="icon-btn" aria-label="Switch to dark theme"></button>
     </div>
     <h1>{{TITLE}}</h1>
     <p class="desc" id="description">{{DESCRIPTION}}</p>
@@ -82,6 +87,7 @@
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 <script id="config" type="application/json">{{CONFIG}}</script>
+<script src="/assets/theme.js" defer></script>
 <script src="/assets/room.js"></script>
 </body>
 </html>
