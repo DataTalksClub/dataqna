@@ -108,14 +108,30 @@ Two results are load-bearing and easy to undo by accident:
   figure/ground separation in L\* alongside the text ratios, for both themes, and
   that the band keeps the brand hue rather than going neutral.
 
-The QR plate follows the theme through one token pair, `--qr-ink` / `--qr-paper`,
-but **the ink stays the darker of the two in every theme**. A reversed code is the
-obvious reading of "dark mode QR" and it does not survive contact with real
-decoders: OpenCV's `QRCodeDetector` fails on a reversed code and reads the same
-image the moment it is inverted back, and plenty of scanner apps are built on it.
-Dark dims the paper to `--slate-300` instead, which stops the presentation join
-panel projecting a white rectangle at a darkened room without asking a stranger's
-phone to do anything unusual. `tests/test_theme.py` fails if a theme swaps them.
+The QR has no plate. It is drawn in the page's ink on the page's background —
+`--qr-ink` / `--qr-paper`, the latter `transparent` in both themes — so in dark it
+is a white code on the dark surface rather than a card laid on top of the design.
+`qr.py` emits `currentColor` for exactly this.
+
+That makes the dark code **reversed**, which is worth being precise about, because
+decoders differ and the first version of this decision got it wrong by testing
+one of them:
+
+| Decoder | Normal | Reversed |
+|---------|--------|----------|
+| OpenCV `QRCodeDetector` | decodes | **fails** |
+| WeChat (CNN-based; WeChat and many scanner apps) | decodes | decodes |
+
+The reversal is in the QR spec, and the decoders people actually point at a screen
+— phone camera apps, Lens, WeChat — handle it. OpenCV's built-in detector is an
+older, weaker algorithm and does not. So this is a real but narrow risk, carried
+deliberately, and mitigated by giving the code everything else it wants: pure
+white ink rather than the softened body colour, and padding on the container as a
+quiet zone on top of segno's own four modules. `tests/test_theme.py` holds the
+contrast floor.
+
+If a reversed code ever does prove to be a problem in the field, `--qr-ink` and
+`--qr-paper` are the two values to change and nothing else moves.
 
 ## 5. Type, space, shape, motion
 

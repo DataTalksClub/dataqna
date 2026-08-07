@@ -170,14 +170,14 @@ def test_the_room_address_bar_matches_the_band_it_sits_under():
     assert f'data-theme-dark="{band}"' in room
 
 
-def test_the_qr_is_never_reversed_by_a_theme():
-    """Being scanned is the only reason this element exists, and a reversed
-    code is not universally readable — OpenCV's decoder fails on one and reads
-    the same image once it is inverted back. Dark may dim the paper; it may not
-    swap the two."""
+def test_the_qr_has_the_contrast_a_reversed_code_needs():
+    """The code has no plate — it is ink on whatever surface it lands on — and
+    in dark it is reversed. Weaker decoders already struggle with a reversed
+    code, so the one thing left to give them is contrast; this is the floor
+    below which that stops being true."""
+    surfaces = ("bg", "surface")
     for name, block in THEMES.items():
-        ink = luminance(resolve(block, "qr-ink"))
-        paper = luminance(resolve(block, "qr-paper"))
-        assert ink < paper, f"{name}: QR modules are lighter than the plate"
-        ratio = contrast(resolve(block, "qr-ink"), resolve(block, "qr-paper"))
-        assert ratio >= 7, f"{name}: QR is only {ratio:.2f}:1"
+        assert resolve(block, "qr-paper") == "transparent", f"{name}: QR has a plate again"
+        for surface in surfaces:
+            ratio = contrast(resolve(block, "qr-ink"), resolve(block, surface))
+            assert ratio >= 10, f"{name}: QR on {surface} is only {ratio:.2f}:1"
