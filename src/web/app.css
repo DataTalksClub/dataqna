@@ -132,6 +132,9 @@
   --toast-bg: var(--text);
   --toast-text: var(--bg);
   --toast-line: transparent;
+  /* The QR plate. One pair, three places it is drawn. */
+  --qr-ink: var(--slate-900);
+  --qr-paper: #ffffff;
   /* Stripe-style elevation: a hairline border does the outlining, so the
      shadows stay layered and low-opacity. */
   --shadow-sm: 0 1px 1px rgba(26, 31, 54, .04), 0 1px 3px rgba(26, 31, 54, .06);
@@ -194,6 +197,13 @@
     --toast-bg: #2c3550;
     --toast-text: var(--text);
     --toast-line: rgba(255, 255, 255, .16);
+    /* Dimmed rather than reversed. Reversing it is what "dark mode QR" wants
+       to mean, and OpenCV's decoder — which plenty of scanner apps are built
+       on — fails outright on the reversed code and reads the same image the
+       moment it is inverted back. So the plate goes quiet instead of white,
+       and the modules stay dark on light, which every decoder can read. */
+    --qr-ink: var(--navy-950);
+    --qr-paper: var(--slate-300);
     /* Black on near-black is worth 2.6 L*. Elevation here comes from the
        surface being lighter, so the small shadow is honestly nothing; the
        large one stays for things that genuinely float. */
@@ -238,6 +248,8 @@ html.theme-dark {
   --toast-bg: #2c3550;
   --toast-text: var(--text);
   --toast-line: rgba(255, 255, 255, .16);
+  --qr-ink: var(--navy-950);
+  --qr-paper: var(--slate-300);
   --shadow-sm: none;
   --shadow-md: 0 12px 32px -12px rgba(0, 0, 0, .8);
 }
@@ -667,15 +679,17 @@ label.check { min-height: 44px; cursor: pointer; }
 input[type=checkbox] { width: 18px; height: 18px; accent-color: var(--accent-fill); }
 
 .share { display: flex; gap: var(--space-4); align-items: flex-start; flex-wrap: wrap; }
-/* QR modules stay ink-on-white in every theme (also in presentation mode
-   below): an inverted QR scans unreliably, and being scanned is the only
-   reason this element exists. */
+/* The QR plate follows the theme, but only as far as it can. Dark dims the
+   paper instead of reversing it, so the join panel stops projecting a white
+   rectangle at a room with the lights down while the modules stay dark on
+   light — the one arrangement every decoder reads. --qr-ink / --qr-paper is
+   the pair; whatever goes in it, the ink has to stay the darker of the two. */
 .share .qr {
   width: 132px;
   height: 132px;
   padding: var(--space-1);
-  color: var(--slate-900);
-  background: #ffffff;
+  color: var(--qr-ink);
+  background: var(--qr-paper);
   border-radius: var(--radius-md);
   border: 1px solid var(--border);
 }
@@ -913,8 +927,8 @@ body.present { overflow: hidden; background: var(--bg); }
   width: min(100%, 38vh);
   aspect-ratio: 1;
   padding: var(--space-3);
-  color: var(--slate-900);
-  background: #ffffff;
+  color: var(--qr-ink);
+  background: var(--qr-paper);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
 }
@@ -1195,8 +1209,8 @@ ol.present-list {
   width: min(52vh, 70vw);
   aspect-ratio: 1;
   padding: var(--space-4);
-  color: var(--slate-900);
-  background: #ffffff;
+  color: var(--qr-ink);
+  background: var(--qr-paper);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
 }

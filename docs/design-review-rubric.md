@@ -116,16 +116,23 @@ shows feedback within 100ms of the tap (optimistic change or busy indicator).
 ### 8. Theme parity
 
 Dark is designed, not derived: surfaces are the navy ramp (never pure black),
-elevation still reads (border + shadow), accents remapped to the dark-safe
-values, QR stays ink-on-white, and every contrast pair re-measured. Pinning a
-theme overrides `prefers-color-scheme` everywhere, including the browser chrome
-(`theme-color`).
+elevation reads from surface lightness rather than from shadows that do nothing
+over near-black, accents remapped to dark-safe values, and every pair
+re-measured. Pinning a theme overrides `prefers-color-scheme` everywhere,
+including the browser chrome (`theme-color`).
+
+Contrast ratios are necessary and not sufficient. Text can clear AA on a band
+that is 1.21:1 against the page behind it — nothing is written on a band, so no
+ratio objects, and there is no band. Check figure/ground separation in L\* as
+well, and check that a filled control is still a *fill* after remapping rather
+than a pale chip carrying dark ink.
 
 - **10:** both themes pass every other criterion independently; no light-theme
   asset or hard-coded hex leaks into dark; toggle state survives reload and
   applies before first paint.
-- **6:** dark theme with washed-out borders, inverted QR, white-flash on load,
-  or any hard-coded color that ignores the semantic layer.
+- **6:** dark theme with washed-out borders, white-flash on load, a surface that
+  does not separate from the page, or any hard-coded color that ignores the
+  semantic layer.
 
 ### 9. Edge cases
 

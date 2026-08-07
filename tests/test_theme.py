@@ -168,3 +168,16 @@ def test_the_room_address_bar_matches_the_band_it_sits_under():
     band = first_stop(resolve(DARK, "hero-bg"))
     assert f'content="{band}" media="(prefers-color-scheme: dark)"' in room
     assert f'data-theme-dark="{band}"' in room
+
+
+def test_the_qr_is_never_reversed_by_a_theme():
+    """Being scanned is the only reason this element exists, and a reversed
+    code is not universally readable — OpenCV's decoder fails on one and reads
+    the same image once it is inverted back. Dark may dim the paper; it may not
+    swap the two."""
+    for name, block in THEMES.items():
+        ink = luminance(resolve(block, "qr-ink"))
+        paper = luminance(resolve(block, "qr-paper"))
+        assert ink < paper, f"{name}: QR modules are lighter than the plate"
+        ratio = contrast(resolve(block, "qr-ink"), resolve(block, "qr-paper"))
+        assert ratio >= 7, f"{name}: QR is only {ratio:.2f}:1"

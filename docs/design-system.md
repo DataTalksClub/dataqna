@@ -108,8 +108,14 @@ Two results are load-bearing and easy to undo by accident:
   figure/ground separation in L\* alongside the text ratios, for both themes, and
   that the band keeps the brand hue rather than going neutral.
 
-QR modules stay ink-on-white in every theme, including dark presentation mode. An
-inverted QR scans unreliably on a lot of phones.
+The QR plate follows the theme through one token pair, `--qr-ink` / `--qr-paper`,
+but **the ink stays the darker of the two in every theme**. A reversed code is the
+obvious reading of "dark mode QR" and it does not survive contact with real
+decoders: OpenCV's `QRCodeDetector` fails on a reversed code and reads the same
+image the moment it is inverted back, and plenty of scanner apps are built on it.
+Dark dims the paper to `--slate-300` instead, which stops the presentation join
+panel projecting a white rectangle at a darkened room without asking a stranger's
+phone to do anything unusual. `tests/test_theme.py` fails if a theme swaps them.
 
 ## 5. Type, space, shape, motion
 
