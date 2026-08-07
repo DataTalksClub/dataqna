@@ -1,4 +1,4 @@
-"""Identifier generation: ULIDs, join codes, and slugs."""
+"""Identifier generation: ULIDs, readable codes, and slugs."""
 
 import os
 import re
@@ -6,7 +6,7 @@ import time
 
 _CROCKFORD = "0123456789ABCDEFGHJKMNPQRSTVWXYZ"
 
-# Join codes are read aloud and typed on a phone, so the alphabet drops every
+# These codes are read aloud and typed on a phone, so the alphabet drops every
 # pair that is ambiguous in a sans-serif font or in speech: O/0, I/1/L, U/V.
 _CODE_ALPHABET = "23456789ABCDEFGHJKMNPQRSTWXYZ"
 
@@ -35,7 +35,7 @@ def ulid():
     return _encode(millis, 10) + _encode(int.from_bytes(os.urandom(10), "big"), 16)
 
 
-def join_code(length=6):
+def readable_code(length=6):
     alphabet = _CODE_ALPHABET
     return "".join(alphabet[b % len(alphabet)] for b in os.urandom(length))
 
@@ -43,7 +43,7 @@ def join_code(length=6):
 def slugify(text, fallback_length=8):
     slug = _SLUG_STRIP.sub("-", (text or "").strip().lower()).strip("-")[:48].strip("-")
     if len(slug) < 3 or not SLUG_PATTERN.match(slug):
-        suffix = join_code(fallback_length).lower()
+        suffix = readable_code(fallback_length).lower()
         slug = f"{slug}-{suffix}".strip("-") if slug else f"room-{suffix}"
     return slug[:48].strip("-")
 

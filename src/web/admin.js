@@ -5,14 +5,49 @@
   var API = "/api/v1";
   var roomId = (location.pathname.match(/^\/admin\/rooms\/([^/]+)/) || [])[1];
   var toastEl = document.getElementById("toast");
-  var state = { room: null, filter: "all", items: [], etag: null, armedDelete: null };
+  var state = { room: null, filter: "all", items: [], etag: null, armedDelete: null, busy: {} };
+
+  function svg(paths) {
+    return '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" ' +
+      'stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+      paths + "</svg>";
+  }
+
+  /* The moderation glyphs are presentation mode's, verbatim: the host runs
+     both surfaces in the same session, so one vocabulary. */
+  var I = {
+    sun: svg('<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 ' +
+      '17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/>'),
+    moon: svg('<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>'),
+    check: svg('<path d="M20 6 9 17l-5-5"/>'),
+    pin: svg('<path d="M9 4h6"/><path d="M10 4v5l-3 3v2h10v-2l-3-3V4"/><path d="M12 14v7"/>'),
+    eyeOff: svg('<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 ' +
+      '5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 ' +
+      '3.19"/><path d="M14.12 14.12a3 3 0 1 1-4.24-4.24"/><path d="m1 1 22 22"/>'),
+    trash: svg('<path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>' +
+      '<path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M10 11v6"/><path d="M14 11v6"/>')
+  };
 
   function $(id) { return document.getElementById(id); }
 
-  function toast(message) {
-    toastEl.textContent = message;
+  /* A toast, optionally carrying an undo — hiding removes the card from
+     view, so its reversal must ride along rather than live on another tab. */
+  function toast(message, undoFn) {
+    toastEl.textContent = "";
+    toastEl.appendChild(document.createTextNode(message));
+    if (undoFn) {
+      var button = document.createElement("button");
+      button.type = "button";
+      button.textContent = "Undo";
+      button.addEventListener("click", function () {
+        toastEl.classList.remove("show");
+        undoFn();
+      });
+      toastEl.appendChild(button);
+    }
     toastEl.classList.add("show");
-    setTimeout(function () { toastEl.classList.remove("show"); }, 2800);
+    clearTimeout(toastEl._timer);
+    toastEl._timer = setTimeout(function () { toastEl.classList.remove("show"); }, undoFn ? 6000 : 2800);
   }
 
   function request(path, options) {
@@ -29,6 +64,48 @@
   }
 
   function fail(error) { if (error && error.message !== "redirecting") toast(error.message); }
+
+  function relative(iso) {
+    if (!iso) return "";
+    var seconds = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
+    if (seconds < 60) return "just now";
+    if (seconds < 3600) return Math.floor(seconds / 60) + "m ago";
+    if (seconds < 86400) return Math.floor(seconds / 3600) + "h ago";
+    return Math.floor(seconds / 86400) + "d ago";
+  }
+
+  function tag(kind, label) {
+    var span = document.createElement("span");
+    span.className = "tag" + (kind ? " " + kind : "");
+    span.textContent = label;
+    return span;
+  }
+
+  /* ---- theme: system by default, pinned once the user picks ---- */
+
+  function effectiveTheme() {
+    var root = document.documentElement.classList;
+    if (root.contains("theme-dark")) return "dark";
+    if (root.contains("theme-light")) return "light";
+    return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  }
+
+  function paintThemeToggle() {
+    var dark = effectiveTheme() === "dark";
+    $("theme-toggle").innerHTML = dark ? I.sun : I.moon;
+    $("theme-toggle").setAttribute("aria-label", dark ? "Switch to light theme" : "Switch to dark theme");
+  }
+
+  function toggleTheme() {
+    var next = effectiveTheme() === "dark" ? "light" : "dark";
+    document.documentElement.classList.remove("theme-dark", "theme-light");
+    document.documentElement.classList.add("theme-" + next);
+    try { localStorage.setItem("dq_theme", next); } catch (e) {}
+    var color = next === "dark" ? "#0d1220" : "#f6f8fb";
+    var metas = document.querySelectorAll('meta[name="theme-color"]');
+    Array.prototype.forEach.call(metas, function (meta) { meta.setAttribute("content", color); });
+    paintThemeToggle();
+  }
 
   /* ---- room list ---- */
 
@@ -62,8 +139,8 @@
         meta.className = "muted";
         meta.style.width = "100%";
         meta.textContent = "/r/" + room.slug + " · " +
-          room.counts.questions + " questions, " + room.counts.answered + " answered" +
-          (room.counts.pending ? " · " + room.counts.pending + " to review" : "");
+          room.counts.questions + (room.counts.questions === 1 ? " question, " : " questions, ") +
+          room.counts.answered + " answered";
         card.appendChild(link);
         card.appendChild(meta);
         host.appendChild(card);
@@ -93,9 +170,14 @@
 
   function loadKeys() {
     request("/api-keys").then(function (body) {
+      var items = body.items || [];
+      // No rows means no chrome: headers labelling nothing are noise.
+      $("keys").hidden = !items.length;
+      $("keys-empty").hidden = !!items.length;
+      if (!items.length) return;
       var table = $("keys");
       table.innerHTML = "<tr><th>Name</th><th>Created</th><th>Last used</th><th></th></tr>";
-      (body.items || []).forEach(function (key) {
+      items.forEach(function (key) {
         var row = table.insertRow();
         row.insertCell().textContent = key.name;
         row.insertCell().textContent = (key.created_at || "").slice(0, 10);
@@ -128,9 +210,13 @@
 
   function loadCohosts() {
     request("/rooms/" + roomId + "/cohosts").then(function (body) {
+      var items = body.items || [];
+      $("cohosts").hidden = !items.length;
+      $("cohosts-empty").hidden = !!items.length;
+      if (!items.length) return;
       var table = $("cohosts");
       table.innerHTML = "<tr><th>Link</th><th>Passcode</th><th>For</th><th>Valid until</th><th></th></tr>";
-      (body.items || []).forEach(function (invite) {
+      items.forEach(function (invite) {
         var row = table.insertRow();
         var nameCell = row.insertCell();
         nameCell.className = "mono";
@@ -189,26 +275,23 @@
     $("cohost-card").hidden = isCohost;
     $("cohost-notice").hidden = !isCohost;
     if (isCohost) {
-      var back = document.querySelector('a[href="/admin"]');
-      if (back) back.hidden = true;
+      // The console list is owner territory; a co-host has exactly one room.
+      Array.prototype.forEach.call(
+        document.querySelectorAll('a[href="/admin"]'),
+        function (link) { link.hidden = true; }
+      );
     }
     $("room-title").textContent = room.title;
-    $("room-sub").textContent = "Owner " + room.owner + " · " + room.state + " · " +
-      room.counts.questions + " questions" +
+    $("room-sub").textContent = room.state + " · " + room.counts.questions +
+      (room.counts.questions === 1 ? " question" : " questions") +
       (room.expires_at ? " · closes " + new Date(room.expires_at).toLocaleString() : "");
+    $("room-owner").textContent = "Owner: " + room.owner;
     $("public-link").href = room.url;
     $("public-link").textContent = room.url;
-    $("join-code").textContent = room.code;
     $("present").href = "/admin/rooms/" + room.room_id + "/present";
     $("qr-png").href = "/r/" + room.slug + "/qr.png?size=1024";
     $("qr-svg").href = "/r/" + room.slug + "/qr.svg";
-    ["md", "csv", "json"].forEach(function (format) {
-      $("export-" + format).href = API + "/rooms/" + room.room_id + "/export?format=" + format;
-    });
     $("state").value = room.state;
-    $("questions-open").checked = room.settings.questions_open;
-    $("voting-open").checked = room.settings.voting_open;
-    $("moderation").checked = room.settings.moderation === "on";
     $("listed").checked = room.settings.listed !== false;
 
     fetch("/r/" + room.slug + "/qr.svg").then(function (r) { return r.text(); })
@@ -220,18 +303,37 @@
       .then(renderRoom).catch(fail);
   }
 
+  /* Empty states are written per tab: each one says what would appear
+     here and what causes it, not a generic "nothing". */
+  var EMPTY = {
+    all: ["No questions yet",
+      "Share the link below — questions appear the moment they are asked."],
+    answered: ["Nothing answered yet",
+      "Mark a question answered and it moves to this tab."],
+    hidden: ["Nothing hidden",
+      "Hide a question to park it here without deleting it."]
+  };
+
   function renderQuestions() {
     var filtered = state.items.filter(function (item) {
       if (state.filter === "all") return item.status === "visible" || item.status === "answered";
-      if (state.filter === "pending") return item.status === "pending";
       if (state.filter === "answered") return item.status === "answered";
       return item.status === "hidden";
     });
-    var pending = state.items.filter(function (q) { return q.status === "pending"; }).length;
-    $("pending-badge").hidden = pending === 0;
-    $("pending-badge").textContent = pending;
+    if (state.filter === "all") {
+      // The console's job is what to answer next: done items sink below the
+      // open queue instead of interleaving with it by score. Stable sort, so
+      // the server's ranking holds within each half.
+      filtered.sort(function (a, b) {
+        return (a.status === "answered") - (b.status === "answered");
+      });
+    }
 
     $("qempty").hidden = filtered.length > 0;
+    if (!filtered.length) {
+      $("qempty-title").textContent = EMPTY[state.filter][0];
+      $("qempty-body").textContent = EMPTY[state.filter][1];
+    }
     var list = $("qlist");
     list.textContent = "";
 
@@ -239,60 +341,115 @@
       var li = document.createElement("li");
       li.className = "q" + (item.status === "answered" ? " answered" : "") + (item.pinned ? " pinned" : "");
 
+      var text = document.createElement("div");
+      text.className = "text";
+      text.textContent = item.text;
+
+      var meta = document.createElement("div");
+      meta.className = "meta";
+      var who = document.createElement("span");
+      who.textContent = (item.author_name || "Anonymous") + " · " + relative(item.created_at);
+      meta.appendChild(who);
+      // States are tags, matching the room view: text and shape, never
+      // position or hue alone.
+      if (item.pinned) meta.appendChild(tag("pinned", "Pinned"));
+      if (item.status === "answered") meta.appendChild(tag("answered", "Answered"));
+      if (item.status === "hidden") meta.appendChild(tag("hidden", "Hidden"));
+
       var score = document.createElement("div");
       // Displays a score; it is not a control, so it must not look like one.
       score.className = "vote static";
       score.setAttribute("aria-hidden", "true");
-      score.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" ' +
+      score.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" ' +
         'stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">' +
         '<path d="M6 14l6-7 6 7"/></svg><span>' + item.score + "</span>";
 
-      var body = document.createElement("div");
-      body.className = "grow";
-      var text = document.createElement("div");
-      text.className = "text";
-      text.textContent = item.text;
-      var meta = document.createElement("div");
-      meta.className = "meta";
-      meta.textContent = (item.author_name || "Anonymous") + " · " + new Date(item.created_at).toLocaleTimeString() + " · " + item.status;
-
+      /* Moderation is routine — twelve times a session — so it whispers:
+         the quiet icon squares from presentation mode, sharing the foot
+         line with the score. The question text keeps the card. */
+      var foot = document.createElement("div");
+      foot.className = "q-foot";
       var actions = document.createElement("div");
       actions.className = "actions";
       [
-        item.status === "pending" ? ["Approve", { status: "visible" }, true] : null,
         item.status === "answered"
-          ? ["Unanswer", { status: "visible" }, false]
-          : ["Mark answered", { status: "answered" }, item.status !== "pending"],
-        [item.pinned ? "Unpin" : "Pin", { pinned: !item.pinned }, false],
-        item.status === "hidden" ? ["Restore", { status: "visible" }, false] : ["Hide", { status: "hidden" }, false]
-      ].filter(Boolean).forEach(function (entry) {
-        var button = document.createElement("button");
-        // Answering is the live-session flow; it earns the filled treatment.
-        button.className = entry[2] ? "small" : "ghost small";
-        button.textContent = entry[0];
-        button.addEventListener("click", function () {
-          request("/rooms/" + roomId + "/questions/" + item.question_id, {
-            method: "PATCH", body: JSON.stringify(entry[1])
-          }).then(function () { state.etag = null; refresh(); }).catch(fail);
-        });
-        actions.appendChild(button);
+          ? ["Unanswer", I.check, { status: "visible" }, true]
+          : ["Mark answered", I.check, { status: "answered" }, false],
+        [item.pinned ? "Unpin" : "Pin", I.pin, { pinned: !item.pinned }, !!item.pinned],
+        item.status === "hidden"
+          ? ["Restore", I.eyeOff, { status: "visible" }, true]
+          // Hiding removes the card from the current tab, so the undo rides
+          // the confirmation toast — one tap to reverse.
+          : ["Hide", I.eyeOff, { status: "hidden" }, false, "Question hidden"]
+      ].forEach(function (entry) {
+        actions.appendChild(actionButton(item, entry[0], entry[1], entry[2], entry[3], entry[4]));
       });
       actions.appendChild(deleteButton(item));
+      foot.appendChild(actions);
+      foot.appendChild(score);
 
-      body.appendChild(text);
-      body.appendChild(meta);
-      body.appendChild(actions);
-      li.appendChild(score);
-      li.appendChild(body);
+      li.appendChild(text);
+      li.appendChild(meta);
+      li.appendChild(foot);
       list.appendChild(li);
     });
   }
 
+  /* The click is acknowledged on the click: apply locally, reconcile after.
+     While the PATCH is in flight the row's buttons disable and the acting
+     one shows a ring, so a slow network reads as busy, not broken. */
+  function performAction(item, name, payload, after) {
+    QNA.patch({
+      item: item,
+      payload: payload,
+      busy: state.busy,
+      action: name,
+      send: function () {
+        return request("/rooms/" + roomId + "/questions/" + item.question_id, {
+          method: "PATCH", body: JSON.stringify(payload)
+        });
+      },
+      render: renderQuestions,
+      done: function () { state.etag = null; refresh(); if (after) after(); },
+      fail: fail
+    });
+  }
+
+  /* Icon-only, named for the screen reader and the tooltip. The armed
+     delete below is the one action that speaks in words instead — a
+     destructive confirm should be read, not recognised. */
+  function actionButton(item, name, icon, payload, pressed, undoLabel) {
+    var button = document.createElement("button");
+    button.type = "button";
+    button.className = "icon-btn";
+    button.innerHTML = icon;
+    button.setAttribute("aria-label", name);
+    button.title = name;
+    // Answered, pinned, hidden are toggles; pressed shows which side is on.
+    button.setAttribute("aria-pressed", pressed ? "true" : "false");
+    if (state.busy[item.question_id]) {
+      button.disabled = true;
+      if (state.busy[item.question_id] === name) button.classList.add("busy");
+    }
+    button.addEventListener("click", function () {
+      var after = undoLabel ? function () {
+        toast(undoLabel, function () {
+          performAction(item, "Undo", { status: "visible" });
+        });
+      } : null;
+      performAction(item, name, payload, after);
+    });
+    return button;
+  }
+
   function refresh() {
+    // An in-flight optimistic change must not be stomped by the poll.
+    if (Object.keys(state.busy).length) return Promise.resolve();
     var headers = state.etag ? { "if-none-match": state.etag } : {};
-    return request("/rooms/" + roomId + "/questions?status=visible,answered,pending,hidden", { headers: headers })
+    return request("/rooms/" + roomId + "/questions?status=visible,answered,hidden", { headers: headers })
       .then(function (body) {
         if (body.unchanged) return;
+        if (Object.keys(state.busy).length) return;
         state.etag = body.etag;
         state.items = body.items || [];
         renderQuestions();
@@ -302,9 +459,21 @@
   /* Deleting is irreversible, so the first click only arms the button. */
   function deleteButton(item) {
     var button = document.createElement("button");
+    button.type = "button";
     var armed = state.armedDelete === item.question_id;
-    button.className = armed ? "small arm" : "ghost small";
-    button.textContent = armed ? "Really delete?" : "Delete";
+    if (armed) {
+      button.className = "small arm";
+      button.textContent = "Really delete?";
+    } else {
+      button.className = "icon-btn";
+      button.innerHTML = I.trash;
+      button.setAttribute("aria-label", "Delete");
+      button.title = "Delete";
+    }
+    if (state.busy[item.question_id]) {
+      button.disabled = true;
+      if (state.busy[item.question_id] === "Delete") button.classList.add("busy");
+    }
     button.addEventListener("click", function () {
       if (state.armedDelete !== item.question_id) {
         state.armedDelete = item.question_id;
@@ -315,22 +484,23 @@
         return;
       }
       state.armedDelete = null;
-      request("/rooms/" + roomId + "/questions/" + item.question_id, {
-        method: "PATCH", body: JSON.stringify({ status: "deleted" })
-      }).then(function () { state.etag = null; refresh(); }).catch(fail);
+      performAction(item, "Delete", { status: "deleted" });
     });
     return button;
   }
 
   function selectFilter(name) {
     state.filter = name;
-    ["all", "pending", "answered", "hidden"].forEach(function (key) {
+    ["all", "answered", "hidden"].forEach(function (key) {
       $("f-" + key).setAttribute("aria-pressed", key === name ? "true" : "false");
     });
     renderQuestions();
   }
 
   /* ---- boot ---- */
+
+  paintThemeToggle();
+  $("theme-toggle").addEventListener("click", toggleTheme);
 
   if (roomId) {
     $("view-room").hidden = false;
@@ -340,17 +510,16 @@
     }).catch(fail);
     refresh();
     setInterval(function () { if (!document.hidden) refresh(); }, 5000);
+    // Relative timestamps go stale behind 304s, which is most of the time.
+    setInterval(function () { if (state.items.length) renderQuestions(); }, 60000);
 
     $("state").addEventListener("change", function () { patchRoom({ state: this.value }); });
-    $("questions-open").addEventListener("change", function () { patchRoom({ settings: { questions_open: this.checked } }); });
-    $("voting-open").addEventListener("change", function () { patchRoom({ settings: { voting_open: this.checked } }); });
-    $("moderation").addEventListener("change", function () { patchRoom({ settings: { moderation: this.checked ? "on" : "off" } }); });
     $("listed").addEventListener("change", function () { patchRoom({ settings: { listed: this.checked } }); });
     $("copy-link").addEventListener("click", function () {
       navigator.clipboard.writeText(state.room.url).then(function () { toast("Link copied"); });
     });
     $("create-cohost").addEventListener("click", createCohost);
-    ["all", "pending", "answered", "hidden"].forEach(function (key) {
+    ["all", "answered", "hidden"].forEach(function (key) {
       $("f-" + key).addEventListener("click", function () { selectFilter(key); });
     });
   } else {

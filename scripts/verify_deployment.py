@@ -139,7 +139,7 @@ def main():
         check("co-host can moderate", moderated.status_code == 200, moderated.text[:200])
 
         runs = cohost.patch(f"{api}/rooms/{room_id}",
-                            json={"settings": {"questions_open": False}}, timeout=20)
+                            json={"settings": {"default_sort": "recent"}}, timeout=20)
         check("co-host runs the session's settings", runs.status_code == 200)
 
         blocked = cohost.patch(f"{api}/rooms/{room_id}", json={"slug": "hijacked"}, timeout=20)

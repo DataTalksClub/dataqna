@@ -14,7 +14,7 @@ Two properties drive the design and separate this from a generic forum:
 - **Joining must cost nothing.** No account, no app, no email. One tap from a QR
   code to a text box.
 - **Everything is scriptable.** Rooms for a recurring podcast or a course cohort
-  are created, opened, closed, and exported through the REST API. The web UI is a
+  are created, opened, and closed through the REST API. The web UI is a
   convenience, never the only path.
 
 ### Non-goals for v1
@@ -47,7 +47,7 @@ Guest hosts are handled without accounts at all. See section 2.1.
 
 A room admin generates a **co-host code** — three groups of four characters, like
 `Q7K2-M9XR-T8VB`, drawn from an alphabet with no glyph you can misread or mishear.
-Anyone holding it can moderate that one room: approve, answer, pin, hide, edit for
+Anyone holding it can moderate that one room: answer, pin, hide, edit for
 typos, and run presentation mode. They need no account, no email address, and no
 prior relationship with the organization.
 
@@ -80,14 +80,17 @@ A room is one Q&A session. It owns its questions, its settings, and its admin li
 
 ### 3.1 Identity and links
 
-Each room has three identifiers:
+Each room has two identifiers:
 
 - `room_id` — opaque, immutable, ULID-shaped. Used in the API and in storage.
 - `slug` — the public URL segment. Chosen at creation (`llm-zoomcamp-2026`) or
   generated. Unique across all rooms, lowercase, `[a-z0-9-]{3,48}`. Mutable, with
   the previous slug kept as a permanent redirect so shared links never break.
-- `code` — a six-character human-typeable join code (`Q7K2M9`), for when someone
-  reads the link out loud. Resolves to the same room.
+
+There is deliberately no join code. Slido needs one because a participant has to
+find a session among all the sessions in the world; here the link *is* the session,
+and a QR code carries it. A second identifier would be one more thing to print,
+read out, mistype, and keep in sync.
 
 The public URL is `https://qna.dtcdev.click/r/<slug>`. That single URL is what goes
 on a slide, in a podcast description, or into a QR code — there is no separate
@@ -104,7 +107,7 @@ on a slide, in a podcast description, or into a QR code — there is no separate
 | State | Public page | New questions | Voting |
 |-------|-------------|---------------|--------|
 | `draft` | 404 | — | — |
-| `open` | visible | yes (unless `questions_open` is off) | yes |
+| `open` | visible | yes | yes |
 | `closed` | visible, read-only | no | no |
 | `archived` | 410 Gone | no | no |
 
@@ -126,16 +129,20 @@ Retention deletes data; expiry only stops accepting it.
 |---------|---------|---------|
 | `title` | required | Shown on the public page and in presentation mode |
 | `description` | `null` | Short context, rendered above the question box |
-| `moderation` | `off` | `off`: questions appear immediately. `on`: they sit in a review queue and are invisible to others until approved |
-| `questions_open` | `true` | Accept new questions. Turn off to freeze submissions while keeping voting live |
-| `voting_open` | `true` | Accept upvotes |
+| `listed` | `true` | Show the session on the public front page. Off makes it reachable by link only |
 | `allow_names` | `true` | Offer an optional name field. When `false`, all questions are anonymous |
 | `require_names` | `false` | Make the name field mandatory |
 | `answered_placement` | `separate` | `separate`: answered questions move to their own tab. `bottom`: they sink below open ones. `inline`: they stay in place, marked |
 | `default_sort` | `popular` | `popular` or `recent` |
-| `max_question_length` | `500` | Characters |
+| `max_question_length` | `450` | Characters. Slido caps at 300; half as long again is generous without letting a question become a speech |
 | `expires_at` | `null` | ISO 8601, see above |
 | `retention_days` | `365` | See above |
+
+There is deliberately no pre-publication review queue and no pause switch for
+questions or votes: an open room accepts both, a closed room accepts neither.
+A question is visible to everyone the moment it is asked. Moderation happens
+after the fact — `hidden` removes anything that needs removing — and closing
+the room is how a session stops.
 
 ## 4. Questions
 
@@ -154,15 +161,19 @@ first.
 
 | State | Visible to participants | Set by |
 |-------|------------------------|--------|
-| `pending` | Author only | Submission when `moderation` is `on` |
-| `visible` | Everyone | Submission, or admin approval |
+| `visible` | Everyone | Submission |
 | `answered` | Everyone, marked | Admin |
 | `hidden` | Nobody | Admin |
 | `deleted` | Nobody | Admin, or the author within the edit window |
 
+An earlier version had a `pending` state feeding a review queue; it is gone,
+and any stored row still carrying it is read as `visible` — those are
+questions someone asked and nobody rejected, and there is no control left
+that could release them.
+
 `hidden` and `deleted` differ in intent: `hidden` is moderation (the record stays,
-and shows in exports as removed), `deleted` is withdrawal (the row is dropped from
-exports). Neither is recoverable through the UI.
+marked as removed), `deleted` is withdrawal (the row is dropped). Neither is
+recoverable through the UI.
 
 ### 4.3 Ranking
 
@@ -207,9 +218,40 @@ while the tab is visible and every 30 seconds when it is hidden, sending
 local updates apply immediately on submit and vote, and are reconciled on the next
 poll.
 
-WebSockets are deliberately not used in v1. API Gateway WebSocket APIs need
-connection state, a disconnect path, and a fan-out mechanism, in exchange for
-latency improvements measured in seconds on a screen a host reads aloud from.
+Presentation mode polls the same endpoint every **1 second** — see section 5.1 for
+why the two rates differ.
+
+### 5.1 Why polling, and why two rates
+
+The audience page and the projector have opposite economics, and conflating them is
+what makes real-time look expensive.
+
+The room page is multiplied by everyone in the room. Two hundred people polling
+every second is where throttling and cost begin, and an attendee seeing a vote tick
+four seconds late loses nothing. Presentation mode is **one client** — the host's
+screen. Making that feel live costs 3,600 mostly-`304` requests an hour for a single
+viewer, which is free in every sense that matters. So the projector polls at 1s and
+the audience at 4s.
+
+That asymmetry is the whole reason no push mechanism is needed. Fan-out to the
+audience is what makes WebSockets expensive; the surface that actually has to feel
+immediate has exactly one connection.
+
+**Alternatives considered.**
+
+| Option | Why not |
+|---|---|
+| API Gateway WebSockets | Connection state in DynamoDB, disconnect pruning on `410`, and a fan-out of one `PostToConnection` call per client per update. Permanent complexity to save three seconds on one screen. |
+| Long polling | The Lambda bills for the whole time it holds the request open, and API Gateway caps the integration at 30 seconds. |
+| Server-Sent Events | Only needs one direction, which fits — votes already go by `POST`. API Gateway HTTP API cannot stream, but a Lambda Function URL with `RESPONSE_STREAM` can. The function runs for the life of the connection, so cost scales with connected attendees. |
+| AppSync subscriptions | Managed fan-out with no connection table, at the price of a GraphQL layer bolted onto a REST API. |
+| IoT Core over MQTT/WSS | Cheapest real pub-sub at scale, and the strangest fit. |
+| Ably, Pusher, Momento | Ruled out by section 15: the page carries no third-party scripts. |
+
+**The upgrade path, if 1s stops being enough.** Server-Sent Events on a Lambda
+Function URL, **for the presenter only** — one connection, one streaming function,
+no connection registry, no fan-out, and the audience keeps polling. Push arrives
+where it is needed without any of the bookkeeping that made it unattractive.
 
 ## 6. The admin experience
 
@@ -218,14 +260,14 @@ latency improvements measured in seconds on a screen a host reads aloud from.
 - **Room list** — rooms where the signed-in user is owner or admin, grouped by
   state, with question and unanswered counts. "New room" opens a form covering the
   settings in section 3.3.
-- **Room detail** — the same question list as the public page, plus per-question
-  controls (mark answered, pin, hide, delete, edit for typos), the moderation queue
-  when `moderation` is on, a bulk action bar, and room settings.
-- **Share panel** — the public URL, the join code, a QR code with copy and download
-  (SVG and PNG), and the "open presentation mode" button.
-- **People** — the admin list, add and remove by email address.
-- **Export** — JSON, CSV, or Markdown, covering questions, states, scores, and
-  timestamps.
+- **Room detail** — leads with the queue: the same question list as the public
+  page plus per-question controls (mark answered, pin, hide, delete, edit for
+  typos), inside the first screenful on a phone. The header carries the two
+  mid-session controls — presentation mode and copy link. Everything done once
+  before an event — the share panel (public URL, QR downloads), settings, and
+  people — sits in collapsed setup panels below the list.
+- **People** — co-host invites: a link plus a passcode, created and revoked by
+  the room admins.
 
 Room admins can do everything to a room except delete it or change its owner; those
 belong to the owner. Ownership can be transferred to another admin.
@@ -241,26 +283,33 @@ Two states share one frame. The resting state is the **ranked list**: the top
 questions as large cards, vote counts prominent, re-sorting live as votes land —
 the audience votes because they can see what is winning. **Spotlight** blows a
 single question up at a size readable from the back of the room, with its author
-and score; the host enters it deliberately and returns to the list with Esc. A
-join strip — QR code, URL, and short join code — stays visible along the top in
+and score; the host enters it from the toolbar, which opens on whatever the room
+has voted to the top, and returns to the list with Esc. A
+join strip — a large QR code on the left, with the URL beside it — stays visible in
 both states, so people who arrive late can join without the host interrupting
-themselves. While the room has no questions yet, the join card takes over the
-whole screen.
+themselves. The QR is sized to be scanned from the back of a room, because it is
+the entire on-ramp: if nobody can scan it, nobody asks anything. While the room has
+no questions yet, the join card takes over the whole screen.
 
-Keyboard only:
+Clicking is the interaction model — every action is a visible control, nothing
+is reachable only by keyboard:
 
-| Key | Action (list) | Action (spotlight) |
-|-----|---------------|--------------------|
-| `↑` `↓` / `←` `→` / `space` | Move the selection | Previous / next question |
-| `Enter` | Spotlight the selected question | Mark answered, back to the list |
-| `a` | Mark selected answered | — |
-| `p` | Pin | Pin |
-| `h` | Hide | Hide, back to the list |
-| `u` | Undo the last answered/hidden | same |
-| `q` | Toggle the QR overlay to full screen | same |
-| `d` | Toggle the dark theme (light is the projector default) | same |
-| `f` | Browser fullscreen | same |
-| `Esc` | Back to room detail | Back to the list |
+- **On each card**: mark answered, and nothing else — one always-visible icon
+  button with an accessible name. Pinning and hiding are moderation and stay in
+  the room console, off the projected screen; the card is for running the
+  session, not curating it.
+- **In the toolbar** (bottom of the frame): undo, spotlight (a toggle — in it
+  says "All questions"), the full-screen QR overlay, the light/dark theme
+  toggle (light is the projector default), and browser fullscreen. Leaving is
+  the browser's back button, not a control that can be mis-clicked on a shared
+  screen.
+- Marking answered applies optimistically and offers **undo** both in the
+  toolbar and in the confirmation cue — mis-taps are likelier with buttons than
+  they were with keys.
+
+Two conventional keys survive because they need no teaching: the arrow keys move
+the selection (or walk the ranking in spotlight), and `Esc` closes the QR
+overlay or leaves the spotlight. Everything else is a button.
 
 The list refreshes on the polling loop; answered and hidden questions visibly
 leave it, and rank changes animate so movement is legible. The spotlit question
@@ -436,9 +485,9 @@ Enforced with conditional counter items in DynamoDB, keyed by a truncated window
 with a TTL a little longer than the window. Exceeding a limit returns `429` with
 `Retry-After`.
 
-Two switches exist for when a room is under active abuse: `moderation: on` routes
-everything through the review queue, and `questions_open: false` stops submissions
-outright while leaving the room readable.
+When a room is under active abuse, `hidden` removes individual questions and
+closing the room stops submissions and votes outright while leaving it
+readable. There is deliberately no finer switch — see section 3.3.
 
 IP addresses are used for rate limiting only, hashed with a per-deployment salt,
 and never stored on a question.
@@ -467,8 +516,7 @@ effectively nothing between events.
 
 Rooms hold what participants type and a name if they choose to give one. No
 accounts, no email addresses, no tracking, no third-party scripts, no analytics.
-Retention is explicit per room and enforced by TTL. Exports let a host keep what
-they need after the room's data is gone.
+Retention is explicit per room and enforced by TTL.
 
 ## 16. Decided, and still open
 
@@ -478,19 +526,22 @@ Settled during the build:
 - **The permanent link** is `/live`, not a per-host `/@handle` (section 8).
 - **Presentation advances manually.** Auto-advance to the top unanswered question
   is livelier but moves the screen under the host mid-sentence.
+- **No review queue, no pause switches.** `moderation`, `questions_open`, and
+  `voting_open` were built and then removed: three toggles nobody used in
+  anger, and one of them let a host silently run a session where nobody could
+  see anybody's questions. Open accepts everything; closed stops everything.
+- **Co-host powers.** A session code runs the whole session — questions,
+  settings, lifecycle, presentation — and only handing access on (invites,
+  the published slug, deletion) stays with the signed-in owner.
 
 Still open:
 
-1. **Co-host powers.** A code currently grants moderation and presentation but not
-   room settings. Pausing questions mid-event is arguably moderation; opening and
-   closing the room is arguably not. If co-hosts need the pause switch, it is a
-   one-line move from `require_admin` to `require_moderator`.
-2. **Slido import.** Worth pulling the existing rooms' questions across before the
+1. **Slido import.** Worth pulling the existing rooms' questions across before the
    subscription lapses, or is the archive not needed?
-3. **Public room directory.** Rooms are currently unlisted and shared only by link,
+2. **Public room directory.** Rooms are currently unlisted and shared only by link,
    with `/live` as the one public entry point. A browsable index of open rooms is
    possible but is a different privacy posture.
-4. **DataOps integration.** The API is in place and key-authenticated; what DataOps
+3. **DataOps integration.** The API is in place and key-authenticated; what DataOps
    should actually do with it — pull questions after an event, create rooms from
    the course schedule, or both — is not specified yet.
 

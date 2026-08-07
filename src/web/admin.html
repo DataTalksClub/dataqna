@@ -7,14 +7,28 @@
 <title>DataQnA admin</title>
 <meta name="theme-color" content="#f6f8fb" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0d1220" media="(prefers-color-scheme: dark)">
+<script>
+/* Apply a pinned theme before first paint, so there is no flash. */
+(function () {
+  try {
+    var t = localStorage.getItem("dq_theme");
+    if (t !== "light" && t !== "dark") return;
+    document.documentElement.classList.add("theme-" + t);
+    var c = t === "dark" ? "#0d1220" : "#f6f8fb";
+    var metas = document.querySelectorAll('meta[name="theme-color"]');
+    for (var i = 0; i < metas.length; i++) metas[i].setAttribute("content", c);
+  } catch (e) {}
+})();
+</script>
 <link rel="icon" href="{{FAVICON}}">
 <link rel="stylesheet" href="/assets/app.css">
 </head>
 <body>
 <div class="wrap wide">
-  <div class="row" style="margin-bottom:18px">
+  <div class="row" style="margin-bottom:16px">
     <span class="grow"><a class="brand" href="/admin"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 14l6-7 6 7"/></svg>DataQnA</a></span>
     <span class="muted" id="who"></span>
+    <button type="button" id="theme-toggle" class="icon-btn" aria-label="Switch to dark theme"></button>
     <a class="btn ghost small" href="/auth/logout">Sign out</a>
   </div>
 
@@ -45,86 +59,92 @@
 
     <div class="card stack">
       <strong>API keys</strong>
-      <p class="muted" style="margin:0">For scripting sessions and for the DataOps integration. Shown once.</p>
+      <p class="muted" style="margin:0">Shown once, at creation.</p>
       <div class="row wrapping">
         <input type="text" id="key-name" class="grow" placeholder="Key name" aria-label="Key name">
         <button id="create-key" class="ghost">Create key</button>
       </div>
       <div id="key-reveal" hidden></div>
-      <table id="keys"></table>
+      <p class="table-empty" id="keys-empty" hidden>No keys yet.</p>
+      <table id="keys" hidden></table>
     </div>
   </div>
 
   <div id="view-room" hidden>
-    <a href="/admin" class="muted" style="text-decoration:none">&larr; All sessions</a>
-    <h1 id="room-title" style="font-size:1.4rem;margin:10px 0 4px"></h1>
-    <div class="muted" id="room-sub" style="margin-bottom:14px"></div>
-
-    <div class="card share">
-      <div class="qr" id="qr"></div>
-      <div class="stack">
-        <div><a id="public-link" href="#" class="mono"></a></div>
-        <div>Join code <code id="join-code"></code></div>
-        <div class="row wrapping">
-          <a id="present" class="btn" href="#" target="_blank" rel="noopener">Presentation mode</a>
-          <button id="copy-link" class="ghost small">Copy link</button>
-          <a id="qr-png" class="btn ghost small" href="#" download>QR PNG</a>
-          <a id="qr-svg" class="btn ghost small" href="#" download>QR SVG</a>
-          <a id="export-md" class="btn ghost small" href="#">Export MD</a>
-          <a id="export-csv" class="btn ghost small" href="#">CSV</a>
-          <a id="export-json" class="btn ghost small" href="#">JSON</a>
-        </div>
+    <div class="room-head">
+      <a href="/admin" class="back-link">&larr; All sessions</a>
+      <h1 id="room-title"></h1>
+      <div class="muted room-sub" id="room-sub"></div>
+      <div class="row wrapping room-tools">
+        <a id="present" class="btn" href="#" target="_blank" rel="noopener">Presentation mode</a>
+        <button id="copy-link" class="ghost">Copy link</button>
       </div>
-    </div>
-
-    <div class="card stack" id="settings-card">
-      <div class="row wrapping">
-        <select id="state" aria-label="Session state">
-          <option value="draft">Draft</option>
-          <option value="open">Open</option>
-          <option value="closed">Closed</option>
-        </select>
-        <label class="row"><input type="checkbox" id="questions-open"> <span>Accept questions</span></label>
-        <label class="row"><input type="checkbox" id="voting-open"> <span>Accept votes</span></label>
-        <label class="row"><input type="checkbox" id="moderation"> <span>Review before showing</span></label>
-        <label class="row"><input type="checkbox" id="listed"> <span>Show on the front page</span></label>
-      </div>
-    </div>
-
-    <div class="card stack" id="cohost-card">
-      <strong>People</strong>
-      <p class="muted" style="margin:0">An invite is a link plus a passcode. Both are
-      needed, so a forwarded link on its own gets nobody in. Whoever has both can run
-      this session — questions, settings, and presentation mode — with no account and
-      no access to anything else. Revoking takes effect immediately.</p>
-      <div class="row wrapping">
-        <input type="text" id="cohost-label" class="grow" placeholder="Who is this for? (optional)" aria-label="Co-host label">
-      </div>
-      <div class="row wrapping">
-        <input type="text" id="cohost-name" class="grow" placeholder="Link name (optional, generated if blank)" aria-label="Link name">
-        <input type="text" id="cohost-passcode" class="grow mono" placeholder="Passcode (optional, generated if blank)" aria-label="Passcode">
-        <button id="create-cohost" class="ghost">Create invite</button>
-      </div>
-      <table id="cohosts"></table>
     </div>
 
     <div class="banner" id="cohost-notice" hidden>
-      You are here with a session code: you can run this session — its questions,
-      settings, and presentation view. Only the owner can add people to it.
+      You're running this session with an invite. Only the owner can add people.
     </div>
 
     <div class="tabs">
       <button type="button" id="f-all" aria-pressed="true">All</button>
-      <button type="button" id="f-pending" aria-pressed="false">Review <span class="badge" id="pending-badge" hidden>0</span></button>
       <button type="button" id="f-answered" aria-pressed="false">Answered</button>
       <button type="button" id="f-hidden" aria-pressed="false">Hidden</button>
     </div>
     <ul class="questions" id="qlist"></ul>
-    <div class="empty" id="qempty" hidden>Nothing here yet.</div>
+    <div class="empty" id="qempty" hidden>
+      <h2 id="qempty-title">No questions yet</h2>
+      <p id="qempty-body">Share the link below — questions appear the moment they are asked.</p>
+    </div>
+
+    <div class="group-heading setup-heading">Setup</div>
+    <details class="card" id="share-card">
+      <summary>Share <span class="summary-hint">public link and QR code</span></summary>
+      <div class="details-body share">
+        <div class="qr" id="qr"></div>
+        <div class="stack grow">
+          <a id="public-link" href="#" class="share-url" target="_blank" rel="noopener"></a>
+          <div class="row wrapping">
+            <a id="qr-png" class="btn ghost small" href="#" target="_blank" rel="noopener">QR PNG</a>
+            <a id="qr-svg" class="btn ghost small" href="#" target="_blank" rel="noopener">QR SVG</a>
+          </div>
+        </div>
+      </div>
+    </details>
+    <details class="card" id="settings-card">
+      <summary>Settings <span class="summary-hint">state and visibility</span></summary>
+      <div class="details-body stack">
+        <div class="row wrapping">
+          <select id="state" aria-label="Session state">
+            <option value="draft">Draft</option>
+            <option value="open">Open</option>
+            <option value="closed">Closed</option>
+          </select>
+          <label class="row check"><input type="checkbox" id="listed"> <span>Show on the front page</span></label>
+        </div>
+      </div>
+    </details>
+    <details class="card" id="cohost-card">
+      <summary>People <span class="summary-hint">co-host invites</span></summary>
+      <div class="details-body stack">
+        <p class="muted" id="room-owner" style="margin:0"></p>
+        <p class="muted" style="margin:0">Send both the link and the passcode.</p>
+        <div class="row wrapping">
+          <input type="text" id="cohost-label" class="grow" placeholder="Who is this for? (optional)" aria-label="Co-host label">
+        </div>
+        <div class="row wrapping">
+          <input type="text" id="cohost-name" class="grow" placeholder="Link name (optional)" aria-label="Link name">
+          <input type="text" id="cohost-passcode" class="grow mono" placeholder="Passcode (optional)" aria-label="Passcode">
+          <button id="create-cohost" class="ghost">Create invite</button>
+        </div>
+        <p class="table-empty" id="cohosts-empty" hidden>No invites yet.</p>
+        <table id="cohosts" hidden></table>
+      </div>
+    </details>
   </div>
 </div>
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
+<script src="/assets/qna.js"></script>
 <script src="/assets/admin.js"></script>
 </body>
 </html>

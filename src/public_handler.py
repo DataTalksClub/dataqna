@@ -11,14 +11,13 @@ from dataqna.http import HttpError
 
 logging.getLogger().setLevel(logging.INFO)
 
-ASSETS = {"app.css", "room.js", "admin.js", "present.js"}
+ASSETS = {"app.css", "room.js", "admin.js", "present.js", "qna.js"}
 
 
 def _room_config(room, participant):
     return {
         "room_id": room["room_id"],
         "slug": room.get("slug"),
-        "code": room.get("code"),
         "state": room.get("state"),
         "url": f"{config.SITE_URL}/r/{room.get('slug')}",
         "settings": rooms.public_view(room)["settings"],
@@ -31,9 +30,6 @@ def _room_config(room, participant):
 def _banner(room):
     if room.get("state") == "closed":
         return "This room is closed. You can still read the questions."
-    settings = room.get("settings", {})
-    if not settings.get("questions_open", True):
-        return "New questions are paused. Voting is still open."
     return None
 
 
@@ -53,7 +49,7 @@ def _serve_room(event, identifier):
         ]
     participant = security.participant_id(token)
 
-    # Canonicalize a join code or a superseded slug onto the current slug.
+    # Canonicalize a superseded slug onto the current one.
     if identifier != room.get("slug"):
         return http.redirect(f"/r/{room['slug']}", cookies=cookies)
 

@@ -50,11 +50,17 @@ the semantic layer. That is the one rule worth enforcing.
 ## 3. Themes
 
 Light and dark are both first-class. `prefers-color-scheme` chooses by default, and
-a page can pin one with `html.theme-light` / `html.theme-dark`.
+a page can pin one with `html.theme-light` / `html.theme-dark`. A visible toggle
+(room header, admin header, presentation toolbar) pins the choice in
+`localStorage` — `dq_theme` for the site, `dq_present_theme` for presentation
+mode, which is its own surface with its own default. Every page applies a stored
+pin **before first paint** via an inline script in `<head>` (the static templates
+carry their own; `render.py` injects `THEME_SCRIPT` into `_shell`), which also
+rewrites the `theme-color` metas so the browser chrome follows.
 
 Presentation mode pins **light**, deliberately: a projector renders white as "screen
-off", and dark slides wash out in a lit room. `d` overrides it and the choice
-persists in `localStorage`.
+off", and dark slides wash out in a lit room. The toolbar's theme button overrides
+it and the choice persists.
 
 The dark mapping is duplicated — once under `@media (prefers-color-scheme: dark)`
 and once under `html.theme-dark`. **Keep the two blocks identical.** CSS has no way
@@ -110,11 +116,27 @@ banners, tabs, question list, empty state and toast, presentation mode.
 Notes that are not obvious from the code:
 
 - **Touch targets are 44px minimum.** `.btn.small` trims padding and type, never
-  the target.
-- **`.vote`** is the one thing a participant taps in a dark room, one-handed. It is
-  oversized on purpose.
+  the target. `.icon-btn` is the square icon-only variant and always carries an
+  `aria-label`. The admin queue's per-question actions use it deliberately, with
+  presentation mode's glyphs: moderation happens a dozen times a session, so it
+  must not outweigh the question text — the console's one filled control is
+  Presentation mode. Only the armed "Really delete?" state speaks in words.
+- **`.vote`** is the one thing a participant taps in a dark room, one-handed: a
+  pill on the card's foot line — chevron and count side by side — 44px tall,
+  secondary to the question text but primary to the thumb. The question card
+  follows Slido's anatomy: text leads, author and time sit under it.
+- **The room hero** (`.hero`) is the participant page's header band. It uses the
+  `--hero-*` tokens; hero-muted is 4.81:1 on the gradient's lightest stop, so do
+  not lighten the gradient without re-measuring.
+- **Pinned is a badge, not a border.** No accent outline, no inset left edge —
+  the room shows a `Pinned` tag, presentation mode a pin glyph sized against the
+  vote count.
 - **`.btn.arm`** is the "are you sure" state of a destructive two-tap, not a
   separate button.
+- **Setup panels** (`details.card`) hold the admin console's done-once tasks —
+  share, settings, people — as collapsed 48px summary rows below the queue, so
+  the queue owns the first screenful. The chevron is drawn in CSS and flips
+  when open; open/closed is a shape change, never color alone.
 - **`[hidden] { display: none !important; }`** is required, not defensive. Author
   styles on `button` beat the UA stylesheet, so without it every hidden button
   renders. Also covered by a test.
@@ -125,11 +147,17 @@ Notes that are not obvious from the code:
 
 The layout rules are in [specification.md](specification.md) §7. What belongs here:
 
-- The ranked list uses **equal grid rows**, so the top N always fit the frame
-  whether there are three questions or eight. At six or more, `.dense` trades size
-  for rows — smaller type and a two-line clamp.
-- Type is sized for a projector at 1920×1080 read across a lit room, not for a
-  laptop at arm's length.
+- **A card is one fixed size.** Type and padding never scale with the number of
+  questions: one question renders exactly like the top card of eight, the list
+  just gets shorter. Past six rows the list truncates with a "+N more" line (and
+  scrolls where there is touch).
+- The **join panel leads on the left** — QR first, sized viewport-relative to be
+  scannable from the back of a room, URL under it, session title at the foot.
+- Every action is a **visible control**: per-question icon buttons on the card,
+  view-level buttons in the bottom toolbar. Only arrows and Esc remain as keys.
+- Type is sized for a projector at 1920×1080 read across a lit room, with an
+  added phone breakpoint (≤820px) where the shell becomes a column and the list
+  scrolls — the host runs sessions from a phone too.
 
 ## 9. Changing it
 

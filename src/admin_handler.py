@@ -85,7 +85,6 @@ def _present(event, room_id, email):
         {
             "room_id": room["room_id"],
             "slug": room.get("slug"),
-            "code": room.get("code"),
             "url": f"{config.SITE_URL}/r/{room.get('slug')}",
             "title": room.get("title"),
         },

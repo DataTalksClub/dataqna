@@ -189,21 +189,6 @@ def test_idempotent_creation_returns_the_same_room(table):
     assert json.loads(first["body"])["room_id"] == json.loads(second["body"])["room_id"]
 
 
-def test_export_requires_admin(table):
-    room = make_room()
-    with pytest.raises(HttpError) as excinfo:
-        call(["rooms", room["room_id"], "export"], "GET")
-    assert excinfo.value.status == 401
-
-
-def test_export_markdown_lists_questions(table):
-    room = make_room()
-    call(["rooms", room["room_id"], "questions"], "POST", body={"text": "Exported?"})
-    response = call(["rooms", room["room_id"], "export"], "GET", identity=owner(),
-                    query={"format": "md"})
-    assert "Exported?" in response["body"]
-
-
 def test_root_admin_can_reach_any_room(table):
     room = make_room()
     root = api.Identity(email="root@datatalks.club", source="session")

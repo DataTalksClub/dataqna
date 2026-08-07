@@ -5,19 +5,27 @@
   var CONFIG = JSON.parse(document.getElementById("config").textContent);
   var API = "/api/v1/rooms/" + CONFIG.room_id;
   var MOTION = window.matchMedia("(prefers-reduced-motion: no-preference)").matches;
+  var RING = 75.4; /* 2πr for the limit ring's r=12 circle */
 
-  var CHEVRON = '<svg class="arrow" width="18" height="18" viewBox="0 0 24 24" fill="none" ' +
+  var CHEVRON = '<svg class="arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" ' +
     'stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" ' +
     'aria-hidden="true"><path d="M6 14l6-7 6 7"/></svg>';
+  var SUN = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" ' +
+    'stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+    '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 ' +
+    '1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>';
+  var MOON = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" ' +
+    'stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+    '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';
 
   var el = {
     ask: document.getElementById("ask"),
     text: document.getElementById("text"),
     name: document.getElementById("name"),
     send: document.getElementById("send"),
-    counter: document.getElementById("counter"),
-    count: document.getElementById("count"),
-    max: document.getElementById("max"),
+    limit: document.getElementById("limit"),
+    limitLeft: document.getElementById("limit-left"),
+    limitLive: document.getElementById("limit-live"),
     list: document.getElementById("list"),
     empty: document.getElementById("empty"),
     emptyTitle: document.getElementById("empty-title"),
@@ -25,12 +33,14 @@
     banner: document.getElementById("banner"),
     liveCount: document.getElementById("live-count"),
     toast: document.getElementById("toast"),
+    themeToggle: document.getElementById("theme-toggle"),
     tabs: {
       popular: document.getElementById("tab-popular"),
       recent: document.getElementById("tab-recent"),
       answered: document.getElementById("tab-answered")
     }
   };
+  el.limitFill = el.limit.querySelector(".fill");
 
   var state = {
     sort: CONFIG.settings.default_sort === "recent" ? "recent" : "popular",
@@ -43,7 +53,11 @@
     busy: {},
     failures: 0,
     loaded: false,
-    armed: null
+    armed: null,
+    sending: false,
+    over: false,
+    said75: false,
+    saidOver: false
   };
 
   var separateAnswered = CONFIG.settings.answered_placement === "separate";
@@ -65,6 +79,34 @@
       });
     });
   }
+
+  /* ---- theme: system by default, pinned once the user picks ---- */
+
+  function effectiveTheme() {
+    var root = document.documentElement.classList;
+    if (root.contains("theme-dark")) return "dark";
+    if (root.contains("theme-light")) return "light";
+    return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  }
+
+  function paintThemeToggle() {
+    var dark = effectiveTheme() === "dark";
+    el.themeToggle.innerHTML = dark ? SUN : MOON;
+    el.themeToggle.setAttribute("aria-label", dark ? "Switch to light theme" : "Switch to dark theme");
+  }
+
+  function toggleTheme() {
+    var next = effectiveTheme() === "dark" ? "light" : "dark";
+    document.documentElement.classList.remove("theme-dark", "theme-light");
+    document.documentElement.classList.add("theme-" + next);
+    try { localStorage.setItem("dq_theme", next); } catch (e) {}
+    var color = next === "dark" ? "#1d2438" : "#5951e8";
+    var metas = document.querySelectorAll('meta[name="theme-color"]');
+    Array.prototype.forEach.call(metas, function (meta) { meta.setAttribute("content", color); });
+    paintThemeToggle();
+  }
+
+  /* ---- questions ---- */
 
   function relative(iso) {
     if (!iso) return "";
@@ -132,6 +174,8 @@
     });
   }
 
+  /* Slido's card anatomy: the question leads, author and time sit under it,
+     and the vote pill rides the foot line. */
   function buildCard(item) {
     var li = document.createElement("li");
     li.dataset.qid = item.question_id;
@@ -139,6 +183,22 @@
       (item.pinned ? " pinned" : "");
     if (state.loaded && !state.seen[item.question_id]) li.classList.add("flash");
     state.seen[item.question_id] = true;
+
+    var text = document.createElement("div");
+    text.className = "text";
+    text.textContent = item.text;
+
+    var foot = document.createElement("div");
+    foot.className = "q-foot";
+
+    var meta = document.createElement("div");
+    meta.className = "meta";
+    var who = document.createElement("span");
+    who.textContent = (item.author_name || "Anonymous") + " · " + relative(item.created_at);
+    meta.appendChild(who);
+    if (item.own) meta.appendChild(tag("you", "You"));
+    if (item.pinned) meta.appendChild(tag("pinned", "Pinned"));
+    if (item.status === "answered") meta.appendChild(tag("answered", "Answered"));
 
     var vote = document.createElement("button");
     vote.type = "button";
@@ -150,35 +210,17 @@
     vote.disabled = !CONFIG.can_vote || !!state.busy[item.question_id];
     vote.addEventListener("click", function () { toggleVote(item, vote); });
 
-    var body = document.createElement("div");
-    body.className = "grow";
-
-    var text = document.createElement("div");
-    text.className = "text";
-    text.textContent = item.text;
-
-    var meta = document.createElement("div");
-    meta.className = "meta";
-    var who = document.createElement("span");
-    who.textContent = (item.author_name || "Anonymous") + " · " + relative(item.created_at);
-    meta.appendChild(who);
-    if (item.own) meta.appendChild(tag("you", "You"));
-    if (item.pinned) meta.appendChild(tag("pinned", "Pinned"));
-    if (item.status === "answered") meta.appendChild(tag("answered", "Answered"));
-    if (item.status === "pending") meta.appendChild(tag("pending", "Awaiting review"));
-
-    body.appendChild(text);
-    body.appendChild(meta);
+    foot.appendChild(meta);
+    foot.appendChild(vote);
+    li.appendChild(text);
+    li.appendChild(foot);
 
     if (item.own && item.editable) {
       var actions = document.createElement("div");
       actions.className = "actions";
       actions.appendChild(withdrawButton(item));
-      body.appendChild(actions);
+      li.appendChild(actions);
     }
-
-    li.appendChild(vote);
-    li.appendChild(body);
     return li;
   }
 
@@ -334,7 +376,8 @@
   function submit(event) {
     event.preventDefault();
     var text = el.text.value.trim();
-    if (!text) return;
+    if (!text || state.over || state.sending) return;
+    state.sending = true;
     el.send.disabled = true;
 
     request(API + "/questions", {
@@ -342,17 +385,15 @@
       body: JSON.stringify({ text: text, author_name: el.name.value.trim() || null })
     }).then(function (body) {
       el.text.value = "";
-      updateCounter();
+      updateLimit();
       try { localStorage.setItem("dq_name", el.name.value.trim()); } catch (e) {}
-      if (body.status === "pending") {
-        toast("Sent for review — only you can see it until it's approved");
-      }
       state.etag = null;
       return refresh().then(function () { reveal(body.question_id); });
     }).catch(function (error) {
       toast(error.message);
     }).then(function () {
-      el.send.disabled = false;
+      state.sending = false;
+      el.send.disabled = state.over;
     });
   }
 
@@ -379,12 +420,38 @@
     refresh();
   }
 
-  function updateCounter() {
+  /* The Twitter ring: nothing until 75% of the limit, a filling ring after,
+     the remaining count in the last 10%, and a blocked Send when over. */
+  function updateLimit() {
     var limit = CONFIG.settings.max_question_length;
     var length = el.text.value.length;
-    el.count.textContent = String(length);
-    el.counter.hidden = length < limit * 0.8;
-    el.counter.classList.toggle("limit", length >= limit);
+    var left = limit - length;
+    var lastStretch = left <= Math.ceil(limit * 0.1);
+    var over = left < 0;
+    var show = length >= limit * 0.75;
+
+    state.over = over;
+    el.limit.classList.toggle("show", show);
+    el.limit.classList.toggle("warn", lastStretch && !over);
+    el.limit.classList.toggle("over", over);
+    el.limitFill.style.strokeDashoffset =
+      (RING * (1 - Math.min(1, length / limit))).toFixed(1);
+    el.limitLeft.textContent = show && lastStretch ? String(left) : "";
+    el.send.disabled = over || state.sending;
+
+    if (show && !state.said75) {
+      state.said75 = true;
+      el.limitLive.textContent = length + " of " + limit + " characters used.";
+    } else if (!show) {
+      state.said75 = false;
+    }
+    if (over && !state.saidOver) {
+      state.saidOver = true;
+      el.limitLive.textContent =
+        "Over the " + limit + " character limit — shorten your question to send it.";
+    } else if (!over) {
+      state.saidOver = false;
+    }
   }
 
   function schedule() {
@@ -393,17 +460,18 @@
   }
 
   function init() {
+    paintThemeToggle();
+    el.themeToggle.addEventListener("click", toggleTheme);
+
     if (CONFIG.can_ask) {
       el.ask.hidden = false;
-      el.max.textContent = CONFIG.settings.max_question_length;
-      el.text.maxLength = CONFIG.settings.max_question_length;
       if (!CONFIG.settings.allow_names) el.name.hidden = true;
       if (CONFIG.settings.require_names) {
         el.name.placeholder = "Your name";
         el.name.required = true;
       }
       try { el.name.value = localStorage.getItem("dq_name") || ""; } catch (e) {}
-      el.text.addEventListener("input", updateCounter);
+      el.text.addEventListener("input", updateLimit);
       el.ask.addEventListener("submit", submit);
       el.text.addEventListener("keydown", function (event) {
         if ((event.metaKey || event.ctrlKey) && event.key === "Enter") submit(event);

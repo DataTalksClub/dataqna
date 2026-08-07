@@ -49,19 +49,30 @@ def test_length_limit_is_enforced(table):
         questions.submit(room, {"text": "x" * 11}, "p1")
 
 
-def test_moderation_hides_pending_questions_from_others(table):
-    room = make_room(settings={"moderation": "on"})
-    question = questions.submit(room, {"text": "Held"}, "author")
-    assert question["status"] == "pending"
+def test_questions_are_visible_to_everyone_the_moment_they_are_asked(table):
+    room = make_room()
+    question = questions.submit(room, {"text": "Q"}, "author")
+    assert question["status"] == "visible"
 
     items, _, _ = questions.collect(room, participant="someone-else")
-    assert items == []
+    assert [item["text"] for item in items] == ["Q"]
 
-    own, _, _ = questions.collect(room, participant="author")
-    assert [item["text"] for item in own] == ["Held"]
 
-    admin_items, _, _ = questions.collect(room, is_admin=True)
-    assert len(admin_items) == 1
+def test_a_legacy_pending_row_reads_as_visible(table):
+    """Moderation is gone; rows stored while it existed must not stay
+    invisible forever — nobody asked for them to be hidden, and no control
+    is left that could release them."""
+    room = make_room()
+    question = questions.submit(room, {"text": "Held over"}, "author")
+    store.update_question(room["room_id"], question["question_id"], {"status": "pending"})
+
+    items, counts, _ = questions.collect(room, participant="someone-else")
+    assert [item["text"] for item in items] == ["Held over"]
+    assert items[0]["status"] == "visible"
+    assert counts["visible"] == 1
+
+    stored = store.get_question(room["room_id"], question["question_id"])
+    assert questions.can_author_edit(stored, "author")
 
 
 def test_popular_ranking_breaks_ties_by_age(table):

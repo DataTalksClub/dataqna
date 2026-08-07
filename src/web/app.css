@@ -3,14 +3,15 @@
    The system, in brief: raw color ramps (slate for neutrals, navy for dark
    surfaces, blurple for the accent) feed semantic tokens (--bg, --text,
    --accent…), and components only ever touch the semantic layer. Themes are
-   just alternative mappings: prefers-color-scheme picks one, and a page can
-   pin a theme with html.theme-light / html.theme-dark (presentation mode
-   does). Space runs on a 4px scale, type on a modular scale with tight
-   tracking on headings, motion is 120–240ms and always behind
-   prefers-reduced-motion.
+   just alternative mappings: prefers-color-scheme picks one by default, a
+   visible toggle pins one with html.theme-light / html.theme-dark, and the
+   pin is applied before first paint by an inline script in each page's head.
+   Space runs on a 4px scale, type on a modular scale with tight tracking on
+   headings, motion is 120–260ms and always behind prefers-reduced-motion.
 
    Every text/background pair below was checked numerically for WCAG AA:
-   the tightest are accent-on-soft 4.84:1 (light) and 5.59:1 (dark). */
+   the tightest are hero-muted on the hero gradient 4.81:1 and accent-on-soft
+   4.84:1 (light) / 5.59:1 (dark). */
 
 :root {
   /* Neutrals: a cool slate ramp. */
@@ -42,6 +43,7 @@
   --blurple-500: #635bff;
   --blurple-600: #5951e8;
   --blurple-700: #4a43d4;
+  --blurple-800: #4338c9;
   --blurple-850: #232a4d;
 
   /* Type */
@@ -105,6 +107,13 @@
   --ok-soft: #e7f5ec;
   --warn: #9a5b12;
   --warn-soft: #fcf2e2;
+  /* The room hero band. White is 5.57:1 on the gradient's lightest stop;
+     hero-muted #ecedff is 4.81:1 on it. */
+  --hero-bg: linear-gradient(135deg, var(--blurple-600), var(--blurple-800));
+  --hero-text: #ffffff;
+  --hero-muted: #ecedff;
+  --hero-chip: rgba(255, 255, 255, .14);
+  --hero-line: rgba(255, 255, 255, .45);
   /* Stripe-style elevation: a hairline border does the outlining, so the
      shadows stay layered and low-opacity. */
   --shadow-sm: 0 1px 1px rgba(26, 31, 54, .04), 0 1px 3px rgba(26, 31, 54, .06);
@@ -136,6 +145,13 @@
     --ok-soft: #17301f;
     --warn: #f0b366;
     --warn-soft: #332510;
+    /* Dark hero: a quiet navy panel, not a glowing band. Navy-50 is 13.2:1
+       on navy-850, navy-300 is 6.1:1. */
+    --hero-bg: linear-gradient(135deg, var(--navy-850), var(--navy-900));
+    --hero-text: var(--navy-50);
+    --hero-muted: var(--navy-300);
+    --hero-chip: rgba(255, 255, 255, .07);
+    --hero-line: var(--navy-500);
     --shadow-sm: 0 1px 2px rgba(0, 0, 0, .4), 0 1px 3px rgba(0, 0, 0, .3);
     --shadow-md: 0 2px 6px rgba(0, 0, 0, .45), 0 10px 24px -6px rgba(0, 0, 0, .4);
   }
@@ -162,6 +178,11 @@ html.theme-dark {
   --ok-soft: #17301f;
   --warn: #f0b366;
   --warn-soft: #332510;
+  --hero-bg: linear-gradient(135deg, var(--navy-850), var(--navy-900));
+  --hero-text: var(--navy-50);
+  --hero-muted: var(--navy-300);
+  --hero-chip: rgba(255, 255, 255, .07);
+  --hero-line: var(--navy-500);
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, .4), 0 1px 3px rgba(0, 0, 0, .3);
   --shadow-md: 0 2px 6px rgba(0, 0, 0, .45), 0 10px 24px -6px rgba(0, 0, 0, .4);
 }
@@ -186,6 +207,8 @@ a { color: var(--accent); }
 
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
+svg { flex: 0 0 auto; }
+
 /* ------------------------------------------------------------- layout */
 
 .wrap { max-width: 720px; margin: 0 auto; padding: var(--space-5) var(--space-4) 96px; }
@@ -194,6 +217,9 @@ a { color: var(--accent); }
 .row { display: flex; gap: var(--space-2); align-items: center; }
 .row.wrapping { flex-wrap: wrap; }
 .grow { flex: 1; min-width: 0; }
+/* In a wrapping row a growing field wraps rather than crushing: a 70px
+   input is not a field anyone can type into. */
+.row.wrapping > .grow { min-width: 160px; }
 .right { margin-left: auto; }
 .stack > * + * { margin-top: var(--space-3); }
 
@@ -206,23 +232,13 @@ a { color: var(--accent); }
   display: inline-flex;
   align-items: center;
   gap: var(--space-2);
+  min-height: 44px;
   font-weight: 700;
   letter-spacing: var(--tracking-snug);
   color: var(--text);
   text-decoration: none;
 }
 .brand svg { color: var(--brand); }
-
-header.room { padding: var(--space-2) 0 var(--space-4); }
-header.room h1 {
-  font-size: var(--text-2xl);
-  font-weight: 700;
-  letter-spacing: var(--tracking-tight);
-  line-height: var(--leading-tight);
-  margin: 0 0 var(--space-2);
-}
-header.room p { margin: 0; color: var(--muted); font-size: var(--text-base); }
-header.room .live-count { margin-top: var(--space-2); font-size: var(--text-sm); color: var(--muted); }
 
 .group-heading {
   font-size: var(--text-xs);
@@ -232,6 +248,86 @@ header.room .live-count { margin-top: var(--space-2); font-size: var(--text-sm);
   color: var(--muted);
   margin: var(--space-5) 0 var(--space-2);
 }
+
+/* ----------------------------------------------------------- room hero
+
+   The participant page opens on a full-bleed brand band: room name, what it
+   is, and the theme toggle. The composer card overlaps its lower edge, so
+   the first screenful reads ask-first. */
+
+.hero {
+  background: var(--hero-bg);
+  color: var(--hero-text);
+  padding: calc(var(--space-4) + env(safe-area-inset-top)) 0 var(--space-9);
+}
+.hero-inner { max-width: 720px; margin: 0 auto; padding: 0 var(--space-4); }
+.hero-top {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-5);
+}
+.hero-kicker {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-xs);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+}
+.hero-kicker .dot {
+  width: 8px;
+  height: 8px;
+  border-radius: var(--radius-full);
+  background: currentColor;
+}
+.hero h1 {
+  margin: 0;
+  font-size: var(--text-2xl);
+  font-weight: 700;
+  letter-spacing: var(--tracking-tight);
+  line-height: var(--leading-tight);
+  overflow-wrap: anywhere;
+}
+.hero .desc {
+  margin: var(--space-2) 0 0;
+  color: var(--hero-muted);
+  font-size: var(--text-base);
+  line-height: var(--leading-snug);
+  max-width: 60ch;
+}
+.hero .live-count {
+  display: inline-flex;
+  align-items: center;
+  margin-top: var(--space-4);
+  padding: var(--space-1) var(--space-3);
+  background: var(--hero-chip);
+  border-radius: var(--radius-full);
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+.hero .icon-btn {
+  color: var(--hero-text);
+  border-color: var(--hero-line);
+  background: transparent;
+}
+.hero .icon-btn:not(:disabled):hover { background: var(--hero-chip); }
+@media (prefers-reduced-motion: no-preference) {
+  .hero-kicker .dot { animation: live-pulse 2.4s var(--ease-out) infinite; }
+}
+@keyframes live-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: .35; }
+}
+
+/* The content column under the hero; the composer climbs into the band. */
+.room-wrap { padding-top: 0; }
+.room-wrap > .composer:first-child,
+.room-wrap > .composer[style] { margin-top: calc(-1 * var(--space-7)); }
+.room-wrap > .banner:first-child,
+.room-wrap > .tabs:first-child { margin-top: var(--space-4); }
 
 /* ------------------------------------------------------------ buttons */
 
@@ -265,21 +361,58 @@ button.ghost:not(:disabled):hover, .btn.ghost:hover { background: var(--surface-
 /* Small trims padding and type, never the touch target. */
 button.small, .btn.small { padding: var(--space-1) var(--space-3); font-size: var(--text-sm); }
 
+/* A square button that is only its icon. Always carries an aria-label. */
+.icon-btn, button.icon-btn {
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0;
+  background: transparent;
+  color: var(--muted);
+  border: 1px solid var(--border);
+  box-shadow: none;
+}
+.icon-btn:not(:disabled):hover { background: var(--surface-2); color: var(--text); }
+/* Icon toggles (pin, answered, hidden): the on state is a soft accent fill.
+   Accent-on-soft is 4.84:1 light / 5.59:1 dark. */
+.icon-btn[aria-pressed=true],
+.icon-btn[aria-pressed=true]:not(:disabled):hover {
+  background: var(--accent-soft);
+  color: var(--accent);
+  border-color: var(--accent-line);
+}
+
 button.danger { background: var(--danger); color: var(--on-accent); }
 button.danger:not(:disabled):hover { background: var(--danger); filter: brightness(.92); }
 /* Armed: the "are you sure" state of a destructive two-tap. */
 button.arm, .arm { background: var(--danger-soft); color: var(--danger); border-color: var(--danger); }
 button.arm:not(:disabled):hover { background: var(--danger-soft); filter: none; }
 
+/* In flight: the label yields to a ring. Feedback, not decoration, so the
+   ring exists at reduced motion too — it just does not spin. */
+button.busy { color: transparent !important; pointer-events: none; position: relative; }
+button.busy::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 14px;
+  height: 14px;
+  margin: -8px 0 0 -8px;
+  border: 2px solid var(--muted);
+  border-top-color: transparent;
+  border-radius: var(--radius-full);
+}
 @media (prefers-reduced-motion: no-preference) {
   button, .btn { transition: background var(--duration-1) var(--ease-out), filter var(--duration-1) var(--ease-out); }
+  button.busy::after { animation: busy-spin .7s linear infinite; }
 }
+@keyframes busy-spin { to { transform: rotate(360deg); } }
 
 /* -------------------------------------------------------------- forms */
 
 textarea, input[type=text], input[type=email], input[type=number], select {
   width: 100%;
-  padding: 11px var(--space-3);
+  padding: var(--space-3);
   font: inherit;
   color: var(--text);
   background: var(--field);
@@ -298,8 +431,82 @@ textarea:focus-visible, input:focus-visible, select:focus-visible {
 /* A full-width select inside a flex row wraps the row and strands its siblings. */
 .row select, .row input[type=number] { width: auto; }
 
-.counter { font-size: var(--text-xs); color: var(--muted); text-align: right; }
-.counter.limit { color: var(--danger); }
+/* Visually hidden, spoken aloud. */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* The character-limit ring: invisible until 75% of the limit, then fills
+   like Twitter's. It always occupies its slot, so appearing shifts nothing.
+   The remaining count joins in the last stretch; color never carries the
+   over-limit state alone — the number goes negative and Send disables. */
+.limit-ring {
+  position: relative;
+  flex: 0 0 auto;
+  width: 32px;
+  height: 32px;
+  visibility: hidden;
+}
+.limit-ring.show { visibility: visible; }
+.limit-ring svg { width: 100%; height: 100%; transform: rotate(-90deg); display: block; }
+.limit-ring circle { fill: none; stroke-width: 2.5; }
+.limit-ring .track { stroke: var(--border); }
+.limit-ring .fill {
+  stroke: var(--accent);
+  stroke-linecap: round;
+  stroke-dasharray: 75.4;
+  stroke-dashoffset: 75.4;
+}
+.limit-ring.warn .fill { stroke: var(--warn); }
+.limit-ring.over .fill { stroke: var(--danger); }
+.limit-ring.over .track { stroke: var(--danger-soft); }
+.limit-ring .left {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--muted);
+}
+.limit-ring.warn .left { color: var(--warn); }
+.limit-ring.over .left { color: var(--danger); }
+
+/* The ask composer: the card is the field. One border does the outlining,
+   so the textarea inside goes naked. */
+.composer {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  padding: var(--space-4);
+  margin-bottom: var(--space-3);
+}
+.composer > * + * { margin-top: var(--space-2); }
+.composer textarea {
+  border: none;
+  box-shadow: none;
+  border-radius: 0;
+  padding: var(--space-1) 0;
+  min-height: 56px;
+  background: transparent;
+}
+.composer textarea:focus-visible { box-shadow: none; }
+.composer:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft), var(--shadow-md);
+}
+.composer .composer-foot { display: flex; gap: var(--space-2); align-items: center; }
+.composer .composer-foot input { flex: 1; min-width: 0; }
 
 /* ---------------------------------------------------- cards & banners */
 
@@ -338,7 +545,73 @@ th {
   letter-spacing: var(--tracking-wide);
 }
 
-.share { display: flex; gap: var(--space-4); align-items: center; flex-wrap: wrap; }
+/* ------------------------------------------------- admin room header
+
+   The console during a live session is the queue; everything else is
+   preparation. The header carries the two things a host reaches for
+   mid-session — presentation mode and the link — and the queue starts
+   inside the first screenful on a phone. */
+
+.room-head { margin-bottom: var(--space-2); }
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  font-size: var(--text-sm);
+  color: var(--muted);
+  text-decoration: none;
+}
+.back-link:hover { color: var(--text); }
+.room-head h1 {
+  margin: 0 0 var(--space-1);
+  font-size: var(--text-xl);
+  font-weight: 700;
+  letter-spacing: var(--tracking-tight);
+  line-height: var(--leading-tight);
+  overflow-wrap: anywhere;
+}
+.room-sub { font-size: var(--text-sm); }
+.room-tools { margin-top: var(--space-3); }
+
+/* Setup panels: share, settings, people. Collapsed one-line rows, so the
+   done-once tasks stay reachable without pushing the queue off screen. */
+.setup-heading { margin-top: var(--space-7); }
+details.card { padding: 0; }
+details.card > summary {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 48px;
+  padding: var(--space-3) var(--space-4);
+  font-weight: 600;
+  cursor: pointer;
+  border-radius: calc(var(--radius-lg) - 1px);
+  list-style: none;
+}
+details.card > summary::-webkit-details-marker { display: none; }
+details.card > summary:hover { background: var(--surface-2); }
+details.card[open] > summary {
+  border-radius: calc(var(--radius-lg) - 1px) calc(var(--radius-lg) - 1px) 0 0;
+}
+/* Open/closed is a shape, not a color: the chevron flips. */
+details.card > summary::after {
+  content: "";
+  flex: 0 0 auto;
+  margin-left: auto;
+  width: 9px;
+  height: 9px;
+  border-right: 2px solid var(--muted);
+  border-bottom: 2px solid var(--muted);
+  transform: translateY(-2px) rotate(45deg);
+}
+details.card[open] > summary::after { transform: translateY(2px) rotate(225deg); }
+.summary-hint { color: var(--muted); font-weight: 400; font-size: var(--text-sm); }
+.details-body { padding: var(--space-1) var(--space-4) var(--space-4); }
+
+label.check { min-height: 44px; cursor: pointer; }
+input[type=checkbox] { width: 18px; height: 18px; accent-color: var(--accent); }
+
+.share { display: flex; gap: var(--space-4); align-items: flex-start; flex-wrap: wrap; }
 /* QR modules stay ink-on-white in every theme (also in presentation mode
    below): an inverted QR scans unreliably, and being scanned is the only
    reason this element exists. */
@@ -349,57 +622,94 @@ th {
   color: var(--slate-900);
   background: #ffffff;
   border-radius: var(--radius-md);
+  border: 1px solid var(--border);
 }
-.share code { font-size: var(--text-lg); font-family: var(--font-mono); letter-spacing: .08em; }
+.share .share-url {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  font-size: var(--text-base);
+  font-weight: 600;
+  overflow-wrap: anywhere;
+  text-decoration: none;
+}
+/* Under the QR's width plus a button there is no useful row left. */
+@media (max-width: 560px) {
+  .share { flex-direction: column; }
+}
 
 /* --------------------------------------------------------------- tabs */
 
-.tabs { display: flex; gap: var(--space-1); margin: var(--space-5) 0 var(--space-3); flex-wrap: wrap; }
+.tabs {
+  display: flex;
+  gap: var(--space-1);
+  margin: var(--space-5) 0 var(--space-3);
+  padding: var(--space-1);
+  width: max-content;
+  max-width: 100%;
+  overflow-x: auto;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-full);
+}
 .tabs button {
+  flex: 0 0 auto;
   background: transparent;
   color: var(--muted);
   border: none;
   box-shadow: none;
-  padding: var(--space-2) var(--space-3);
+  padding: var(--space-1) var(--space-4);
   min-height: 44px;
-  border-radius: var(--radius-md);
-  font-weight: 600;
-}
-.tabs button:not(:disabled):hover { background: var(--surface-2); color: var(--text); }
-.tabs button[aria-pressed=true],
-.tabs button[aria-pressed=true]:not(:disabled):hover { background: var(--accent-soft); color: var(--accent); }
-.tabs .badge {
-  display: inline-block;
-  min-width: 20px;
-  padding: 1px 6px;
   border-radius: var(--radius-full);
-  background: var(--danger);
-  color: var(--danger-soft);
-  font-size: var(--text-xs);
-  font-weight: 700;
+  font-weight: 600;
+  font-size: var(--text-sm);
 }
+.tabs button:not(:disabled):hover { background: transparent; color: var(--text); }
+.tabs button[aria-pressed=true],
+.tabs button[aria-pressed=true]:not(:disabled):hover {
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: var(--shadow-sm);
+}
+/* ----------------------------------------------------- question list
 
-/* ----------------------------------------------------- question list */
+   Slido's participant anatomy in Stripe's clothes: the question text leads
+   the card, author and time sit under it, and the vote control is a compact
+   pill on the card's foot line — secondary to the text, primary to the
+   thumb. */
 
 ul.questions { list-style: none; margin: 0; padding: 0; }
 
 li.q {
   display: flex;
-  gap: var(--space-3);
-  align-items: flex-start;
+  flex-direction: column;
+  gap: var(--space-2);
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-sm);
-  padding: var(--space-3);
+  padding: var(--space-3) var(--space-4);
   margin-bottom: var(--space-2);
 }
 li.q.answered .vote { opacity: .6; }
-li.q.pinned { border-color: var(--accent); box-shadow: inset 3px 0 0 var(--accent), var(--shadow-sm); }
-li.q .text { white-space: pre-wrap; overflow-wrap: anywhere; }
+li.q .text {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-weight: 500;
+  line-height: var(--leading-snug);
+  /* The admin column is 1100px wide; a question must not become a 120ch line. */
+  max-width: 78ch;
+}
+li.q .q-foot { display: flex; align-items: center; gap: var(--space-3); flex-wrap: wrap; }
+/* The admin card's foot: moderation happens twelve times a session, so the
+   controls are the quiet icon squares from presentation mode — visible,
+   44px, and mute next to the question text. The score pill holds the right
+   edge, mirroring the room card's vote pill. */
+li.q .q-foot .actions { flex: 1; min-width: 0; }
 li.q .meta {
-  margin-top: var(--space-2);
-  font-size: var(--text-xs);
+  flex: 1;
+  min-width: 0;
+  font-size: var(--text-sm);
   color: var(--muted);
   display: flex;
   align-items: center;
@@ -419,27 +729,27 @@ li.q .tag {
 li.q .tag.you { background: var(--accent-soft); color: var(--accent); }
 li.q .tag.pinned { background: var(--accent-soft); color: var(--accent); }
 li.q .tag.answered { background: var(--ok-soft); color: var(--ok); }
-li.q .tag.pending { background: var(--warn-soft); color: var(--warn); }
+li.q .tag.hidden { background: var(--warn-soft); color: var(--warn); }
 
-.actions { display: flex; gap: var(--space-2); flex-wrap: wrap; margin-top: var(--space-3); }
+.actions { display: flex; gap: var(--space-2); flex-wrap: wrap; }
 
-/* The vote control: the one thing a participant taps in the dark. */
+/* The vote control: the one thing a participant taps in the dark. A pill —
+   chevron and count side by side — sized to the thumb, not to the card. */
 .vote {
   flex: 0 0 auto;
-  min-width: 56px;
-  min-height: 60px;
-  display: flex;
-  flex-direction: column;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 1px;
-  padding: var(--space-2) var(--space-1);
+  gap: var(--space-1);
+  min-height: 44px;
+  min-width: 68px;
+  padding: 0 var(--space-4) 0 var(--space-3);
   background: var(--surface);
   border: 1.5px solid var(--accent-line);
   color: var(--accent);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-full);
   font-weight: 700;
-  font-size: var(--text-lg);
+  font-size: var(--text-sm);
   box-shadow: none;
   touch-action: manipulation;
 }
@@ -452,7 +762,7 @@ li.q .tag.pending { background: var(--warn-soft); color: var(--warn); }
 .vote[aria-pressed=true]:not(:disabled):hover { background: var(--accent); }
 .vote:disabled { border-color: var(--border); color: var(--muted); }
 /* The admin list reuses this shape to display a score. It is not a control. */
-.vote.static { border-color: var(--border); color: var(--muted); background: transparent; }
+.vote.static { border-color: var(--border); color: var(--muted); background: transparent; min-height: 36px; }
 
 @media (prefers-reduced-motion: no-preference) {
   .vote { transition: transform var(--duration-1) var(--ease-out), background var(--duration-2) var(--ease-out), border-color var(--duration-2) var(--ease-out), color var(--duration-2) var(--ease-out); }
@@ -475,11 +785,18 @@ li.q .tag.pending { background: var(--warn-soft); color: var(--warn); }
 .empty h2 { font-size: var(--text-lg); font-weight: 600; letter-spacing: var(--tracking-snug); color: var(--text); margin: var(--space-3) 0 var(--space-2); }
 .empty p { margin: 0; font-size: var(--text-sm); }
 
+/* A one-line empty note for a small section, not a full-page state. */
+.table-empty { font-size: var(--text-sm); color: var(--muted); margin: 0; }
+
 .toast {
   position: fixed;
   left: 50%;
   bottom: calc(var(--space-6) + env(safe-area-inset-bottom));
   transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  max-width: calc(100vw - var(--space-6));
   background: var(--text);
   color: var(--bg);
   padding: var(--space-2) var(--space-4);
@@ -491,161 +808,178 @@ li.q .tag.pending { background: var(--warn-soft); color: var(--warn); }
   transition: opacity var(--duration-2) var(--ease-out);
   z-index: 20;
 }
-.toast.show { opacity: 1; }
+.toast.show { opacity: 1; pointer-events: auto; }
+/* The undo that rides a toast: same inverted palette, real button. */
+.toast button {
+  background: transparent;
+  border: 1px solid var(--bg);
+  color: var(--bg);
+  box-shadow: none;
+  min-height: 44px;
+  padding: var(--space-1) var(--space-3);
+  font-size: var(--text-sm);
+}
+.toast button:not(:disabled):hover { background: transparent; opacity: .85; }
 
 /* -------------------------------------------------- presentation mode
 
    Projected in a lit room, so it defaults to light rather than dark: a
    projector renders white as "screen off", and dark slides wash out.
-   present.html pins html.theme-light; the host can opt into dark with `d`.
+   present.html pins html.theme-light; the toolbar's theme button overrides.
 
-   Two states share one frame. The resting state is the ranked list — the
-   audience votes because they can see what is winning. Spotlight blows one
-   question up and is entered deliberately. The join strip stays up in both. */
+   Composition: the join panel — QR first, then the URL — owns the left
+   edge, because getting people in is the screen's first job. The ranked
+   list takes the rest. Every action is a visible button: per-question ones
+   live on the card, view-level ones in the bottom toolbar. Cards are one
+   fixed size regardless of how many questions exist; a long list scrolls
+   and truncates, it never shrinks to fit. */
 
-body.present {
-  overflow: hidden;
-  background: var(--bg);
-}
+body.present { overflow: hidden; background: var(--bg); }
 
 .present-shell {
   display: grid;
-  grid-template-rows: auto 1fr auto;
-  height: 100vh;
+  grid-template-columns: clamp(280px, 27vw, 480px) minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr) auto;
+  height: 100dvh;
 }
 
-.present-bar {
+.present-join {
+  grid-row: 1;
   display: flex;
-  align-items: center;
-  gap: var(--space-6);
-  padding: var(--space-4) var(--space-9);
-  border-bottom: 1px solid var(--border);
+  flex-direction: column;
+  gap: var(--space-5);
+  padding: var(--space-6);
   background: var(--surface);
-}
-.present-bar .session {
-  font-size: var(--text-xl);
-  font-weight: 650;
-  letter-spacing: var(--tracking-snug);
-  flex: 1;
-  min-width: 0;
+  border-right: 1px solid var(--border);
+  min-height: 0;
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
-.present-bar .join {
-  display: flex;
-  align-items: center;
-  gap: var(--space-4);
-  background: var(--surface-2);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  padding: var(--space-2) var(--space-4);
-}
-.present-bar .join .qr {
-  width: 84px;
-  height: 84px;
-  padding: var(--space-1);
+.present-join .qr {
+  width: min(100%, 38vh);
+  aspect-ratio: 1;
+  padding: var(--space-3);
   color: var(--slate-900);
   background: #ffffff;
-  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
 }
-.present-bar .join .join-label {
-  font-size: var(--text-xs);
+.present-join .qr svg { width: 100%; height: 100%; display: block; }
+.present-join .join-label {
+  font-size: clamp(var(--text-xs), .9vw, var(--text-base));
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: var(--tracking-wide);
   color: var(--muted);
 }
-.present-bar .join .url { font-size: var(--text-xl); font-weight: 700; letter-spacing: var(--tracking-snug); }
-.present-bar .join .code { font-size: var(--text-base); color: var(--muted); }
-.present-bar .join .code code { font-family: var(--font-mono); letter-spacing: .08em; color: var(--text); }
-
-.present-main {
-  min-height: 0;
-  padding: var(--space-6) var(--space-9);
-  display: flex;
-  flex-direction: column;
-  max-width: 1500px;
-  width: 100%;
-  margin: 0 auto;
+.present-join .url {
+  font-size: clamp(1.15rem, 1.6vw, 1.8rem);
+  font-weight: 750;
+  letter-spacing: var(--tracking-snug);
+  line-height: var(--leading-tight);
+  overflow-wrap: anywhere;
+  margin-top: var(--space-1);
+}
+.present-join .join-session { margin-top: var(--space-2); min-height: 0; }
+.present-join .session {
+  font-size: clamp(var(--text-base), 1.2vw, var(--text-xl));
+  font-weight: 650;
+  letter-spacing: var(--tracking-snug);
+  line-height: var(--leading-snug);
+  overflow-wrap: anywhere;
+}
+.present-join .join-count {
+  margin-top: var(--space-1);
+  color: var(--muted);
+  font-size: clamp(var(--text-sm), 1vw, var(--text-lg));
 }
 
-/* The ranked list. Equal grid rows guarantee the top N always fit the
-   frame: three questions get huge cards, eight get compact ones. */
+.present-main {
+  grid-row: 1;
+  min-height: 0;
+  min-width: 0;
+  padding: var(--space-6) var(--space-7);
+  display: flex;
+  flex-direction: column;
+}
+
+/* The ranked list. Cards are content-sized with fixed type and padding:
+   one question renders exactly like the top card of eight. */
 ol.present-list {
   list-style: none;
   margin: 0;
-  padding: 0;
-  flex: 1;
+  padding: 2px;
+  /* Content-sized, so the frame's leftover height stays below the list and
+     cards always stack from the top. */
+  flex: 0 1 auto;
   min-height: 0;
-  display: grid;
-  grid-auto-rows: minmax(0, 1fr);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
   gap: var(--space-3);
 }
 .present-list li {
+  flex: 0 0 auto;
   display: flex;
   align-items: center;
-  gap: var(--space-6);
-  min-height: 0;
+  gap: var(--space-5);
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-sm);
-  padding: var(--space-3) var(--space-6);
+  padding: var(--space-4) var(--space-5);
 }
-.present-list li.pinned { box-shadow: inset 4px 0 0 var(--accent), var(--shadow-sm); }
 .present-list li.selected {
   border-color: var(--accent);
   box-shadow: 0 0 0 2px var(--accent), var(--shadow-md);
 }
 .present-list .p-score {
   flex: 0 0 auto;
-  min-width: 96px;
+  min-width: 84px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0;
   color: var(--accent);
   font-weight: 700;
-  font-size: 2rem;
+  font-size: clamp(1.5rem, 1.8vw, 1.9rem);
   line-height: 1.1;
 }
-.present-list .p-score svg { flex: 0 0 auto; }
 .present-list .p-body { flex: 1; min-width: 0; }
 .present-list .p-text {
-  font-size: clamp(1.5rem, 2.4vw, 2.1rem);
+  font-size: clamp(1.2rem, 1.8vw, 1.9rem);
   font-weight: 600;
   line-height: var(--leading-snug);
   letter-spacing: var(--tracking-snug);
   overflow-wrap: anywhere;
   display: -webkit-box;
   -webkit-box-orient: vertical;
-  -webkit-line-clamp: 3;
+  -webkit-line-clamp: 2;
   overflow: hidden;
 }
 .present-list .p-meta {
   margin-top: var(--space-1);
-  font-size: var(--text-lg);
+  font-size: clamp(.95rem, 1vw, 1.15rem);
   color: var(--muted);
   display: flex;
-  gap: var(--space-3);
+  gap: var(--space-2);
   align-items: center;
+  min-height: 28px;
 }
-.present-list .p-meta .p-pin { color: var(--accent); font-weight: 600; }
-
-/* Six or more on screen: trade size for rows. */
-.present-list.dense { gap: var(--space-2); }
-.present-list.dense li { padding: var(--space-2) var(--space-5); }
-.present-list.dense .p-text { font-size: clamp(1.2rem, 1.8vw, 1.6rem); -webkit-line-clamp: 2; }
-.present-list.dense .p-score { font-size: 1.6rem; min-width: 80px; }
-.present-list.dense .p-meta { font-size: var(--text-base); }
+/* Per-question controls: staff-only surface, so they are plainly visible —
+   quiet squares that defer to the text but never hide from the host. */
+.present-list .p-actions {
+  flex: 0 0 auto;
+  display: flex;
+  gap: var(--space-2);
+  margin-left: auto;
+}
+.p-actions .icon-btn svg { width: 20px; height: 20px; }
 
 .present-more {
   flex: 0 0 auto;
   padding-top: var(--space-3);
   text-align: center;
   color: var(--muted);
-  font-size: var(--text-lg);
+  font-size: clamp(var(--text-sm), 1vw, var(--text-lg));
 }
 
 @media (prefers-reduced-motion: no-preference) {
@@ -670,22 +1004,23 @@ ol.present-list {
   display: flex;
   flex-direction: column;
   justify-content: center;
-  padding: var(--space-6) var(--space-7);
+  gap: var(--space-6);
+  padding: var(--space-4) var(--space-6);
+  overflow-y: auto;
 }
 .present-stage .q-text {
-  font-size: clamp(2rem, 4.6vw, 4rem);
+  font-size: clamp(1.8rem, 4.2vw, 3.8rem);
   font-weight: 650;
   line-height: 1.18;
   letter-spacing: var(--tracking-tight);
   overflow-wrap: anywhere;
-  max-width: 24ch;
+  max-width: 26ch;
 }
 .present-stage .q-meta {
-  margin-top: var(--space-7);
   display: flex;
   align-items: center;
   gap: var(--space-5);
-  font-size: var(--text-xl);
+  font-size: clamp(var(--text-base), 1.4vw, var(--text-xl));
   color: var(--muted);
 }
 .present-stage .q-score {
@@ -696,67 +1031,151 @@ ol.present-list {
   color: var(--on-accent);
   border-radius: var(--radius-full);
   padding: var(--space-2) var(--space-5);
-  font-size: var(--text-xl);
+  font-size: clamp(var(--text-lg), 1.6vw, var(--text-xl));
   font-weight: 700;
 }
+.stage-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+.stage-actions .spacer { width: var(--space-4); }
 @media (prefers-reduced-motion: no-preference) {
   .present-stage .q-text, .present-stage .q-meta { transition: opacity var(--duration-3) var(--ease-out), transform var(--duration-3) var(--ease-out); }
 }
 .present-stage.swapping .q-text,
 .present-stage.swapping .q-meta { opacity: 0; transform: translateY(10px); }
 
+/* The toolbar: every view-level action as a real control. Quiet enough for
+   a projected screen, labelled enough to need no manual. */
 .present-foot {
+  grid-column: 1 / -1;
   display: flex;
   align-items: center;
-  gap: var(--space-5);
-  padding: var(--space-3) var(--space-9);
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-5);
   border-top: 1px solid var(--border);
+  background: var(--surface);
+  overflow-x: auto;
+}
+.present-foot .progress {
+  font-weight: 650;
+  font-size: var(--text-sm);
   color: var(--muted);
+  margin-right: auto;
+  white-space: nowrap;
+}
+.present-foot button {
+  flex: 0 0 auto;
+  background: transparent;
+  border-color: transparent;
+  color: var(--muted);
+  box-shadow: none;
   font-size: var(--text-sm);
 }
-.present-foot .progress { font-weight: 650; }
-.present-foot .hints { opacity: 1; transition: opacity .5s var(--ease-out); margin-left: auto; }
-.present-foot .hints.faded { opacity: 0; }
+.present-foot button:not(:disabled):hover {
+  background: var(--surface-2);
+  color: var(--text);
+}
+.present-foot svg { width: 18px; height: 18px; }
 
-/* A host cue, not audience chrome: small, low-contrast, gone in a moment. */
+/* A host cue with the undo one tap away — mis-taps get likelier now that
+   every action is a button. */
 .present-cue {
   position: fixed;
-  left: var(--space-9);
-  bottom: 72px;
+  left: 50%;
+  bottom: calc(64px + env(safe-area-inset-bottom));
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
   background: var(--text);
   color: var(--bg);
   padding: var(--space-2) var(--space-4);
   border-radius: var(--radius-full);
   box-shadow: var(--shadow-md);
   font-size: var(--text-sm);
+  white-space: nowrap;
   opacity: 0;
+  pointer-events: none;
   transition: opacity var(--duration-2) var(--ease-out);
+  z-index: 10;
 }
-.present-cue.show { opacity: 1; }
+.present-cue.show { opacity: 1; pointer-events: auto; }
+.present-cue button {
+  background: transparent;
+  border: 1px solid var(--bg);
+  color: var(--bg);
+  box-shadow: none;
+  min-height: 36px;
+  padding: var(--space-1) var(--space-3);
+  font-size: var(--text-sm);
+}
+.present-cue button:not(:disabled):hover { background: transparent; opacity: .85; }
 
-/* The join card, blown up. Shown automatically while the room is still empty,
-   which is exactly when everyone is trying to get in. */
+/* The join card, blown up. Shown automatically while the room is still
+   empty — which is exactly when everyone is trying to get in. */
 .present-overlay {
   position: fixed; inset: 0; background: var(--bg); color: var(--text);
-  display: none; flex-direction: column; align-items: center; justify-content: center; gap: var(--space-6);
+  display: none; flex-direction: column; align-items: center; justify-content: center;
+  gap: var(--space-6); cursor: pointer; z-index: 15;
+  padding: var(--space-6);
 }
 .present-overlay.show { display: flex; }
 .present-overlay .qr {
-  width: min(52vh, 52vw);
-  height: min(52vh, 52vw);
+  width: min(52vh, 70vw);
+  aspect-ratio: 1;
   padding: var(--space-4);
   color: var(--slate-900);
   background: #ffffff;
+  border: 1px solid var(--border);
   border-radius: var(--radius-lg);
 }
-.present-overlay .url { font-size: clamp(1.6rem, 3.6vw, 2.8rem); font-weight: 750; letter-spacing: var(--tracking-tight); }
-.present-overlay .code { font-size: clamp(1rem, 2vw, 1.5rem); color: var(--muted); }
+.present-overlay .qr svg { width: 100%; height: 100%; display: block; }
+.present-overlay .url { font-size: clamp(1.6rem, 3.6vw, 2.8rem); font-weight: 750; letter-spacing: var(--tracking-tight); overflow-wrap: anywhere; text-align: center; }
+.present-overlay .hint { color: var(--muted); font-size: var(--text-sm); }
+.present-overlay .overlay-close { position: absolute; top: var(--space-4); right: var(--space-4); }
 
-@media (max-width: 1000px) {
-  .present-bar { padding: var(--space-3) var(--space-5); }
-  .present-main { padding: var(--space-4) var(--space-5); }
-  .present-foot { padding: var(--space-2) var(--space-5); }
-  .present-bar .join .qr { width: 56px; height: 56px; }
-  .present-bar .join .url { font-size: var(--text-base); }
-  .present-list .p-score { min-width: 64px; }
+/* Phone: the host runs the session one-handed. The shell becomes a column —
+   compact join strip, scrolling list, thumb-height toolbar. */
+@media (max-width: 820px) {
+  .present-shell {
+    display: flex;
+    flex-direction: column;
+    height: 100dvh;
+  }
+  .present-join {
+    flex: 0 0 auto;
+    flex-direction: row;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-3) var(--space-4);
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+  }
+  .present-join .qr { width: 64px; padding: var(--space-1); border-radius: var(--radius-sm); }
+  .present-join .join-copy { min-width: 0; }
+  .present-join .url { font-size: var(--text-base); margin-top: 0; }
+  .present-join .join-session { display: none; }
+  .present-main { flex: 1; min-height: 0; padding: var(--space-3) var(--space-3); }
+  ol.present-list { gap: var(--space-2); }
+  .present-list li {
+    flex-wrap: wrap;
+    gap: var(--space-2) var(--space-3);
+    padding: var(--space-3);
+  }
+  .present-list .p-score { min-width: 48px; font-size: 1.25rem; }
+  .present-list .p-score svg { width: 20px; height: 20px; }
+  .present-list .p-text { font-size: var(--text-base); -webkit-line-clamp: 3; }
+  .present-list .p-meta { font-size: var(--text-sm); min-height: 0; }
+  .present-list .p-actions { margin-left: auto; flex-basis: 100%; justify-content: flex-end; }
+  .present-stage { padding: var(--space-3); gap: var(--space-5); }
+  /* At clamp()'s floor the URL still overruns 390px and breaks mid-word. */
+  .present-overlay .url { font-size: var(--text-lg); }
+  .present-foot { padding: var(--space-1) var(--space-2); }
+  .present-foot .progress { font-size: var(--text-xs); }
+  /* Icons only at thumb width; every control keeps its aria-label. */
+  .present-foot button span { display: none; }
+  .present-cue { max-width: calc(100vw - 24px); white-space: normal; }
 }

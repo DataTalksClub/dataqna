@@ -12,13 +12,14 @@ def make_room(table, **overrides):
     return rooms.create(payload, OWNER)
 
 
-def test_create_allocates_slug_code_and_owner_grant(table):
+def test_create_allocates_slug_and_owner_grant(table):
+    """The slug is the room's whole identity — there is no separate join code."""
     room = make_room(table)
     assert room["slug"] == "podcast-142"
-    assert len(room["code"]) == 6
+    assert "code" not in room
     assert store.is_admin(room["room_id"], OWNER)
     assert rooms.load("podcast-142")["room_id"] == room["room_id"]
-    assert rooms.load(room["code"])["room_id"] == room["room_id"]
+    assert rooms.load(room["room_id"])["room_id"] == room["room_id"]
 
 
 def test_duplicate_explicit_slug_is_rejected(table):
@@ -79,9 +80,26 @@ def test_live_lists_only_open_unexpired_rooms(table):
 def test_settings_are_validated(table):
     room = make_room(table)
     with pytest.raises(HttpError):
-        rooms.apply_updates(room, {"settings": {"moderation": "sometimes"}})
+        rooms.apply_updates(room, {"settings": {"answered_placement": "sometimes"}})
     with pytest.raises(HttpError):
         rooms.apply_updates(room, {"settings": {"unknown_key": True}})
+
+
+def test_removed_settings_are_rejected_as_unknown(table):
+    """moderation, questions_open, and voting_open left the product; a script
+    still sending them should hear about it rather than silently no-op."""
+    room = make_room(table)
+    for key, value in (("moderation", "on"), ("questions_open", False), ("voting_open", False)):
+        with pytest.raises(HttpError):
+            rooms.apply_updates(room, {"settings": {key: value}})
+
+
+def test_legacy_settings_fall_out_of_stored_rooms_on_write(table):
+    room = make_room(table)
+    store.update_room(room["room_id"], {"settings": dict(room["settings"], questions_open=False)})
+    updated = rooms.apply_updates(rooms.load(room["room_id"]), {"settings": {"listed": False}})
+    assert "questions_open" not in updated["settings"]
+    assert rooms.accepting_questions(updated)
 
 
 def test_index_keys_are_strings(table):

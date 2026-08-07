@@ -15,9 +15,6 @@ TRANSITIONS = {
 }
 
 DEFAULT_SETTINGS = {
-    "moderation": "off",
-    "questions_open": True,
-    "voting_open": True,
     # Whether the session appears on the public front page. Off makes a room
     # reachable by link only — it changes nothing about who may read it.
     "listed": True,
@@ -25,11 +22,12 @@ DEFAULT_SETTINGS = {
     "require_names": False,
     "answered_placement": "separate",
     "default_sort": "popular",
-    "max_question_length": 500,
+    # Slido caps questions at 300. Half as long again is generous without
+    # letting a question become a speech the host has to read out.
+    "max_question_length": 450,
 }
 
 _ENUMS = {
-    "moderation": {"off", "on"},
     "answered_placement": {"separate", "bottom", "inline"},
     "default_sort": {"popular", "recent"},
 }
@@ -40,7 +38,11 @@ def _bad(message, code="invalid_request"):
 
 
 def clean_settings(raw, base=None):
-    settings = dict(base or DEFAULT_SETTINGS)
+    # Rebuilt from the known keys, so settings removed from the product
+    # (moderation, questions_open, voting_open) fall out of stored rooms on
+    # their next write instead of lingering forever.
+    base = base or {}
+    settings = {key: base.get(key, value) for key, value in DEFAULT_SETTINGS.items()}
     for key, value in (raw or {}).items():
         if key not in DEFAULT_SETTINGS:
             raise _bad(f"Unknown setting: {key}")
@@ -118,24 +120,13 @@ def create(payload, owner_email):
     if not store.claim_pointer("SLUG", slug, room_id):
         if explicit:
             raise HttpError(409, "slug_taken", f"The slug '{slug}' is already in use.")
-        slug = ids.slugify(f"{title}-{ids.join_code(4)}")
+        slug = ids.slugify(f"{title}-{ids.readable_code(4)}")
         if not store.claim_pointer("SLUG", slug, room_id):
             raise HttpError(409, "slug_taken", "Could not allocate a unique slug.")
-
-    code = None
-    for _ in range(6):
-        candidate = ids.join_code()
-        if store.claim_pointer("CODE", candidate, room_id):
-            code = candidate
-            break
-    if code is None:
-        store.release_pointer("SLUG", slug)
-        raise HttpError(503, "code_exhausted", "Could not allocate a join code. Try again.")
 
     room = {
         "room_id": room_id,
         "slug": slug,
-        "code": code,
         "title": title,
         "description": str(payload.get("description") or "").strip()[:1000] or None,
         "state": state,
@@ -148,15 +139,13 @@ def create(payload, owner_email):
         "state_changed_at": timestamp,
         "q_total": 0,
         "q_answered": 0,
-        "q_pending": 0,
     }
     try:
         store.put_room(room)
     except Exception:
-        # Never strand a slug or code on a room that was not created — the next
-        # attempt with the same slug would fail with a misleading conflict.
+        # Never strand a slug on a room that was not created — the next attempt
+        # with the same slug would fail with a misleading conflict.
         store.release_pointer("SLUG", slug)
-        store.release_pointer("CODE", code)
         raise
 
     store.add_admin(room_id, owner_email, role="owner")
@@ -237,7 +226,6 @@ def public_view(room):
     return {
         "room_id": room["room_id"],
         "slug": room.get("slug"),
-        "code": room.get("code"),
         "title": room.get("title"),
         "description": room.get("description"),
         "state": room.get("state"),
@@ -263,7 +251,6 @@ def admin_view(room):
             "counts": {
                 "questions": int(room.get("q_total") or 0),
                 "answered": int(room.get("q_answered") or 0),
-                "pending": int(room.get("q_pending") or 0),
             },
         }
     )
@@ -271,11 +258,12 @@ def admin_view(room):
 
 
 def accepting_questions(room):
-    return room.get("state") == "open" and room.get("settings", {}).get("questions_open", True)
+    """An open room accepts questions, full stop — closing is the only pause."""
+    return room.get("state") == "open"
 
 
 def accepting_votes(room):
-    return room.get("state") == "open" and room.get("settings", {}).get("voting_open", True)
+    return room.get("state") == "open"
 
 
 def question_ttl(room):

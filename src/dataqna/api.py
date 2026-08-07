@@ -5,8 +5,6 @@ routes with a session cookie; scripts call them with a bearer key. Participant
 routes take neither and are protected by rate limits instead.
 """
 
-import csv
-import io
 
 from . import config, http, ids, questions, rooms, security, store
 from .http import HttpError
@@ -200,9 +198,6 @@ def route(event, segments, method, identity):
         if not store.revoke_cohost_invite(room["room_id"], tail[1]):
             raise HttpError(404, "not_found", "No such co-host code.")
         return http.json_response(200, {"revoked": True})
-    if tail == ["export"]:
-        return _export(event, room, identity)
-
     raise HttpError(404, "not_found", "Unknown endpoint.")
 
 
@@ -354,7 +349,7 @@ def _question(event, room, question_id, method, identity):
 
 def _vote(event, room, question_id, method, identity):
     question = store.get_question(room["room_id"], question_id)
-    if not question or question.get("status") not in questions.PUBLIC_STATUSES:
+    if not question or questions.status_of(question) not in questions.PUBLIC_STATUSES:
         raise HttpError(404, "not_found", "No such question.")
     if not rooms.accepting_votes(room):
         raise HttpError(409, "voting_closed", "Voting is closed for this room.")
@@ -389,7 +384,6 @@ def _bulk(event, room, identity):
         raise HttpError(400, "invalid_request", "question_ids is limited to 100 per call")
 
     mapping = {
-        "approve": ("status", "visible"),
         "answer": ("status", "answered"),
         "hide": ("status", "hidden"),
         "delete": ("status", "deleted"),
@@ -515,40 +509,6 @@ def redeem_cohost(name, passcode, source_ip=""):
     if not room or room.get("state") == "archived":
         return None, None, "That session is no longer available."
     return invite, room, None
-
-
-def _export(event, room, identity):
-    identity.require_moderator(room)
-    items, _, _ = questions.collect(room, is_admin=True)
-    fmt = (http.query(event).get("format") or "json").lower()
-    rows = [item for item in items if item["status"] != "deleted"]
-
-    if fmt == "json":
-        return http.json_response(200, {"room": rooms.public_view(room), "questions": rows})
-    if fmt == "csv":
-        buffer = io.StringIO()
-        writer = csv.DictWriter(
-            buffer,
-            fieldnames=["question_id", "text", "author_name", "status", "score", "pinned", "created_at", "answered_at"],
-            extrasaction="ignore",
-        )
-        writer.writeheader()
-        writer.writerows(rows)
-        return http.response(
-            200,
-            buffer.getvalue(),
-            content_type="text/csv; charset=utf-8",
-            headers={"content-disposition": f'attachment; filename="{room["slug"]}.csv"'},
-        )
-    if fmt == "md":
-        lines = [f"# {room.get('title')}", ""]
-        for row in rows:
-            mark = "x" if row["status"] == "answered" else " "
-            who = row["author_name"] or "Anonymous"
-            lines.append(f"- [{mark}] **{row['score']}** — {row['text']} _({who})_")
-        return http.response(200, "\n".join(lines) + "\n", content_type="text/markdown; charset=utf-8")
-
-    raise HttpError(400, "invalid_request", "format must be json, csv, or md")
 
 
 def _api_keys(event, tail, method, identity):

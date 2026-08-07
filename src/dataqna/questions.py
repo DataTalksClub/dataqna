@@ -1,11 +1,11 @@
-"""Question submission, moderation, ranking, and serialization."""
+"""Question submission, ranking, and serialization."""
 
 import hashlib
 
 from . import config, ids, rooms, store
 from .http import HttpError
 
-STATUSES = ("pending", "visible", "answered", "hidden", "deleted")
+STATUSES = ("visible", "answered", "hidden", "deleted")
 PUBLIC_STATUSES = ("visible", "answered")
 
 EDIT_WINDOW_SECONDS = 300
@@ -15,13 +15,25 @@ def _bad(message, code="invalid_request"):
     return HttpError(400, code, message)
 
 
+def status_of(question):
+    """A question's status, with history smoothed over.
+
+    Moderation was removed from the product, but rows written while it
+    existed may still carry `pending`. They were questions someone asked and
+    nobody ever rejected, so they read as `visible` — the alternative is a
+    question that stays invisible forever with no control left to release it.
+    """
+    status = question.get("status")
+    return "visible" if status == "pending" else status
+
+
 def submit(room, payload, participant):
     if not rooms.accepting_questions(room):
         raise HttpError(409, "questions_closed", "This room is not accepting questions.")
 
     settings = room.get("settings", {})
     text = str(payload.get("text", "")).strip()
-    limit = int(settings.get("max_question_length", 500))
+    limit = int(settings.get("max_question_length", 450))
     if not text:
         raise _bad("text is required")
     if len(text) > limit:
@@ -40,7 +52,7 @@ def submit(room, payload, participant):
         "text": text,
         "author_name": name or None,
         "participant": participant,
-        "status": "pending" if settings.get("moderation") == "on" else "visible",
+        "status": "visible",
         # Starts at zero; the author's own vote below is what makes it one, so
         # that withdrawing it decrements exactly once.
         "score": 0,
@@ -56,15 +68,13 @@ def submit(room, payload, participant):
     store.add_vote(room["room_id"], question["question_id"], participant, ttl=ttl)
     question["score"] = 1
     store.bump_counter(room["room_id"], "q_total", 1)
-    if question["status"] == "pending":
-        store.bump_counter(room["room_id"], "q_pending", 1)
     return question
 
 
 def can_author_edit(question, participant, now=None):
     if not participant or question.get("participant") != participant:
         return False
-    if question.get("status") not in ("visible", "pending"):
+    if status_of(question) != "visible":
         return False
     if int(question.get("score") or 0) > 1:
         return False
@@ -74,7 +84,7 @@ def can_author_edit(question, participant, now=None):
 def set_status(room, question, target):
     if target not in STATUSES:
         raise _bad(f"status must be one of {list(STATUSES)}")
-    current = question.get("status")
+    current = status_of(question)
     if current == target:
         return question
 
@@ -86,10 +96,6 @@ def set_status(room, question, target):
 
     updated = store.update_question(room["room_id"], question["question_id"], fields)
     room_id = room["room_id"]
-    if current == "pending" and target != "pending":
-        store.bump_counter(room_id, "q_pending", -1)
-    if target == "pending" and current != "pending":
-        store.bump_counter(room_id, "q_pending", 1)
     if target == "answered" and current != "answered":
         store.bump_counter(room_id, "q_answered", 1)
     if current == "answered" and target != "answered":
@@ -102,13 +108,10 @@ def set_status(room, question, target):
 
 
 def visible_to(question, participant, is_admin):
-    status = question.get("status")
+    status = status_of(question)
     if is_admin:
         return status != "deleted"
-    if status in PUBLIC_STATUSES:
-        return True
-    # An author always sees their own question sitting in the moderation queue.
-    return status == "pending" and participant and question.get("participant") == participant
+    return status in PUBLIC_STATUSES
 
 
 def rank(questions, sort):
@@ -128,7 +131,7 @@ def serialize(question, *, participant=None, voted=False, is_admin=False, now=No
         "question_id": question["question_id"],
         "text": question.get("text"),
         "author_name": question.get("author_name"),
-        "status": question.get("status"),
+        "status": status_of(question),
         "score": int(question.get("score") or 0),
         "pinned": bool(question.get("pinned")),
         "created_at": rooms.iso(question.get("created_at")),
@@ -139,8 +142,6 @@ def serialize(question, *, participant=None, voted=False, is_admin=False, now=No
         view["own"] = own
         view["voted"] = voted
         view["editable"] = can_author_edit(question, participant, now=now)
-    if is_admin:
-        view["is_pending"] = question.get("status") == "pending"
     return view
 
 
@@ -165,7 +166,7 @@ def collect(room, *, participant=None, is_admin=False, sort=None, statuses=None)
     for question in raw:
         if not visible_to(question, participant, is_admin):
             continue
-        if allowed and question.get("status") not in allowed:
+        if allowed and status_of(question) not in allowed:
             continue
         visible.append(question)
 
@@ -182,8 +183,7 @@ def collect(room, *, participant=None, is_admin=False, sort=None, statuses=None)
         for question in ordered
     ]
     counts = {
-        "visible": sum(1 for q in visible if q.get("status") == "visible"),
-        "answered": sum(1 for q in visible if q.get("status") == "answered"),
-        "pending": sum(1 for q in visible if q.get("status") == "pending"),
+        "visible": sum(1 for q in visible if status_of(q) == "visible"),
+        "answered": sum(1 for q in visible if status_of(q) == "answered"),
     }
     return items, counts, etag(ordered)

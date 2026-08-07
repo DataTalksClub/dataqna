@@ -38,6 +38,19 @@ THEME_META = (
     '<meta name="theme-color" content="#0d1220" media="(prefers-color-scheme: dark)">'
 )
 
+# Applies a theme the visitor pinned elsewhere (the room or admin toggle)
+# before first paint, so server-rendered pages match without a flash.
+THEME_SCRIPT = (
+    "<script>(function(){try{"
+    'var t=localStorage.getItem("dq_theme");'
+    'if(t!=="light"&&t!=="dark")return;'
+    'document.documentElement.classList.add("theme-"+t);'
+    'var c=t==="dark"?"#0d1220":"#f6f8fb";'
+    "var m=document.querySelectorAll('meta[name=\"theme-color\"]');"
+    'for(var i=0;i<m.length;i++)m[i].setAttribute("content",c);'
+    "}catch(e){}})();</script>"
+)
+
 BRAND = (
     '<a class="brand" href="/live">'
     '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor"'
@@ -69,7 +82,7 @@ def version():
     global _version
     if _version is None:
         digest = hashlib.sha256()
-        for name in sorted(("app.css", "room.js", "admin.js", "present.js")):
+        for name in sorted(("app.css", "room.js", "admin.js", "present.js", "qna.js")):
             digest.update(asset_bytes(name) or b"")
         _version = digest.hexdigest()[:10]
     return _version
@@ -133,6 +146,7 @@ def _shell(title, inner, *, status=200):
 <meta name="robots" content="noindex">
 <title>{html.escape(title)}</title>
 {THEME_META}
+{THEME_SCRIPT}
 <link rel="icon" href="{FAVICON}">
 <link rel="stylesheet" href="/assets/app.css"></head>
 <body><div class="wrap">{inner}</div></body></html>"""

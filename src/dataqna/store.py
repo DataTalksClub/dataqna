@@ -93,18 +93,14 @@ def get_room(room_id):
 
 
 def resolve_room(identifier):
-    """Accept a room id, a slug, or a join code."""
+    """Accept a room id or a slug."""
     if not identifier:
         return None
     room = get_room(identifier)
     if room:
         return room
-    for kind in ("SLUG", "CODE"):
-        value = identifier.upper() if kind == "CODE" else identifier.lower()
-        room_id = resolve_pointer(kind, value)
-        if room_id:
-            return get_room(room_id)
-    return None
+    room_id = resolve_pointer("SLUG", identifier.lower())
+    return get_room(room_id) if room_id else None
 
 
 def update_room(room_id, fields):
@@ -135,8 +131,6 @@ def delete_room(room):
             batch.delete_item(Key={"PK": item["PK"], "SK": item["SK"]})
     if room.get("slug"):
         release_pointer("SLUG", room["slug"])
-    if room.get("code"):
-        release_pointer("CODE", room["code"])
 
 
 def rooms_for_user(email):

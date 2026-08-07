@@ -143,9 +143,9 @@ def test_cohost_runs_the_session_including_its_settings(table):
 
     updated = json.loads(
         call(["rooms", room["room_id"]], "PATCH", identity=identity,
-             body={"settings": {"questions_open": False}})["body"]
+             body={"settings": {"default_sort": "recent"}})["body"]
     )
-    assert updated["settings"]["questions_open"] is False
+    assert updated["settings"]["default_sort"] == "recent"
 
     closed = json.loads(
         call(["rooms", room["room_id"]], "PATCH", identity=identity,

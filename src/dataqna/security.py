@@ -113,9 +113,9 @@ def new_cohost_code(groups=3, size=4):
 
 def new_cohost_name():
     """The non-secret half: what goes in the URL, memorable enough to say."""
-    from .ids import join_code
+    from .ids import readable_code
 
-    return f"{join_code(4).lower()}-{join_code(4).lower()}"
+    return f"{readable_code(4).lower()}-{readable_code(4).lower()}"
 
 
 def new_cohost_token(room_id, invite_id, ttl_seconds):

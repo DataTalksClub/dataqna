@@ -8,31 +8,57 @@
 <meta property="og:title" content="{{TITLE}}">
 <meta property="og:description" content="Ask and upvote questions — live.">
 <meta property="og:type" content="website">
-<meta name="theme-color" content="#f6f8fb" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#0d1220" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#5951e8" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d2438" media="(prefers-color-scheme: dark)">
+<script>
+/* Apply a pinned theme before first paint, so there is no flash. */
+(function () {
+  try {
+    var t = localStorage.getItem("dq_theme");
+    if (t !== "light" && t !== "dark") return;
+    document.documentElement.classList.add("theme-" + t);
+    var c = t === "dark" ? "#1d2438" : "#5951e8";
+    var metas = document.querySelectorAll('meta[name="theme-color"]');
+    for (var i = 0; i < metas.length; i++) metas[i].setAttribute("content", c);
+  } catch (e) {}
+})();
+</script>
 <link rel="icon" href="{{FAVICON}}">
 <link rel="stylesheet" href="/assets/app.css">
 </head>
 <body>
-<div class="wrap">
-  <header class="room">
+<header class="hero">
+  <div class="hero-inner">
+    <div class="hero-top">
+      <span class="hero-kicker"><span class="dot" aria-hidden="true"></span>Live Q&amp;A</span>
+      <button type="button" id="theme-toggle" class="icon-btn" aria-label="Switch to dark theme"></button>
+    </div>
     <h1>{{TITLE}}</h1>
-    <p id="description">{{DESCRIPTION}}</p>
+    <p class="desc" id="description">{{DESCRIPTION}}</p>
     <div class="live-count" id="live-count" hidden></div>
-  </header>
+  </div>
+</header>
 
-  <div id="banner" class="banner" hidden></div>
-
-  <form id="ask" class="card stack" hidden>
-    <textarea id="text" maxlength="500" enterkeyhint="send"
-              placeholder="Ask a question…" aria-label="Your question"></textarea>
-    <div class="counter" id="counter" hidden><span id="count">0</span>/<span id="max">500</span></div>
-    <div class="row wrapping">
-      <input type="text" id="name" class="grow" maxlength="60" autocomplete="name"
+<div class="wrap room-wrap">
+  <form id="ask" class="composer" hidden>
+    <textarea id="text" rows="2" enterkeyhint="send"
+              placeholder="Type your question…" aria-label="Your question"></textarea>
+    <div class="composer-foot">
+      <input type="text" id="name" maxlength="60" autocomplete="name"
              placeholder="Your name (optional)" aria-label="Your name">
+      <div class="limit-ring" id="limit" aria-hidden="true">
+        <svg viewBox="0 0 28 28">
+          <circle class="track" cx="14" cy="14" r="12"></circle>
+          <circle class="fill" cx="14" cy="14" r="12"></circle>
+        </svg>
+        <span class="left" id="limit-left"></span>
+      </div>
       <button type="submit" id="send">Send</button>
     </div>
   </form>
+  <div class="sr-only" id="limit-live" aria-live="polite"></div>
+
+  <div id="banner" class="banner" hidden></div>
 
   <div class="tabs">
     <button type="button" id="tab-popular" aria-pressed="true">Popular</button>

@@ -2,26 +2,39 @@
 <html lang="en" class="theme-light">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="robots" content="noindex">
 <title>{{TITLE}}</title>
 <meta name="theme-color" content="#ffffff">
+<script>
+/* Light is the projector default; a stored choice overrides before paint. */
+(function () {
+  try {
+    if (localStorage.getItem("dq_present_theme") !== "dark") return;
+    var root = document.documentElement;
+    root.classList.remove("theme-light");
+    root.classList.add("theme-dark");
+    var metas = document.querySelectorAll('meta[name="theme-color"]');
+    for (var i = 0; i < metas.length; i++) metas[i].setAttribute("content", "#0d1220");
+  } catch (e) {}
+})();
+</script>
 <link rel="icon" href="{{FAVICON}}">
 <link rel="stylesheet" href="/assets/app.css">
 </head>
 <body class="present">
 <div class="present-shell">
-  <header class="present-bar">
-    <div class="session" id="session-title"></div>
-    <div class="join">
-      <div class="qr" id="qr"></div>
-      <div>
-        <div class="join-label">Join and ask</div>
-        <div class="url" id="join-url"></div>
-        <div class="code">code <code id="join-code"></code></div>
-      </div>
+  <aside class="present-join">
+    <div class="qr" id="qr" role="img" aria-label="QR code — scan to join"></div>
+    <div class="join-copy">
+      <div class="join-label">Join at</div>
+      <div class="url" id="join-url"></div>
     </div>
-  </header>
+    <div class="join-session">
+      <div class="session" id="session-title"></div>
+      <div class="join-count" id="join-count"></div>
+    </div>
+  </aside>
 
   <main class="present-main">
     <ol class="present-list" id="plist"></ol>
@@ -30,24 +43,31 @@
     <section class="present-stage" id="stage" hidden>
       <div class="q-text" id="q-text"></div>
       <div class="q-meta" id="q-meta"></div>
+      <div class="stage-actions" id="stage-actions"></div>
     </section>
   </main>
 
   <footer class="present-foot">
     <span class="progress" id="progress"></span>
-    <span class="hints" id="hints"></span>
+    <button type="button" id="tb-undo" disabled></button>
+    <button type="button" id="tb-spot"></button>
+    <button type="button" id="tb-qr"></button>
+    <button type="button" id="tb-theme"></button>
+    <button type="button" id="tb-full"></button>
   </footer>
 </div>
 
 <div class="present-cue" id="cue"></div>
 
 <div class="present-overlay" id="overlay">
-  <div class="qr" id="qr-big"></div>
+  <button type="button" class="icon-btn overlay-close" id="overlay-close" aria-label="Close the join screen"></button>
+  <div class="qr" id="qr-big" role="img" aria-label="QR code — scan to join"></div>
   <div class="url" id="overlay-url"></div>
-  <div class="code" id="overlay-code"></div>
+  <div class="hint">Click anywhere to close</div>
 </div>
 
 <script id="config" type="application/json">{{CONFIG}}</script>
+<script src="/assets/qna.js"></script>
 <script src="/assets/present.js"></script>
 </body>
 </html>

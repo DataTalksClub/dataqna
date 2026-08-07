@@ -61,7 +61,7 @@ Creates a room. Requires an unscoped key.
   "retention_days": 365,
   "admins": ["co-host@datatalks.club"],
   "settings": {
-    "moderation": "off",
+    "listed": true,
     "allow_names": true,
     "require_names": false,
     "answered_placement": "separate",
@@ -82,7 +82,6 @@ defaults to `draft`. The caller is the owner and does not need to be listed in
 {
   "room_id": "01K3QJ7X8N2M4P6R8T0V2W4Y6A",
   "slug": "podcast-142",
-  "code": "Q7K2M9",
   "title": "Podcast #142 — live Q&A",
   "state": "open",
   "url": "https://qna.dtcdev.click/r/podcast-142",
@@ -93,7 +92,7 @@ defaults to `draft`. The caller is the owner and does not need to be listed in
   "owner": "alexey@datatalks.club",
   "admins": ["co-host@datatalks.club"],
   "settings": { "...": "..." },
-  "counts": { "questions": 0, "unanswered": 0, "pending": 0 }
+  "counts": { "questions": 0, "answered": 0 }
 }
 ```
 
@@ -110,8 +109,8 @@ Query: `state` (repeatable), `q` (title substring), `limit` (default 50, max 200
 ### `GET /rooms/{room}`
 
 The room as returned by create. Admin credentials return the full object;
-unauthenticated callers get a public subset — no admin list, no counts of pending
-questions — and only for `open` or `closed` rooms.
+unauthenticated callers get a public subset — no owner, no counts — and only
+for `open` or `closed` rooms.
 
 ### `PATCH /rooms/{room}`
 
@@ -134,11 +133,6 @@ retention expires. `?purge=true` deletes immediately and irreversibly.
 
 The public room URL as a QR code. Public, cacheable. `?size=` in pixels for PNG
 (default 512, max 2048), `?margin=` in modules (default 4).
-
-### `GET /rooms/{room}/export`
-
-`?format=json|csv|md`. Questions with state, score, author name, and timestamps.
-Withdrawn questions are omitted; moderator-hidden ones appear marked. Admin only.
 
 ## Admins
 
@@ -219,7 +213,7 @@ Public for `open` and `closed` rooms. This is the endpoint the room page polls.
 | Query | Default | Meaning |
 |-------|---------|---------|
 | `sort` | room's `default_sort` | `popular` or `recent` |
-| `status` | `visible,answered` | Repeatable. `pending`, `hidden`, and `deleted` require admin |
+| `status` | `visible,answered` | Repeatable. `hidden` and `deleted` require admin |
 | `limit` | 100 | Max 500 |
 | `cursor` | — | From `next_cursor` |
 
@@ -245,7 +239,7 @@ Send `If-None-Match` with the previous `etag` to get `304` when nothing changed.
   ],
   "next_cursor": null,
   "etag": "W/\"a3f1c2\"",
-  "counts": { "visible": 23, "answered": 7, "pending": 0 }
+  "counts": { "visible": 23, "answered": 7 }
 }
 ```
 
@@ -254,15 +248,15 @@ Send `If-None-Match` with the previous `etag` to get `304` when nothing changed.
 
 ### `POST /rooms/{room}/questions`
 
-Public. Requires `questions_open` and state `open`.
+Public. Requires state `open`.
 
 ```json
 { "text": "How do you decide what to cover in a course?", "author_name": "Maria" }
 ```
 
 `author_name` is rejected when `allow_names` is `false` and required when
-`require_names` is `true`. `201` returns the question, with `status` `pending` under
-moderation. Starts at `score` 1 — the author's own.
+`require_names` is `true`. `201` returns the question, visible to everyone at
+once. Starts at `score` 1 — the author's own.
 
 ### `PATCH /rooms/{room}/questions/{question_id}`
 
@@ -278,8 +272,8 @@ Authors may set `text`, or `status` to `deleted`, within their edit window.
 
 ### `POST /rooms/{room}/questions/{question_id}/vote`
 
-Public. Idempotent: voting twice leaves the score unchanged. `403` when the caller
-is the author or `voting_open` is `false`.
+Public. Idempotent: voting twice leaves the score unchanged. `409` when the
+room is not open.
 
 `200`: `{ "score": 15, "voted": true }`
 
@@ -289,13 +283,13 @@ Withdraws the vote. `200`: `{ "score": 14, "voted": false }`
 
 ### `POST /rooms/{room}/questions/bulk`
 
-Admin. One call for the moderation queue and end-of-session cleanup.
+Admin. One call for end-of-session cleanup.
 
 ```json
-{ "question_ids": ["01K3...", "01K4..."], "action": "approve" }
+{ "question_ids": ["01K3...", "01K4..."], "action": "answer" }
 ```
 
-Actions: `approve`, `answer`, `hide`, `delete`, `pin`, `unpin`. Max 100 ids.
+Actions: `answer`, `hide`, `delete`, `pin`, `unpin`. Max 100 ids.
 Returns per-id results; a failure on one does not roll back the rest.
 
 ## API keys
@@ -357,8 +351,4 @@ curl -sS "$API/rooms/$ROOM/qr.svg" -o podcast-142-qr.svg
 curl -sS -X PATCH "$API/rooms/$ROOM" \
   -H "authorization: Bearer $KEY" -H 'content-type: application/json' \
   -d '{"state":"open","expires_at":"2026-08-13T21:00:00Z"}'
-
-# Afterwards, keep the transcript.
-curl -sS "$API/rooms/$ROOM/export?format=md" \
-  -H "authorization: Bearer $KEY" -o podcast-142-questions.md
 ```
