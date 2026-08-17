@@ -82,11 +82,43 @@ def test_pinned_questions_lead_every_ordering(table):
         assert items[0]["text"] == "quiet"
 
 
+def test_the_room_holds_one_pin_at_a_time(table):
+    """The pin is the host holding one question up for the room; two held up
+    is just the list again. Pinning the second retires the first."""
+    room = make_room()
+    loud = questions.submit(room, {"text": "loud"}, "p1")
+    quiet = questions.submit(room, {"text": "quiet"}, "p2")
+    for voter in ("a", "b", "c"):
+        store.add_vote(room["room_id"], loud["question_id"], voter)
+    questions.set_pinned(room, _stored(room, loud), True)
+    questions.set_pinned(room, _stored(room, quiet), True)
+
+    items, _, _ = questions.collect(room)
+    assert [item["text"] for item in items] == ["quiet", "loud"]
+    assert [item["pinned"] for item in items] == [True, False]
+
+
+def test_marking_a_pinned_question_answered_unpins_it(table):
+    """A question that leaves the board takes no pin with it, so the room's
+    one pin is never spent on something nobody can see."""
+    room = make_room()
+    question = questions.submit(room, {"text": "Q"}, "p1")
+    questions.set_pinned(room, _stored(room, question), True)
+
+    updated = questions.set_status(room, _stored(room, question), "answered")
+
+    assert not updated["pinned"]
+
+
 def _first(room, text):
     for question in store.list_questions(room["room_id"]):
         if question["text"] == text:
             return question["question_id"]
     raise AssertionError(text)
+
+
+def _stored(room, question):
+    return store.get_question(room["room_id"], question["question_id"])
 
 
 def test_marking_answered_updates_counters(table):

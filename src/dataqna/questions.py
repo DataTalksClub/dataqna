@@ -81,6 +81,10 @@ def set_status(room, question, target):
         fields["answered_at"] = store.now()
     elif current == "answered":
         fields["answered_at"] = None
+    if target in ("answered", "deleted"):
+        # A question that leaves the board takes no pin with it, so the
+        # room's one pin is never spent on something nobody can see.
+        fields["pinned"] = False
 
     updated = store.update_question(room["room_id"], question["question_id"], fields)
     room_id = room["room_id"]
@@ -93,6 +97,18 @@ def set_status(room, question, target):
     if current == "deleted" and target != "deleted":
         store.bump_counter(room_id, "q_total", 1)
     return updated
+
+
+def set_pinned(room, question, pinned):
+    """Pin is singular: one question per room at a time. The pin is the host
+    holding one question up for the room, and two held up is just the list
+    again — so pinning retires every other pin before it lands."""
+    room_id = room["room_id"]
+    if pinned:
+        for other in store.list_questions(room_id):
+            if other["question_id"] != question["question_id"] and other.get("pinned"):
+                store.update_question(room_id, other["question_id"], {"pinned": False})
+    return store.update_question(room_id, question["question_id"], {"pinned": bool(pinned)})
 
 
 def visible_to(question, participant, is_admin):

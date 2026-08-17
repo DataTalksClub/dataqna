@@ -334,9 +334,7 @@ def _question(event, room, question_id, method, identity):
     if "pinned" in payload:
         if not is_admin:
             raise HttpError(403, "forbidden", "Only admins can pin questions.")
-        updated = store.update_question(
-            room["room_id"], question_id, {"pinned": bool(payload["pinned"])}
-        )
+        updated = questions.set_pinned(room, question, bool(payload["pinned"]))
     if "status" in payload:
         updated = questions.set_status(room, updated, payload["status"])
 
@@ -399,7 +397,7 @@ def _bulk(event, room, identity):
             if field == "status":
                 questions.set_status(room, question, value)
             else:
-                store.update_question(room["room_id"], question_id, {"pinned": value})
+                questions.set_pinned(room, question, value)
             results.append({"question_id": question_id, "ok": True})
         except HttpError as exc:
             results.append({"question_id": question_id, "ok": False, "error": exc.code})

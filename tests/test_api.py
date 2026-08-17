@@ -180,6 +180,38 @@ def test_a_participant_cannot_moderate(table):
     assert excinfo.value.status == 403
 
 
+def _ask(room, text, participant):
+    cookies = [f"dq_p={security.new_participant_token()}"] if participant else None
+    created = call(
+        ["rooms", room["room_id"], "questions"], "POST", body={"text": text}, cookies=cookies
+    )
+    return json.loads(created["body"])["question_id"]
+
+
+def test_pinning_a_question_unpins_the_rooms_other_one(table):
+    """The route enforces the one pin a room holds, so every client — this
+    UI, a script, a future one — inherits it without knowing about it."""
+    room = make_room()
+    first = _ask(room, "first question", "a")
+    second = _ask(room, "second question", "b")
+    call(["rooms", room["room_id"], "questions", first], "PATCH", identity=owner(), body={"pinned": True})
+    call(["rooms", room["room_id"], "questions", second], "PATCH", identity=owner(), body={"pinned": True})
+
+    listed = json.loads(call(["rooms", room["room_id"], "questions"], "GET")["body"])
+    assert [item["text"] for item in listed["items"]] == ["second question", "first question"]
+    assert [item["pinned"] for item in listed["items"]] == [True, False]
+
+
+def test_marking_a_pinned_question_answered_unpins_it(table):
+    room = make_room()
+    question_id = _ask(room, "the pinned one", "a")
+    call(["rooms", room["room_id"], "questions", question_id], "PATCH", identity=owner(), body={"pinned": True})
+    call(["rooms", room["room_id"], "questions", question_id], "PATCH", identity=owner(), body={"status": "answered"})
+
+    stored = store.get_question(room["room_id"], question_id)
+    assert not stored["pinned"]
+
+
 def test_idempotent_creation_returns_the_same_room(table):
     first = call(["rooms"], "POST", identity=owner(),
                  body={"title": "Podcast #142", "idempotency_key": "podcast-142"})

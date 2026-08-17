@@ -269,6 +269,10 @@ Admins set `status` (`visible`, `answered`, `deleted`), `pinned`, or
 `text` — the last for fixing a typo before it goes on screen, not for changing what
 someone asked.
 
+Pin is singular: one question per room is pinned at a time. Pinning a question
+unpins the room's other pinned question, and a question marked `answered` or
+`deleted` loses its pin.
+
 Authors may set `text`, or `status` to `deleted`, within their edit window.
 
 ```json

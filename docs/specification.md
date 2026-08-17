@@ -191,8 +191,11 @@ delete, and it is not recoverable through the UI.
 upvoted questions, the one that has waited longest is answered next. `recent` sorts
 by creation time descending.
 
-Pinned questions are held at the top of both orderings, in pin order. A host uses
-this to keep a seed question or a topic marker visible.
+Pin is singular. One question per room is pinned at a time — the pin is the host
+holding one question up for the room, and two held up is just the list again — so
+pinning one quietly unpins the room's other pinned question. A pinned question
+that is answered or deleted takes no pin with it. A host uses this to hold the
+question being discussed above the vote race.
 
 Score is the upvote count. There are no downvotes: they turn a question queue into
 a popularity contest with a losing side, and the host already has `deleted` for
