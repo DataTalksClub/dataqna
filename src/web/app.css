@@ -970,6 +970,13 @@ ol.present-list {
   border-color: var(--accent);
   box-shadow: 0 0 0 2px var(--accent), var(--shadow-md);
 }
+/* The pin is exclusive, so the one tinted card reads as the question the
+   host is holding up — legible from the back of the room, not only in the
+   button state the host is looking at. */
+.present-list li.pinned {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+}
 .present-list .p-score {
   flex: 0 0 auto;
   min-width: 84px;

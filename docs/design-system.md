@@ -193,9 +193,10 @@ Notes that are not obvious from the code:
 - **The room hero** (`.hero`) is the participant page's header band. It uses the
   `--hero-*` tokens; hero-muted is 4.81:1 on the gradient's lightest stop, so do
   not lighten the gradient without re-measuring.
-- **Pinned is a badge, not a border.** No accent outline, no inset left edge —
-  the room shows a `Pinned` tag, presentation mode a pin glyph sized against the
-  vote count.
+- **Pinned is a badge on the room, a tint on the projector.** The room shows a
+  `Pinned` tag; presentation mode tints the card. The pin is exclusive, so the
+  one tinted card reads as the question the host is holding up — no outline, no
+  inset left edge, which would say it with noise instead.
 - **`.btn.arm`** is the "are you sure" state of a destructive two-tap, not a
   separate button.
 - **Setup panels** (`details.card`) hold the admin console's done-once tasks —

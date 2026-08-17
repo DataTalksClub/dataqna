@@ -260,6 +260,7 @@
     var li = document.createElement("li");
     li.dataset.qid = item.question_id;
     if (item.question_id === state.selectedId) li.classList.add("selected");
+    if (item.pinned) li.classList.add("pinned");
 
     var score = document.createElement("div");
     score.className = "p-score";

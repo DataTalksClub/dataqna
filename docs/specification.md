@@ -337,8 +337,8 @@ is reachable only by keyboard:
 
 - **On each card**: pin and mark answered, as always-visible icon buttons with
   accessible names. Hiding is moderation and stays in the room console, off the
-  projected screen. Pinned shows as the pressed state of its own button and
-  nowhere else — a second pin glyph beside the author said the same thing twice.
+  projected screen. Pinned shows as a tint on the card and the pressed state of
+  its button — a second glyph beside the author would say the same thing twice.
   Pinning one question unpins the room's other one, and the newly pinned card
   slides to the top on the tap — the room should see the host's choice land,
   not discover it on the next refresh.
