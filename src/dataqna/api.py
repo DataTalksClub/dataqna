@@ -139,7 +139,13 @@ def _require_room(identifier, *, allow_archived=False):
 
 
 def _readable(room, identity):
-    """A draft room is invisible to anyone who is not an admin of it."""
+    """A draft room is invisible to anyone who is not an admin of it. An
+    archived one stays closed to the audience — the link is gone for them —
+    but its hosts get in, because reopening it is theirs to do."""
+    if room.get("state") == "archived":
+        if not identity.moderates(room):
+            raise HttpError(410, "archived", "This session has been archived.")
+        return
     if room.get("state") != "draft":
         return
     if not identity.moderates(room):
@@ -174,8 +180,14 @@ def route(event, segments, method, identity):
             return _list_rooms(identity)
         raise HttpError(405, "method_not_allowed", f"{method} is not allowed here.")
 
-    room = _require_room(rest[0], allow_archived=method == "DELETE")
     tail = rest[1:]
+    # An archived session reads for its hosts, so the console can show it and
+    # offer the reopen; the audience's methods stay 410, and the only write
+    # that reaches it is the room's own PATCH — the reopen itself.
+    room = _require_room(
+        rest[0],
+        allow_archived=method in ("GET", "DELETE") or (method == "PATCH" and not tail),
+    )
 
     if not tail:
         return _room_detail(event, room, method, identity)
@@ -244,6 +256,12 @@ def _room_detail(event, room, method, identity):
     if method == "PATCH":
         identity.require_moderator(room)
         payload = http.body(event)
+        # An archived session is cold: the reopen is the one move back to
+        # life, and nothing may be written on the way past it.
+        if room.get("state") == "archived" and (
+            set(payload) - {"state"} or payload.get("state") not in ("open", "closed")
+        ):
+            raise HttpError(409, "archived", "An archived session can only be reopened.")
         # The slug is the link the owner published; a session code must not be
         # able to break it out from under them.
         if "slug" in payload and not identity.is_admin_of(room):

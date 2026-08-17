@@ -97,22 +97,13 @@
       inGroup.forEach(function (room) {
         var card = document.createElement("div");
         card.className = "card room-card row wrapping";
-        if (room.state === "archived") {
-          // An archived session has no detail page behind it — the API went
-          // with it — so the card is the record, not a link to one.
-          var title = document.createElement("span");
-          title.style.fontWeight = "600";
-          title.textContent = room.title;
-          card.appendChild(title);
-        } else {
-          var link = document.createElement("a");
-          // Stretched so the whole card is the hit target, not just the words.
-          link.className = "stretched";
-          link.href = "/admin/rooms/" + room.room_id;
-          link.textContent = room.title;
-          link.style.fontWeight = "600";
-          card.appendChild(link);
-        }
+        var link = document.createElement("a");
+        // Stretched so the whole card is the hit target, not just the words.
+        link.className = "stretched";
+        link.href = "/admin/rooms/" + room.room_id;
+        link.textContent = room.title;
+        link.style.fontWeight = "600";
+        card.appendChild(link);
         var meta = document.createElement("div");
         meta.className = "muted";
         meta.style.width = "100%";
@@ -266,6 +257,12 @@
     $("present").href = "/admin/rooms/" + room.room_id + "/present";
     $("qr-png").href = "/r/" + room.slug + "/qr.png?size=1024";
     $("qr-svg").href = "/r/" + room.slug + "/qr.svg";
+    // An archived session is read-only: settings have nothing left to say,
+    // and the banner carries the one move it still has.
+    var archived = room.state === "archived";
+    $("archived-notice").hidden = !archived;
+    $("archived-tools").hidden = !archived;
+    $("settings-card").hidden = archived;
     $("state").value = room.state;
     $("listed").checked = room.settings.listed !== false;
 
@@ -483,6 +480,24 @@
     setInterval(function () { if (state.items.length) renderQuestions(); }, 60000);
 
     $("state").addEventListener("change", function () { patchRoom({ state: this.value }); });
+
+    /* Reopening is the undo of an accidental archive, so it is one click
+       with no arming — the risk runs the other way now. */
+    $("reopen").addEventListener("click", function () {
+      var button = this;
+      button.disabled = true;
+      request("/rooms/" + roomId, { method: "PATCH", body: JSON.stringify({ state: "open" }) })
+        .then(function (room) {
+          renderRoom(room);
+          state.etag = null;
+          refresh();
+          toast("Session reopened");
+        })
+        .catch(function (error) {
+          fail(error);
+          button.disabled = false;
+        });
+    });
 
     /* Archiving is the console's one terminal act — no transition leaves it,
        and the API 410s once it lands — so it arms like delete: the first

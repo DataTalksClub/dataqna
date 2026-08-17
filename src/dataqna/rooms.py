@@ -11,7 +11,9 @@ TRANSITIONS = {
     "draft": {"open", "archived"},
     "open": {"closed", "archived"},
     "closed": {"open", "archived"},
-    "archived": set(),
+    # Recoverable by its hosts: an archive is a filing, not a shredding, and
+    # the accident it exists to undo is sometimes the archive itself.
+    "archived": {"open", "closed"},
 }
 
 DEFAULT_SETTINGS = {
@@ -171,6 +173,11 @@ def transition(room, target):
     }
     if target == "closed" and room.get("retention_days"):
         fields["ttl"] = timestamp + int(room["retention_days"]) * 86400
+    elif "ttl" in room:
+        # Retention counts from the close date and only while the room stays
+        # closed: a room brought back to life must not carry a death date
+        # set by an earlier closing.
+        fields["ttl"] = None
     return store.update_room(room["room_id"], fields)
 
 

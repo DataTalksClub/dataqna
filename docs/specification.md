@@ -114,8 +114,8 @@ on a slide, in a podcast description, or into a QR code — there is no separate
 
 ```text
  draft ──open──► open ──close──► closed ──archive──► archived
-                  │                │
-                  └──── reopen ────┘
+                  ▲                │                      │
+                  └──── reopen ────┘◄────── reopen ───────┘
 ```
 
 | State | Public page | New questions | Voting |
@@ -123,7 +123,13 @@ on a slide, in a podcast description, or into a QR code — there is no separate
 | `draft` | 404 | — | — |
 | `open` | visible | yes | yes |
 | `closed` | visible, read-only | no | no |
-| `archived` | 410 Gone | no | no |
+| `archived` | 410 Gone; its hosts reopen it from the console | no | no |
+
+Archiving is reversible by the room's hosts and by nobody else: an archive is a
+filing, not a shredding, and the accident it exists to undo is sometimes the
+archive itself. Reopening brings the session back as it was — with its
+retention timer cleared, so a room recovered from archive is not later deleted
+on the strength of a closing that no longer stands.
 
 `draft` lets a room be created and configured ahead of time — a course cohort's
 room can exist weeks before the first session — without the link being live.
@@ -291,9 +297,10 @@ where it is needed without any of the bookkeeping that made it unattractive.
   before an event — the share panel (public URL, QR downloads), settings, and
   people — sits in collapsed setup panels below the list. Settings carries the
   lifecycle: the state select for the reversible moves, and an armed Archive
-  button for the one that is not. Archiving asks twice — it is terminal — and
-  the session then lives in the room list as its own record, unclickable, its
-  link gone.
+  button for the one that asks twice. An archived session stays in the room
+  list and opens read-only, its questions frozen as they ended, with one
+  control left: Reopen — a single click, no arming, because its whole purpose
+  is undoing an accident.
 - **People** — co-host invites: a link plus a passcode, created and revoked by
   the room admins.
 

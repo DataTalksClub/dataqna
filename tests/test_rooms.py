@@ -59,9 +59,29 @@ def test_expiry_in_the_future_leaves_the_room_open(table):
 
 def test_invalid_transition_is_rejected(table):
     room = make_room(table)
-    rooms.transition(room, "archived")
     with pytest.raises(HttpError):
-        rooms.transition(rooms.load(room["room_id"]), "open")
+        rooms.transition(room, "draft")
+
+
+def test_an_archived_room_can_be_reopened(table):
+    """An archive is a filing, not a shredding: the accident it exists to
+    undo is sometimes the archive itself."""
+    room = make_room(table)
+    rooms.transition(room, "closed")
+    rooms.transition(rooms.load(room["room_id"]), "archived")
+    reopened = rooms.transition(rooms.load(room["room_id"]), "open")
+    assert reopened["state"] == "open"
+
+
+def test_reopening_clears_the_retention_timer(table):
+    """Retention counts from the close date, and only while the room stays
+    closed: a room brought back to life must not carry the death date an
+    earlier closing set."""
+    room = make_room(table)
+    closed = rooms.transition(room, "closed")
+    assert "ttl" in closed
+    reopened = rooms.transition(rooms.load(room["room_id"]), "open")
+    assert "ttl" not in reopened
 
 
 def test_live_lists_only_open_unexpired_rooms(table):

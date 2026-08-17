@@ -104,18 +104,28 @@ def resolve_room(identifier):
 
 
 def update_room(room_id, fields):
+    """A None value removes the attribute rather than storing a null — the
+    caller is clearing a field, not blanking it."""
     if not fields:
         return get_room(room_id)
-    names, values, sets = {}, {}, []
+    names, values, sets, removes = {}, {}, [], []
     for index, (key, value) in enumerate(fields.items()):
         names[f"#f{index}"] = key
-        values[f":v{index}"] = value
-        sets.append(f"#f{index} = :v{index}")
+        if value is None:
+            removes.append(f"#f{index}")
+        else:
+            values[f":v{index}"] = value
+            sets.append(f"#f{index} = :v{index}")
+    parts = []
+    if sets:
+        parts.append("SET " + ", ".join(sets))
+    if removes:
+        parts.append("REMOVE " + ", ".join(removes))
     result = table().update_item(
         Key={"PK": _room_pk(room_id), "SK": "META"},
-        UpdateExpression="SET " + ", ".join(sets),
+        UpdateExpression=" ".join(parts),
         ExpressionAttributeNames=names,
-        ExpressionAttributeValues=values,
+        ExpressionAttributeValues=values or None,
         ConditionExpression=Attr("PK").exists(),
         ReturnValues="ALL_NEW",
     )

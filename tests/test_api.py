@@ -225,3 +225,29 @@ def test_root_admin_can_reach_any_room(table):
     room = make_room()
     root = api.Identity(email="root@datatalks.club", source="session")
     assert call(["rooms", room["room_id"]], "PATCH", identity=root, body={"title": "ok"})
+
+
+def test_an_archived_session_reads_for_its_hosts_and_reopens(table):
+    """Archive is reversible for the people who filed it and terminal for
+    everyone else: the hosts get the console and the reopen, the audience
+    keeps its 410."""
+    room = make_room()
+    call(["rooms", room["room_id"]], "PATCH", identity=owner(), body={"state": "archived"})
+
+    with pytest.raises(HttpError) as excinfo:
+        call(["rooms", room["room_id"]])
+    assert excinfo.value.status == 410
+    with pytest.raises(HttpError) as excinfo:
+        call(["rooms", room["room_id"], "questions"])
+    assert excinfo.value.status == 410
+
+    listed = call(["rooms", room["room_id"]], "GET", identity=owner())
+    assert json.loads(listed["body"])["state"] == "archived"
+    assert call(["rooms", room["room_id"], "questions"], "GET", identity=owner())
+
+    with pytest.raises(HttpError) as excinfo:
+        call(["rooms", room["room_id"]], "PATCH", identity=owner(), body={"title": "Sneaked"})
+    assert excinfo.value.status == 409
+
+    reopened = call(["rooms", room["room_id"]], "PATCH", identity=owner(), body={"state": "open"})
+    assert json.loads(reopened["body"])["state"] == "open"
