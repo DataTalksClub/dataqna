@@ -335,7 +335,7 @@
       [
         item.status === "answered"
           ? ["Unanswer", I.check, { status: "visible" }, true]
-          : ["Mark answered", I.check, { status: "answered" }, false],
+          : ["Mark answered", I.check, { status: "answered", pinned: false }, false],
         [item.pinned ? "Unpin" : "Pin", I.pin, { pinned: !item.pinned }, !!item.pinned]
       ].forEach(function (entry) {
         actions.appendChild(actionButton(item, entry[0], entry[1], entry[2], entry[3], entry[4]));

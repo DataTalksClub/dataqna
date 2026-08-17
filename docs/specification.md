@@ -322,6 +322,9 @@ is reachable only by keyboard:
   accessible names. Hiding is moderation and stays in the room console, off the
   projected screen. Pinned shows as the pressed state of its own button and
   nowhere else — a second pin glyph beside the author said the same thing twice.
+  Pinning one question unpins the room's other one, and the newly pinned card
+  slides to the top on the tap — the room should see the host's choice land,
+  not discover it on the next refresh.
 - **In the toolbar** (bottom of the frame): undo, spotlight (a toggle — in it
   says "All questions"), the full-screen QR overlay, the light/dark theme
   toggle (light is the projector default), and browser fullscreen. Leaving is
@@ -329,7 +332,7 @@ is reachable only by keyboard:
   screen.
 - Marking answered applies optimistically and offers **undo** both in the
   toolbar and in the confirmation cue — mis-taps are likelier with buttons than
-  they were with keys.
+  they were with keys. The pin, if the card had one, goes with it.
 - No spinners here, unlike the console. A pin lands pinned and an answered card
   leaves on the tap, with nothing disabled while the request is in flight: a
   stall on a projected screen is one the whole room watches the host sit

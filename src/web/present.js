@@ -81,10 +81,20 @@
     });
   }
 
+  /* The server ranks, but the tap cannot wait for it: ranking here too is
+     what lets the optimistic pin reorder on the click — playFlip slides the
+     pinned card up and the displaced one down instead of the room watching
+     both sit still for the next poll. Mirrors the server's popular sort. */
   function visible() {
-    return state.items.filter(function (item) {
-      return !item.status || item.status === "visible";
-    });
+    return state.items
+      .filter(function (item) {
+        return !item.status || item.status === "visible";
+      })
+      .sort(function (a, b) {
+        if (!!b.pinned !== !!a.pinned) return b.pinned ? 1 : -1;
+        if (b.score !== a.score) return b.score - a.score;
+        return a.created_at < b.created_at ? -1 : a.created_at > b.created_at ? 1 : 0;
+      });
   }
 
   function byId(id) {
@@ -152,7 +162,10 @@
           state.etag = null;
           if (options.done) options.done();
         },
-        fail: function (error) { cue(error.message); }
+        fail: function (error) {
+          if (options.fail) options.fail(error);
+          else cue(error.message);
+        }
       });
     };
     if (options.leave) dismiss(item, run);
@@ -164,7 +177,8 @@
   function removal(item, name, status, label) {
     if (state.busy[item.question_id]) return;
     state.lastAction = { question_id: item.question_id };
-    performAction(item, name, { status: status }, { leave: state.mode === "list" });
+    // The pin goes with the card: an answered question holds nothing up.
+    performAction(item, name, { status: status, pinned: false }, { leave: state.mode === "list" });
     if (state.mode === "spotlight") exitSpotlight();
     cue(label, true);
     paintToolbar();
@@ -172,9 +186,25 @@
 
   function markAnswered(item) { removal(item, "answered", "answered", "Marked answered"); }
 
+  /* One pin per room: pinning this question retires the room's other pin,
+     and both happen on the tap. A refusal brings the retired pin back. */
   function togglePin(item) {
     if (state.busy[item.question_id]) return;
-    performAction(item, "pin", { pinned: !item.pinned });
+    var retired = [];
+    if (!item.pinned) {
+      state.items.forEach(function (other) {
+        if (other !== item && other.pinned) {
+          other.pinned = false;
+          retired.push(other);
+        }
+      });
+    }
+    performAction(item, "pin", { pinned: !item.pinned }, {
+      fail: function (error) {
+        retired.forEach(function (other) { other.pinned = true; });
+        cue(error.message);
+      }
+    });
   }
 
   /* One level of undo costs nothing and saves the projected moment. */
