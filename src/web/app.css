@@ -241,7 +241,6 @@ svg { flex: 0 0 auto; }
 /* ------------------------------------------------------------- layout */
 
 .wrap { max-width: 720px; margin: 0 auto; padding: var(--space-5) var(--space-4) 96px; }
-.wide { max-width: 1100px; }
 
 .row { display: flex; gap: var(--space-2); align-items: center; }
 .row.wrapping { flex-wrap: wrap; }
@@ -728,7 +727,8 @@ li.q .text {
   overflow-wrap: anywhere;
   font-weight: 500;
   line-height: var(--leading-snug);
-  /* The admin column is 1100px wide; a question must not become a 120ch line. */
+  /* A question must not become a 120ch line on any screen it can be
+     stretched to. */
   max-width: 78ch;
 }
 li.q .q-foot { display: flex; align-items: center; gap: var(--space-3); flex-wrap: wrap; }
