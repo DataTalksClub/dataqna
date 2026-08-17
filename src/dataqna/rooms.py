@@ -22,9 +22,10 @@ DEFAULT_SETTINGS = {
     "require_names": False,
     "answered_placement": "separate",
     "default_sort": "popular",
-    # Slido caps questions at 300. Half as long again is generous without
-    # letting a question become a speech the host has to read out.
-    "max_question_length": 450,
+    # A question has to read on a projected card, and a wall of text asks the
+    # host to edit it live. 315 is 30% under the old limit and a shade over
+    # Slido's 300 — enough for a considered question, not for a speech.
+    "max_question_length": 315,
 }
 
 _ENUMS = {

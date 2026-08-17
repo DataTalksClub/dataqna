@@ -327,7 +327,11 @@ def _question(event, room, question_id, method, identity):
     updated = question
     if "text" in payload:
         text = str(payload["text"]).strip()
-        limit = int(room.get("settings", {}).get("max_question_length", 500))
+        limit = int(
+            room.get("settings", {}).get(
+                "max_question_length", rooms.DEFAULT_SETTINGS["max_question_length"]
+            )
+        )
         if not text or len(text) > limit:
             raise HttpError(400, "invalid_request", f"text must be 1 to {limit} characters")
         updated = store.update_question(room["room_id"], question_id, {"text": text})

@@ -931,8 +931,9 @@ body.present { overflow: hidden; background: var(--bg); }
   flex-direction: column;
 }
 
-/* The ranked list. Cards are content-sized with fixed type and padding:
-   one question renders exactly like the top card of eight. */
+/* The ranked list. Fixed type and padding, and the card grows to the whole
+   question: the list scrolls rather than cutting one, because a host cannot
+   answer half a question. */
 ol.present-list {
   list-style: none;
   margin: 0;
@@ -987,10 +988,6 @@ ol.present-list {
   line-height: var(--leading-snug);
   letter-spacing: var(--tracking-snug);
   overflow-wrap: anywhere;
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-  overflow: hidden;
 }
 .present-list .p-meta {
   margin-top: var(--space-1);
@@ -1208,7 +1205,7 @@ ol.present-list {
   }
   .present-list .p-score { min-width: 48px; font-size: 1.25rem; }
   .present-list .p-score svg { width: 20px; height: 20px; }
-  .present-list .p-text { font-size: var(--text-base); -webkit-line-clamp: 3; }
+  .present-list .p-text { font-size: var(--text-base); }
   .present-list .p-meta { font-size: var(--text-sm); min-height: 0; }
   .present-list .p-actions { margin-left: auto; flex-basis: 100%; justify-content: flex-end; }
   .present-stage { padding: var(--space-3); gap: var(--space-5); }

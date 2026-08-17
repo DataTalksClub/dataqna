@@ -49,6 +49,16 @@ def test_length_limit_is_enforced(table):
         questions.submit(room, {"text": "x" * 11}, "p1")
 
 
+def test_the_default_limit_is_315_characters(table):
+    """Cut 30% from the old 450: a question has to read whole on a projected
+    card, and a tighter limit asks for a better-phrased question rather than
+    a wall of text the host has to edit live."""
+    room = make_room()
+    assert questions.submit(room, {"text": "x" * 315}, "p1")["score"] == 1
+    with pytest.raises(HttpError):
+        questions.submit(room, {"text": "x" * 316}, "p2")
+
+
 def test_questions_are_visible_to_everyone_the_moment_they_are_asked(table):
     room = make_room()
     question = questions.submit(room, {"text": "Q"}, "author")

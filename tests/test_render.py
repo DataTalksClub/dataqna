@@ -41,6 +41,13 @@ def test_assets_are_version_stamped():
     assert 'href="/assets/app.css"' not in body
 
 
+def test_no_surface_ever_clamps_a_question_to_a_line_count():
+    """Presentation mode clamped its cards to two lines once, and the host
+    answered half a question in front of the room. A question is shown whole
+    or the surface scrolls — line clamps must not come back."""
+    assert "line-clamp" not in render.asset_bytes("app.css").decode()
+
+
 def test_asset_responses_are_cacheable_because_they_are_versioned():
     response = render.asset_response("app.css")
     assert response["statusCode"] == 200

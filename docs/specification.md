@@ -148,7 +148,7 @@ Retention deletes data; expiry only stops accepting it.
 | `require_names` | `false` | Make the name field mandatory |
 | `answered_placement` | `separate` | `separate`: answered questions move to their own tab. `bottom`: they sink below open ones. `inline`: they stay in place, marked |
 | `default_sort` | `popular` | `popular` or `recent` |
-| `max_question_length` | `450` | Characters. Slido caps at 300; half as long again is generous without letting a question become a speech |
+| `max_question_length` | `315` | Characters. A question has to read on a projected card: 30% under the old 450, a shade over Slido's 300 |
 | `expires_at` | `null` | ISO 8601, see above |
 | `retention_days` | `365` | See above |
 
@@ -351,9 +351,10 @@ the selection (or walk the ranking in spotlight), and `Esc` closes the QR
 overlay or leaves the spotlight. Everything else is a button.
 
 The list refreshes on the polling loop; answered and deleted questions visibly
-leave it, and rank changes animate so movement is legible. The spotlit question
-never moves underneath the host — ranking applies again once they return to the
-list.
+leave it, and rank changes animate so movement is legible. A card shows the whole
+question — the list scrolls rather than cutting one, because a host cannot answer
+half a question. The spotlit question never moves underneath the host — ranking
+applies again once they return to the list.
 
 ## 8. The permanent link
 
