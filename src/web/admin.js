@@ -268,11 +268,15 @@
       .then(renderRoom).catch(fail);
   }
 
+  var TABS = ["all", "unanswered", "answered"];
+
   /* Empty states are written per tab: each one says what would appear
      here and what causes it, not a generic "nothing". */
   var EMPTY = {
     all: ["No questions yet",
       "Share the link below — questions appear the moment they are asked."],
+    unanswered: ["Everything is answered",
+      "A new question lands here the moment it is asked."],
     answered: ["Nothing answered yet",
       "Mark a question answered and it moves to this tab."]
   };
@@ -280,6 +284,7 @@
   function renderQuestions() {
     var filtered = state.items.filter(function (item) {
       if (state.filter === "answered") return item.status === "answered";
+      if (state.filter === "unanswered") return item.status === "visible";
       return item.status === "visible" || item.status === "answered";
     });
     if (state.filter === "all") {
@@ -447,7 +452,7 @@
 
   function selectFilter(name) {
     state.filter = name;
-    ["all", "answered"].forEach(function (key) {
+    TABS.forEach(function (key) {
       $("f-" + key).setAttribute("aria-pressed", key === name ? "true" : "false");
     });
     renderQuestions();
@@ -473,7 +478,7 @@
       navigator.clipboard.writeText(state.room.url).then(function () { toast("Link copied"); });
     });
     $("create-cohost").addEventListener("click", createCohost);
-    ["all", "answered"].forEach(function (key) {
+    TABS.forEach(function (key) {
       $("f-" + key).addEventListener("click", function () { selectFilter(key); });
     });
   } else {
