@@ -313,7 +313,10 @@ join strip — a large QR code on the left, with the URL beside it — stays vis
 both states, so people who arrive late can join without the host interrupting
 themselves. The QR is sized to be scanned from the back of a room, because it is
 the entire on-ramp: if nobody can scan it, nobody asks anything. While the room has
-no questions yet, the join card takes over the whole screen.
+no questions yet, the join card takes over the whole screen — and the moment a
+question arrives it gives way to the list, even when the host pinned the overlay
+open: the QR's job is to fill an empty screen, not to sit on the question it
+produced.
 
 Clicking is the interaction model — every action is a visible control, nothing
 is reachable only by keyboard:

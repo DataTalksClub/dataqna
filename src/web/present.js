@@ -459,6 +459,14 @@
         // A 304 — most polls — re-renders nothing at all.
         if (body.unchanged || !body.items) return;
         if (epoch !== state.epoch || Object.keys(state.busy).length) return;
+        // A question asked outranks the join code it came through: the QR
+        // overlay's job is to fill an empty screen, not to sit on the first
+        // question it produced.
+        var known = {};
+        state.items.forEach(function (item) { known[item.question_id] = true; });
+        if (body.items.some(function (item) { return !known[item.question_id]; })) {
+          state.overlayPinned = false;
+        }
         state.etag = body.etag;
         state.items = body.items;
         if (state.selectedId && !byId(state.selectedId)) state.selectedId = null;
