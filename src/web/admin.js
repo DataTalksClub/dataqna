@@ -97,12 +97,22 @@
       inGroup.forEach(function (room) {
         var card = document.createElement("div");
         card.className = "card room-card row wrapping";
-        var link = document.createElement("a");
-        // Stretched so the whole card is the hit target, not just the words.
-        link.className = "stretched";
-        link.href = "/admin/rooms/" + room.room_id;
-        link.textContent = room.title;
-        link.style.fontWeight = "600";
+        if (room.state === "archived") {
+          // An archived session has no detail page behind it — the API went
+          // with it — so the card is the record, not a link to one.
+          var title = document.createElement("span");
+          title.style.fontWeight = "600";
+          title.textContent = room.title;
+          card.appendChild(title);
+        } else {
+          var link = document.createElement("a");
+          // Stretched so the whole card is the hit target, not just the words.
+          link.className = "stretched";
+          link.href = "/admin/rooms/" + room.room_id;
+          link.textContent = room.title;
+          link.style.fontWeight = "600";
+          card.appendChild(link);
+        }
         var meta = document.createElement("div");
         meta.className = "muted";
         meta.style.width = "100%";
@@ -473,6 +483,35 @@
     setInterval(function () { if (state.items.length) renderQuestions(); }, 60000);
 
     $("state").addEventListener("change", function () { patchRoom({ state: this.value }); });
+
+    /* Archiving is the console's one terminal act — no transition leaves it,
+       and the API 410s once it lands — so it arms like delete: the first
+       click asks, the second acts, and success returns to the list, where
+       the session now lives under Archived as its own record. */
+    var archiveTimer = null;
+    $("archive").addEventListener("click", function () {
+      var button = this;
+      if (!button.classList.contains("arm")) {
+        button.classList.add("arm");
+        button.textContent = "Really archive?";
+        clearTimeout(archiveTimer);
+        archiveTimer = setTimeout(function () {
+          button.classList.remove("arm");
+          button.textContent = "Archive session";
+        }, 3000);
+        return;
+      }
+      clearTimeout(archiveTimer);
+      button.disabled = true;
+      request("/rooms/" + roomId, { method: "PATCH", body: JSON.stringify({ state: "archived" }) })
+        .then(function () { location.href = "/admin"; })
+        .catch(function (error) {
+          button.disabled = false;
+          button.classList.remove("arm");
+          button.textContent = "Archive session";
+          fail(error);
+        });
+    });
     $("listed").addEventListener("change", function () { patchRoom({ settings: { listed: this.checked } }); });
     $("copy-link").addEventListener("click", function () {
       navigator.clipboard.writeText(state.room.url).then(function () { toast("Link copied"); });

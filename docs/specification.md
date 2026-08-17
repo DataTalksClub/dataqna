@@ -289,7 +289,11 @@ where it is needed without any of the bookkeeping that made it unattractive.
   typos), inside the first screenful on a phone. The header carries the two
   mid-session controls — presentation mode and copy link. Everything done once
   before an event — the share panel (public URL, QR downloads), settings, and
-  people — sits in collapsed setup panels below the list.
+  people — sits in collapsed setup panels below the list. Settings carries the
+  lifecycle: the state select for the reversible moves, and an armed Archive
+  button for the one that is not. Archiving asks twice — it is terminal — and
+  the session then lives in the room list as its own record, unclickable, its
+  link gone.
 - **People** — co-host invites: a link plus a passcode, created and revoked by
   the room admins.
 
