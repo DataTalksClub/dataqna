@@ -86,10 +86,17 @@ def test_settings_are_validated(table):
 
 
 def test_removed_settings_are_rejected_as_unknown(table):
-    """moderation, questions_open, and voting_open left the product; a script
-    still sending them should hear about it rather than silently no-op."""
+    """moderation, questions_open, and voting_open left the product, and
+    max_question_length was promoted from a setting to a product constant; a
+    script still sending them should hear about it rather than silently
+    no-op."""
     room = make_room(table)
-    for key, value in (("moderation", "on"), ("questions_open", False), ("voting_open", False)):
+    for key, value in (
+        ("moderation", "on"),
+        ("questions_open", False),
+        ("voting_open", False),
+        ("max_question_length", 450),
+    ):
         with pytest.raises(HttpError):
             rooms.apply_updates(room, {"settings": {key: value}})
 

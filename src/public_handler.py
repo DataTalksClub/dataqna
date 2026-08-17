@@ -21,6 +21,9 @@ def _room_config(room, participant, host_links=None):
         "state": room.get("state"),
         "url": f"{config.SITE_URL}/r/{room.get('slug')}",
         "settings": rooms.public_view(room)["settings"],
+        # The limit is a product constant, not a setting, so the composer
+        # reads it from here rather than out of the room.
+        "max_length": config.MAX_QUESTION_LENGTH,
         "can_ask": rooms.accepting_questions(room),
         "can_vote": rooms.accepting_votes(room),
         "banner": _banner(room),

@@ -65,8 +65,7 @@ Creates a room. Requires an unscoped key.
     "allow_names": true,
     "require_names": false,
     "answered_placement": "separate",
-    "default_sort": "popular",
-    "max_question_length": 500
+    "default_sort": "popular"
   },
   "idempotency_key": "podcast-142"
 }

@@ -22,10 +22,6 @@ DEFAULT_SETTINGS = {
     "require_names": False,
     "answered_placement": "separate",
     "default_sort": "popular",
-    # A question has to read on a projected card, and a wall of text asks the
-    # host to edit it live. 315 is 30% under the old limit and a shade over
-    # Slido's 300 — enough for a considered question, not for a speech.
-    "max_question_length": 315,
 }
 
 _ENUMS = {
@@ -49,10 +45,6 @@ def clean_settings(raw, base=None):
         if key in _ENUMS:
             if value not in _ENUMS[key]:
                 raise _bad(f"{key} must be one of {sorted(_ENUMS[key])}")
-        elif key == "max_question_length":
-            value = int(value)
-            if not 1 <= value <= config.MAX_QUESTION_LENGTH_LIMIT:
-                raise _bad(f"max_question_length must be between 1 and {config.MAX_QUESTION_LENGTH_LIMIT}")
         else:
             if not isinstance(value, bool):
                 raise _bad(f"{key} must be true or false")

@@ -148,7 +148,6 @@ Retention deletes data; expiry only stops accepting it.
 | `require_names` | `false` | Make the name field mandatory |
 | `answered_placement` | `separate` | `separate`: answered questions move to their own tab. `bottom`: they sink below open ones. `inline`: they stay in place, marked |
 | `default_sort` | `popular` | `popular` or `recent` |
-| `max_question_length` | `315` | Characters. A question has to read on a projected card: 30% under the old 450, a shade over Slido's 300 |
 | `expires_at` | `null` | ISO 8601, see above |
 | `retention_days` | `365` | See above |
 
@@ -166,10 +165,11 @@ A participant types the question, optionally a name, and submits. The question i
 stored with the participant id derived from the cookie. No email, no IP retained
 beyond the rate-limiting window (section 11).
 
-Constraints: 1 to `max_question_length` characters after trimming; plain text only,
-rendered escaped. A participant may edit or delete their own question for five
-minutes after posting, or until it receives its first upvote — whichever comes
-first.
+Constraints: 1 to 315 characters after trimming — a product constant, not a
+setting, because the length of a good question does not vary by session; plain
+text only, rendered escaped. A participant may edit or delete their own question
+for five minutes after posting, or until it receives its first upvote — whichever
+comes first.
 
 ### 4.2 States
 

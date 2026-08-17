@@ -407,7 +407,7 @@
   /* The Twitter ring: nothing until 75% of the limit, a filling ring after,
      the remaining count in the last 10%, and a blocked Send when over. */
   function updateLimit() {
-    var limit = CONFIG.settings.max_question_length;
+    var limit = CONFIG.max_length;
     var length = el.text.value.length;
     var left = limit - length;
     var lastStretch = left <= Math.ceil(limit * 0.1);

@@ -43,20 +43,21 @@ def test_closed_room_refuses_questions(table):
         questions.submit(rooms.load(room["room_id"]), {"text": "Q"}, "p1")
 
 
-def test_length_limit_is_enforced(table):
-    room = make_room(settings={"max_question_length": 10})
-    with pytest.raises(HttpError):
-        questions.submit(room, {"text": "x" * 11}, "p1")
-
-
-def test_the_default_limit_is_315_characters(table):
-    """Cut 30% from the old 450: a question has to read whole on a projected
-    card, and a tighter limit asks for a better-phrased question rather than
-    a wall of text the host has to edit live."""
+def test_questions_are_capped_at_315_characters(table):
+    """A product constant, not a room setting: a question has to read whole
+    on a projected card, and a tighter limit asks for a better-phrased
+    question rather than a wall of text the host has to edit live. Rooms
+    made before the change still carry the old number in storage — dead
+    weight there, not a limit."""
     room = make_room()
-    assert questions.submit(room, {"text": "x" * 315}, "p1")["score"] == 1
+    settings = dict(room["settings"])
+    settings["max_question_length"] = 450
+    store.update_room(room["room_id"], {"settings": settings})
+    stale = store.get_room(room["room_id"])
+
+    assert questions.submit(stale, {"text": "x" * 315}, "p1")["score"] == 1
     with pytest.raises(HttpError):
-        questions.submit(room, {"text": "x" * 316}, "p2")
+        questions.submit(stale, {"text": "x" * 316}, "p2")
 
 
 def test_questions_are_visible_to_everyone_the_moment_they_are_asked(table):

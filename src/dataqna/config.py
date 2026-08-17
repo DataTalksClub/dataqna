@@ -42,5 +42,10 @@ ROOT_ADMINS = frozenset(
     if part.strip()
 )
 
-MAX_QUESTION_LENGTH_LIMIT = 2000
+# A question has to read whole on a projected card, and a wall of text asks
+# the host to edit it live. 315 is 30% under the old limit and a shade over
+# Slido's 300 — enough for a considered question, not for a speech. A product
+# constant, not a room setting: the length of a good question does not vary
+# by session.
+MAX_QUESTION_LENGTH = 315
 MAX_NAME_LENGTH = 60

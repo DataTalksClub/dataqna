@@ -21,7 +21,7 @@ def submit(room, payload, participant):
 
     settings = room.get("settings", {})
     text = str(payload.get("text", "")).strip()
-    limit = int(settings.get("max_question_length", rooms.DEFAULT_SETTINGS["max_question_length"]))
+    limit = config.MAX_QUESTION_LENGTH
     if not text:
         raise _bad("text is required")
     if len(text) > limit:
