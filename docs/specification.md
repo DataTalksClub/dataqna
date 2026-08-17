@@ -127,9 +127,11 @@ on a slide, in a podcast description, or into a QR code — there is no separate
 
 Archiving is reversible by the room's hosts and by nobody else: an archive is a
 filing, not a shredding, and the accident it exists to undo is sometimes the
-archive itself. Reopening brings the session back as it was — with its
-retention timer cleared, so a room recovered from archive is not later deleted
-on the strength of a closing that no longer stands.
+archive itself. It is also a filing with a shelf life — the session is deleted
+seven days after archiving, a clock that overrides any retention date an
+earlier closing set. Reopening cancels the clock and brings the session back as
+it was, so a room recovered from archive is not later deleted on the strength
+of a closing that no longer stands.
 
 `draft` lets a room be created and configured ahead of time — a course cohort's
 room can exist weeks before the first session — without the link being live.
@@ -300,7 +302,8 @@ where it is needed without any of the bookkeeping that made it unattractive.
   button for the one that asks twice. An archived session stays in the room
   list and opens read-only, its questions frozen as they ended, with one
   control left: Reopen — a single click, no arming, because its whole purpose
-  is undoing an accident.
+  is undoing an accident. The seven-day deletion the archive scheduled is
+  cancelled with it.
 - **People** — co-host invites: a link plus a passcode, created and revoked by
   the room admins.
 

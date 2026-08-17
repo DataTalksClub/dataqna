@@ -84,6 +84,24 @@ def test_reopening_clears_the_retention_timer(table):
     assert "ttl" not in reopened
 
 
+def test_archiving_schedules_deletion_in_seven_days(table):
+    """The archive is an undo window, not a drawer: seven days after the
+    filing the session is deleted, and the clock starts at the archive —
+    an earlier closing's retention date does not survive it."""
+    room = make_room(table)
+    rooms.transition(room, "closed")
+    archived = rooms.transition(rooms.load(room["room_id"]), "archived")
+    assert archived["ttl"] - archived["state_changed_at"] == 7 * 86400
+
+
+def test_reopening_cancels_the_seven_day_deletion(table):
+    room = make_room(table)
+    rooms.transition(room, "archived")
+    assert "ttl" in store.get_room(room["room_id"])
+    reopened = rooms.transition(rooms.load(room["room_id"]), "open")
+    assert "ttl" not in reopened
+
+
 def test_live_lists_only_open_unexpired_rooms(table):
     open_room = make_room(table, slug="open-one")
     make_room(table, slug="draft-one", state="draft")

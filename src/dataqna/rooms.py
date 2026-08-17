@@ -171,7 +171,12 @@ def transition(room, target):
         "GSI1PK": f"STATE#{target}",
         "GSI1SK": store.sort_key(timestamp),
     }
-    if target == "closed" and room.get("retention_days"):
+    if target == "archived":
+        # The archive holds the session for an undo window, then deletes it —
+        # overriding any retention date an earlier closing set, because the
+        # seven days start at the filing.
+        fields["ttl"] = timestamp + config.ARCHIVE_DELETE_DAYS * 86400
+    elif target == "closed" and room.get("retention_days"):
         fields["ttl"] = timestamp + int(room["retention_days"]) * 86400
     elif "ttl" in room:
         # Retention counts from the close date and only while the room stays

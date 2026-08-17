@@ -125,8 +125,9 @@ transitions in specification section 3.2; anything else returns `400`.
 
 ### `DELETE /rooms/{room}`
 
-Owner only. Archives the room: the public URL returns `410`, data remains until
-retention expires. `?purge=true` deletes immediately and irreversibly.
+Owner only. Archives the room: the public URL returns `410`, and the session is
+deleted seven days later unless a host reopens it (`PATCH` with `state` `open`
+or `closed`). `?purge=true` deletes immediately and irreversibly.
 
 ### `GET /rooms/{room}/qr.svg`, `GET /rooms/{room}/qr.png`
 

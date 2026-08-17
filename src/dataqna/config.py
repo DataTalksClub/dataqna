@@ -49,3 +49,9 @@ ROOT_ADMINS = frozenset(
 # by session.
 MAX_QUESTION_LENGTH = 315
 MAX_NAME_LENGTH = 60
+
+# An archived session is held this many days as an undo window and then
+# deleted: a filing nobody came back for is clutter nobody wanted, and the
+# alternative is a list of dead sessions that grows forever. Reopening
+# cancels the clock.
+ARCHIVE_DELETE_DAYS = 7
