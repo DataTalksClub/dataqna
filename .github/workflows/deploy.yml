@@ -47,7 +47,7 @@ jobs:
         run: make build
 
       - name: Deploy
-        run: sam deploy --config-env sandbox --no-confirm-changeset --no-fail-on-empty-changeset
+        run: scripts/deploy.sh --no-confirm-changeset --no-fail-on-empty-changeset
 
       # Fails the workflow if the deployed site is not actually working, rather
       # than reporting success because CloudFormation returned CREATE_COMPLETE.

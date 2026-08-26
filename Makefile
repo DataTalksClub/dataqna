@@ -20,7 +20,7 @@ build: requirements
 	sam build --config-env sandbox
 
 deploy:
-	sam deploy --config-env sandbox
+	scripts/deploy.sh
 
 verify:
 	uv run python scripts/verify_deployment.py
