@@ -173,11 +173,16 @@ A participant types the question, optionally a name, and submits. The question i
 stored with the participant id derived from the cookie. No email, no IP retained
 beyond the rate-limiting window (section 11).
 
-Constraints: 1 to 315 characters after trimming — a product constant, not a
-setting, because the length of a good question does not vary by session; plain
-text only, rendered escaped. A participant may edit or delete their own question
-for five minutes after posting, or until it receives its first upvote — whichever
-comes first.
+Constraints: 1 to 234 characters after trimming, and at most three lines
+however they are broken — a product constant, not a setting, because the
+length of a good question does not vary by session; plain text only, rendered
+escaped. The cap is what three lines of a question card hold (3 × 78, the
+measure its text wraps at), so a question asked within the cap reads whole
+without growing past a card. The limit gates submission and author edits
+only: questions asked under earlier, looser caps keep the text they were
+asked with and render at their full height. A participant may edit or delete
+their own question for five minutes after posting, or until it receives its
+first upvote — whichever comes first.
 
 ### 4.2 States
 

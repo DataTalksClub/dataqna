@@ -43,21 +43,38 @@ def test_closed_room_refuses_questions(table):
         questions.submit(rooms.load(room["room_id"]), {"text": "Q"}, "p1")
 
 
-def test_questions_are_capped_at_315_characters(table):
+def test_questions_are_capped_at_three_lines(table):
     """A product constant, not a room setting: a question has to read whole
-    on a projected card, and a tighter limit asks for a better-phrased
-    question rather than a wall of text the host has to edit live. Rooms
-    made before the change still carry the old number in storage — dead
-    weight there, not a limit."""
+    on a projected card, and three lines is what a card holds — 234
+    characters at the 78 the text wraps to, and three lines however they are
+    broken. Rooms made before the change still carry the old number in
+    storage — dead weight there, not a limit."""
     room = make_room()
     settings = dict(room["settings"])
     settings["max_question_length"] = 450
     store.update_room(room["room_id"], {"settings": settings})
     stale = store.get_room(room["room_id"])
 
-    assert questions.submit(stale, {"text": "x" * 315}, "p1")["score"] == 1
+    assert questions.submit(stale, {"text": "x" * 234}, "p1")["score"] == 1
     with pytest.raises(HttpError):
-        questions.submit(stale, {"text": "x" * 316}, "p2")
+        questions.submit(stale, {"text": "x" * 235}, "p2")
+    assert questions.submit(stale, {"text": "one\ntwo\nthree"}, "p3")["score"] == 1
+    with pytest.raises(HttpError):
+        questions.submit(stale, {"text": "one\ntwo\nthree\nfour"}, "p4")
+
+
+def test_questions_asked_before_the_cap_reach_the_board_unchanged(table):
+    """The limit is a gate at submission, not a property the board enforces:
+    a question asked under the old, looser cap keeps its text and its full
+    height on the card."""
+    room = make_room()
+    question = questions.submit(room, {"text": "Q"}, "p1")
+    store.update_question(
+        room["room_id"], question["question_id"], {"text": "x" * 315 + "\nmore"}
+    )
+
+    items, _, _ = questions.collect(room)
+    assert items[0]["text"] == "x" * 315 + "\nmore"
 
 
 def test_questions_are_visible_to_everyone_the_moment_they_are_asked(table):

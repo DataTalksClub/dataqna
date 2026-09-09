@@ -15,17 +15,27 @@ def _bad(message, code="invalid_request"):
     return HttpError(400, code, message)
 
 
+def validate_text(text):
+    """The one gate a question's text passes: the character budget of three
+    card lines, and the line count itself. Only submission and author edits
+    come through here — the board renders whatever is stored, so tightening
+    the gate never reshapes a question already asked."""
+    limit = config.MAX_QUESTION_LENGTH
+    if not text:
+        raise _bad("text is required")
+    if len(text) > limit:
+        raise _bad(f"text must be {limit} characters or fewer")
+    if text.count("\n") >= config.MAX_QUESTION_LINES:
+        raise _bad(f"text must be at most {config.MAX_QUESTION_LINES} lines")
+
+
 def submit(room, payload, participant):
     if not rooms.accepting_questions(room):
         raise HttpError(409, "questions_closed", "This room is not accepting questions.")
 
     settings = room.get("settings", {})
     text = str(payload.get("text", "")).strip()
-    limit = config.MAX_QUESTION_LENGTH
-    if not text:
-        raise _bad("text is required")
-    if len(text) > limit:
-        raise _bad(f"text must be {limit} characters or fewer")
+    validate_text(text)
 
     name = str(payload.get("author_name") or "").strip()[: config.MAX_NAME_LENGTH]
     if name and not settings.get("allow_names", True):

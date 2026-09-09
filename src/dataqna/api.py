@@ -345,9 +345,7 @@ def _question(event, room, question_id, method, identity):
     updated = question
     if "text" in payload:
         text = str(payload["text"]).strip()
-        limit = config.MAX_QUESTION_LENGTH
-        if not text or len(text) > limit:
-            raise HttpError(400, "invalid_request", f"text must be 1 to {limit} characters")
+        questions.validate_text(text)
         updated = store.update_question(room["room_id"], question_id, {"text": text})
     if "pinned" in payload:
         if not is_admin:
