@@ -453,26 +453,22 @@ def _cohosts(event, room, method, identity):
                 "A link name must be 3-48 characters of lowercase letters, digits, and hyphens.",
             )
 
-        invite_id = ids.ulid()
-        name = requested or security.new_cohost_name()
-        if not store.claim_cohost_name(name, room["room_id"], invite_id):
-            if requested:
-                raise HttpError(
-                    409, "name_taken", f"This session already has a link named '{name}'."
-                )
-            name = security.new_cohost_name()
-            if not store.claim_cohost_name(name, room["room_id"], invite_id):
-                raise HttpError(503, "name_exhausted", "Could not allocate a link name. Try again.")
-
         invite = {
-            "invite_id": invite_id,
+            "invite_id": ids.ulid(),
             "room_id": room["room_id"],
-            "name": name,
+            "name": requested or security.new_cohost_name(),
             "passcode": passcode,
             "created_by": identity.email,
             "created_at": store.now(),
         }
-        store.put_cohost_invite(invite)
+        if not store.create_cohost_invite(invite):
+            if requested:
+                raise HttpError(
+                    409, "name_taken", f"This session already has a link named '{invite['name']}'."
+                )
+            invite["name"] = security.new_cohost_name()
+            if not store.create_cohost_invite(invite):
+                raise HttpError(503, "name_exhausted", "Could not allocate a link name. Try again.")
         return http.json_response(201, _cohost_view(room, invite))
 
     raise HttpError(405, "method_not_allowed", f"{method} is not allowed here.")

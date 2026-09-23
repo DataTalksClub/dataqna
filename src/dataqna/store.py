@@ -139,6 +139,22 @@ def delete_room(room):
     with table().batch_writer() as batch:
         for item in items:
             batch.delete_item(Key={"PK": item["PK"], "SK": item["SK"]})
+        # Link-name pointers are deliberately keyed outside the room's
+        # partition, so the purge above does not reach them. Nothing can ever
+        # claim them again — the room id is never reused — so they leave with
+        # the room rather than sit held forever.
+        kwargs = {}
+        while True:
+            page = table().scan(
+                FilterExpression=Attr("PK").begins_with(f"COHOSTNAME#{room_id}#"),
+                ProjectionExpression="PK, SK",
+                **kwargs,
+            )
+            for item in page["Items"]:
+                batch.delete_item(Key={"PK": item["PK"], "SK": item["SK"]})
+            if not page.get("LastEvaluatedKey"):
+                break
+            kwargs["ExclusiveStartKey"] = page["LastEvaluatedKey"]
     if room.get("slug"):
         release_pointer("SLUG", room["slug"])
 
@@ -336,50 +352,62 @@ def normalize_cohost_name(value):
     return "".join(str(value or "").strip().lower().split())
 
 
-def put_cohost_invite(invite):
-    item = dict(invite)
-    item["PK"] = _room_pk(invite["room_id"])
-    item["SK"] = f"COHOST#{invite['invite_id']}"
-    item["entity"] = "cohost_invite"
-    table().put_item(Item=item)
-    return invite
-
-
 def _cohost_name_pk(room_id, name):
     """Scoped to the room, so a name only has to be free within its session."""
     return f"COHOSTNAME#{room_id}#{normalize_cohost_name(name)}"
 
 
-def claim_cohost_name(name, room_id, invite_id):
-    item = {
-        "PK": _cohost_name_pk(room_id, name),
-        "SK": "META",
-        "entity": "cohost_pointer",
-        "room_id": room_id,
-        "invite_id": invite_id,
-    }
-    key = {"PK": item["PK"], "SK": "META"}
-    exists = "attribute_not_exists(PK)"
-    if _conditional(table().put_item, Item=item, ConditionExpression=exists):
-        return True
-    # The pointer is held — but it is a claim only while the invite it names
-    # still exists. Invite and pointer live in different partitions, so a
-    # deletion that reaches one and not the other leaves the name held by a
-    # ghost: redemption refuses it, the People panel does not list it, and the
-    # host cannot hand the name out again. Releasing the pointer conditionally
-    # on it still naming the dead invite, so a claim that just rewrote it is
-    # not dropped underneath anyone.
-    pointer = table().get_item(Key=key).get("Item")
-    if not pointer or get_cohost_invite(room_id, pointer.get("invite_id")):
+def create_cohost_invite(invite):
+    """Write an invite and the pointer that reserves its name.
+
+    The two live in different partitions, so they cannot be one write — and
+    the order they go in decides what a failure in between can leave behind.
+    The invite goes first: if the pointer never lands, the residue is a row
+    the panel lists and the host can revoke, with the name still free. The
+    pointer — the claim — goes last, so a pointer can never name an invite
+    that was never written. That ghost is what held sma/ivan's name while
+    answering every re-creation with 'already taken'.
+    """
+    room_id = invite["room_id"]
+    key = {"PK": _cohost_name_pk(room_id, invite["name"]), "SK": "META"}
+    held = table().get_item(Key=key).get("Item")
+    if held and get_cohost_invite(room_id, held.get("invite_id")):
         return False
+    if held:
+        # A pointer is a claim only while the invite it names still exists.
+        # Rows stranded by the old two-step writes — or deleted from outside
+        # this code — must not hold the name forever. Release it conditionally
+        # on it still naming the dead invite, so a claim that just rewrote it
+        # is not dropped underneath anyone.
+        if not _conditional(
+            table().delete_item,
+            Key=key,
+            ConditionExpression="invite_id = :dead",
+            ExpressionAttributeValues={":dead": held["invite_id"]},
+        ):
+            return False
+
+    item = dict(invite)
+    item["PK"] = _room_pk(room_id)
+    item["SK"] = f"COHOST#{invite['invite_id']}"
+    item["entity"] = "cohost_invite"
+    table().put_item(Item=item)
     if not _conditional(
-        table().delete_item,
-        Key=key,
-        ConditionExpression="invite_id = :dead",
-        ExpressionAttributeValues={":dead": pointer["invite_id"]},
+        table().put_item,
+        Item={
+            "PK": key["PK"],
+            "SK": "META",
+            "entity": "cohost_pointer",
+            "room_id": room_id,
+            "invite_id": invite["invite_id"],
+        },
+        ConditionExpression="attribute_not_exists(PK)",
     ):
+        # A live invite claimed the name between our check and our write.
+        # Take the invite back out, so the refusal leaves nothing behind.
+        table().delete_item(Key={"PK": item["PK"], "SK": item["SK"]})
         return False
-    return _conditional(table().put_item, Item=item, ConditionExpression=exists)
+    return True
 
 
 def list_cohost_invites(room_id):
@@ -400,9 +428,18 @@ def revoke_cohost_invite(room_id, invite_id):
     invite = get_cohost_invite(room_id, invite_id)
     if not invite:
         return False
+    # The claim goes first: a revoke interrupted between its two deletes then
+    # leaves an invite the panel still lists and a name already free, and
+    # revoking again finishes it. The other order is what leaves a name held
+    # by a ghost after its invite is gone. The release is conditional on the
+    # pointer naming this invite, so one room's revoke cannot free another's.
+    _conditional(
+        table().delete_item,
+        Key={"PK": _cohost_name_pk(room_id, invite["name"]), "SK": "META"},
+        ConditionExpression="invite_id = :id",
+        ExpressionAttributeValues={":id": invite_id},
+    )
     table().delete_item(Key={"PK": _room_pk(room_id), "SK": f"COHOST#{invite_id}"})
-    # The name goes back into circulation with the invite that held it.
-    table().delete_item(Key={"PK": _cohost_name_pk(room_id, invite["name"]), "SK": "META"})
     return True
 
 

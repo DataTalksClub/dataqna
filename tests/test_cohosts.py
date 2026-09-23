@@ -96,6 +96,9 @@ def test_a_taken_link_name_is_refused(table):
     with pytest.raises(HttpError) as excinfo:
         invite_for(room, name="tonight")
     assert excinfo.value.status == 409
+    # The create is all-or-nothing: a refusal leaves no half-written invite.
+    response = call(["rooms", room["room_id"], "cohosts"], "GET", identity=owner())
+    assert [item["name"] for item in json.loads(response["body"])["items"]] == ["tonight"]
 
 
 def test_a_name_whose_invite_vanished_is_handed_out_again(table):
@@ -128,6 +131,18 @@ def test_the_same_name_is_free_in_another_session(table):
     second = make_room(slug="tuesday")
     invite_for(first, name="ivan")
     assert invite_for(second, name="ivan")["name"] == "ivan"
+
+
+def test_deleting_a_session_releases_its_link_names(table):
+    """Pointers are keyed outside the room partition on purpose, so the purge
+    has to reach them — a filed session's names are held by nobody afterwards."""
+    room = make_room(slug="fleeting")
+    invite_for(room, name="ivan")
+    call(["rooms", room["room_id"]], "DELETE", identity=owner(), query={"purge": "true"})
+    assert store.resolve_cohost_name(room["room_id"], "ivan") is None
+    assert table.get_item(
+        Key={"PK": f"COHOSTNAME#{room['room_id']}#ivan", "SK": "META"}
+    ).get("Item") is None
 
 
 def test_an_invite_from_another_session_does_not_open_this_one(table):
@@ -266,6 +281,11 @@ def test_revoking_an_invite_takes_effect_immediately(table):
     call(["rooms", room["room_id"], "cohosts", invite["invite_id"]], "DELETE", identity=owner())
     assert not identity.moderates(room)
     assert store.resolve_cohost_name(room["room_id"], invite["name"]) is None
+    # Not merely unresolvable: the pointer row itself is gone with the invite,
+    # or it would go on holding the name against every re-creation.
+    assert table.get_item(
+        Key={"PK": f"COHOSTNAME#{room['room_id']}#{invite['name']}", "SK": "META"}
+    ).get("Item") is None
     _, error = api.redeem_cohost(room, invite["name"], invite["passcode"])
     assert error
 
