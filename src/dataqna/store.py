@@ -358,9 +358,28 @@ def claim_cohost_name(name, room_id, invite_id):
         "room_id": room_id,
         "invite_id": invite_id,
     }
-    return _conditional(
-        table().put_item, Item=item, ConditionExpression="attribute_not_exists(PK)"
-    )
+    key = {"PK": item["PK"], "SK": "META"}
+    exists = "attribute_not_exists(PK)"
+    if _conditional(table().put_item, Item=item, ConditionExpression=exists):
+        return True
+    # The pointer is held — but it is a claim only while the invite it names
+    # still exists. Invite and pointer live in different partitions, so a
+    # deletion that reaches one and not the other leaves the name held by a
+    # ghost: redemption refuses it, the People panel does not list it, and the
+    # host cannot hand the name out again. Releasing the pointer conditionally
+    # on it still naming the dead invite, so a claim that just rewrote it is
+    # not dropped underneath anyone.
+    pointer = table().get_item(Key=key).get("Item")
+    if not pointer or get_cohost_invite(room_id, pointer.get("invite_id")):
+        return False
+    if not _conditional(
+        table().delete_item,
+        Key=key,
+        ConditionExpression="invite_id = :dead",
+        ExpressionAttributeValues={":dead": pointer["invite_id"]},
+    ):
+        return False
+    return _conditional(table().put_item, Item=item, ConditionExpression=exists)
 
 
 def list_cohost_invites(room_id):

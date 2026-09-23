@@ -98,6 +98,30 @@ def test_a_taken_link_name_is_refused(table):
     assert excinfo.value.status == 409
 
 
+def test_a_name_whose_invite_vanished_is_handed_out_again(table):
+    """Invite and pointer are separate items, so a deletion can reach one and
+    not the other — leaving a name that redeems nobody, lists nowhere, and
+    answers every re-creation with 'already taken'. That is where sma/ivan
+    ended up. A pointer naming a dead invite holds nothing: the claim heals."""
+    room = make_room()
+    dead = invite_for(room, name="ivan", passcode="gone-gone-gone42")
+    table.delete_item(Key={"PK": f"ROOM#{room['room_id']}",
+                          "SK": f"COHOST#{dead['invite_id']}"})
+
+    _, error = api.redeem_cohost(room, "ivan", "gone-gone-gone42")
+    assert error
+
+    fresh = invite_for(room, name="ivan")
+    assert fresh["name"] == "ivan"
+    assert fresh["passcode"] != "gone-gone-gone42"
+    found, error = api.redeem_cohost(room, "ivan", fresh["passcode"])
+    assert error is None
+    assert found["invite_id"] == fresh["invite_id"]
+
+    response = call(["rooms", room["room_id"], "cohosts"], "GET", identity=owner())
+    assert [item["name"] for item in json.loads(response["body"])["items"]] == ["ivan"]
+
+
 def test_the_same_name_is_free_in_another_session(table):
     """A name is part of its room's link, so it is only spoken for there."""
     first = make_room(slug="monday")
