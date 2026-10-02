@@ -223,3 +223,21 @@ against the spec.
   `579b01b` redefined the icon geometry to dataops' rendered form (24-grid
   paths at 20px, stroke 1.8), superseding the 16/1.5 geometry this review
   scored; migrating the app's glyphs to it is underway in this tree.
+
+## Round 3 — the icon-geometry migration (2026-10-02, `aed75d7`)
+
+dakit `71a39d3` retired the 16-box/stroke-1.5 set this review originally
+scored, so the console's glyphs moved to the family contract: every chrome,
+row, and panel icon redrawn on the 24 grid at 20px, stroke 1.8, from the
+canonical showcase paths (disclosure chevrons became chevron-down, flipped
+180° when a panel opens; the toolbar title left the menu-toggle button).
+
+An independent fresh-judge pass over 14 re-rendered surfaces
+(`tmp/family-judge-r3-icons/`, both themes, 1440 and 390) — **DQ-JUDGE-R3:
+PASS, no required fixes.** The first submission failed on evidence, not
+work: a stale preview server still served the pre-migration markup; after a
+server restart and re-shoot the judge pixel-verified the closed disclosure
+chevrons pointing down and one consistent round-cap family weight on every
+surface, with genuinely dark darks and no icon-bump layout regressions.
+Two optional mobile density notes recorded (admin API-keys table wrapping
+at 390px, console top-bar title ellipsis). Tests: 157 passed.
