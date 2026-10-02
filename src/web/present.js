@@ -413,7 +413,7 @@
     spot.setAttribute("aria-label", lit ? "Back to all questions" : "Spotlight the top question");
     spot.setAttribute("aria-pressed", lit ? "true" : "false");
     spot.disabled = !lit && !visible().length;
-    var dark = document.documentElement.classList.contains("theme-dark");
+    var dark = document.documentElement.getAttribute("data-theme") === "dark";
     $("tb-theme").innerHTML = (dark ? I.sun : I.moon) + "<span>" + (dark ? "Light" : "Dark") + "</span>";
     $("tb-theme").setAttribute("aria-label", dark ? "Switch to the light theme" : "Switch to the dark theme");
     var full = !!document.fullscreenElement;
@@ -541,18 +541,15 @@
      slides wash out in a lit room. Dark is an explicit choice, kept across
      sessions for the hosts who present from an OLED in a dim studio. */
   function applyTheme(theme) {
-    var root = document.documentElement;
-    root.classList.toggle("theme-dark", theme === "dark");
-    root.classList.toggle("theme-light", theme !== "dark");
-    /* dakit's token sheet keys its dark values off data-theme. */
-    root.setAttribute("data-theme", theme);
+    /* The pin is dakit's data-theme attribute. */
+    document.documentElement.setAttribute("data-theme", theme);
     var color = theme === "dark" ? "#0d1117" : "#ffffff";
     var metas = document.querySelectorAll('meta[name="theme-color"]');
     Array.prototype.forEach.call(metas, function (meta) { meta.setAttribute("content", color); });
   }
 
   function toggleTheme() {
-    var dark = !document.documentElement.classList.contains("theme-dark");
+    var dark = document.documentElement.getAttribute("data-theme") !== "dark";
     applyTheme(dark ? "dark" : "light");
     try { localStorage.setItem("dq_present_theme", dark ? "dark" : "light"); } catch (e) {}
     paintToolbar();

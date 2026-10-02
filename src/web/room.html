@@ -9,18 +9,16 @@
 <meta property="og:description" content="Ask and upvote questions — live.">
 <meta property="og:type" content="website">
 <meta name="theme-color" content="#244d78">
-<!-- The class means nothing until app.css arrives, and until then the UA
-     paints its own canvas. Light is the default, so this is what it says;
+<!-- The attribute means nothing until app.css arrives, and until then the
+     UA paints its own canvas. Light is the default, so this is what it says;
      the script below overrides it when dark is pinned. -->
 <style>:root { color-scheme: light; }</style>
 <script>
-/* Apply a pinned theme before first paint, so there is no flash. */
+/* Apply a pinned theme before first paint, so there is no flash. The pin is
+   dakit's data-theme attribute. */
 (function () {
   try {
     if (localStorage.getItem("dq_theme") !== "dark") return;
-    document.documentElement.classList.add("theme-dark");
-    /* dakit's token sheet keys its dark values off data-theme, so the
-       attribute rides along with the class. */
     document.documentElement.setAttribute("data-theme", "dark");
     document.documentElement.style.colorScheme = "dark";
     var metas = document.querySelectorAll('meta[name="theme-color"]');

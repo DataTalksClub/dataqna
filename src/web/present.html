@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en" class="theme-light">
+<html lang="en" data-theme="light">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -12,11 +12,8 @@
 (function () {
   try {
     if (localStorage.getItem("dq_present_theme") !== "dark") return;
-    var root = document.documentElement;
-    root.classList.remove("theme-light");
-    root.classList.add("theme-dark");
-    /* dakit's token sheet keys its dark values off data-theme. */
-    root.setAttribute("data-theme", "dark");
+    /* The pin is dakit's data-theme attribute. */
+    document.documentElement.setAttribute("data-theme", "dark");
     root.style.colorScheme = "dark";
     var metas = document.querySelectorAll('meta[name="theme-color"]');
     for (var i = 0; i < metas.length; i++) metas[i].setAttribute("content", "#0d1117");

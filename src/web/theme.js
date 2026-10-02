@@ -8,7 +8,8 @@
 
    Light is the default for everyone regardless of what their device prefers,
    so dark is the only thing that is ever stored. prefers-color-scheme is not
-   consulted anywhere.
+   consulted anywhere — a deliberate turn from dakit's README boot script,
+   which falls back to the OS preference; see docs/design-system.md §3.
 
    Presentation mode is deliberately not here. It pins light by default —
    a projector renders white as "screen off" — and stores that under its own
@@ -32,7 +33,7 @@
     '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';
 
   function effective() {
-    return root.classList.contains("theme-dark") ? "dark" : "light";
+    return root.getAttribute("data-theme") === "dark" ? "dark" : "light";
   }
 
   function paint() {
@@ -48,9 +49,8 @@
      its own — switching back to it clears the key instead of writing "light". */
   function toggle() {
     var next = effective() === "dark" ? "light" : "dark";
-    root.classList.toggle("theme-dark", next === "dark");
-    /* dakit's token sheet keys its dark values off data-theme, so the
-       attribute moves with the class. */
+    /* The pin is dakit's data-theme attribute; light is what the attribute's
+       absence — or an explicit "light" — means. */
     root.setAttribute("data-theme", next);
     root.style.colorScheme = next;
     try {
