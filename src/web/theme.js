@@ -24,13 +24,15 @@
   var DARK = root.getAttribute("data-theme-dark") || "#0d1117";
   var LIGHT = root.getAttribute("data-theme-light") || "#ffffff";
 
-  var SUN = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" ' +
-    'stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
-    '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 ' +
-    '1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>';
-  var MOON = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" ' +
-    'stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
-    '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';
+  /* The family icon language: 16x16, stroke 1.5, round caps, no fills — the
+     same drawing style as the dakit chevron and every nav glyph. */
+  var SUN = '<svg class="icon" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" ' +
+    'stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+    '<circle cx="8" cy="8" r="3.2"/><path d="M8 1.2v1.7M8 13.1v1.7M2.9 2.9l1.2 1.2M11.9 11.9l1.2 ' +
+    '1.2M1.2 8h1.7M13.1 8h1.7M2.9 13.1l1.2-1.2M11.9 4.1l1.2-1.2"/></svg>';
+  var MOON = '<svg class="icon" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" ' +
+    'stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+    '<path d="M13.2 9.6A5.5 5.5 0 116.4 2.8a4.3 4.3 0 006.8 6.8z"/></svg>';
 
   function effective() {
     return root.getAttribute("data-theme") === "dark" ? "dark" : "light";

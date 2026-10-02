@@ -23,141 +23,258 @@
   } catch (e) {}
 })();
 </script>
+<script>document.documentElement.classList.add("js");</script>
 <link rel="icon" href="{{FAVICON}}">
 <link rel="stylesheet" href="/assets/dakit-tokens.css">
 <link rel="stylesheet" href="/assets/app.css">
 </head>
 <body>
-<div class="wrap">
-  <div class="row" style="margin-bottom:16px">
-    <span class="grow"><a class="brand" href="/" title="DataQnA home"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 14l6-7 6 7"/></svg>DataQnA</a></span>
-    <span class="muted" id="who"></span>
-    <button type="button" data-theme-toggle class="icon-btn" aria-label="Switch to dark theme"></button>
-    <a class="btn ghost small" href="/auth/logout">Sign out</a>
-  </div>
-
-  <div id="view-list" hidden>
-    <div class="card stack">
-      <strong>New session</strong>
-      <input type="text" id="new-title" placeholder="Session title" aria-label="Session title">
-      <div class="row wrapping">
-        <input type="text" id="new-slug" class="grow" placeholder="custom-link (optional)" aria-label="Slug">
-        <select id="new-state" aria-label="Initial state">
-          <option value="open">Open now</option>
-          <option value="draft">Draft</option>
-        </select>
-        <select id="new-expiry" aria-label="Closes after">
-          <option value="">never closes</option>
-          <option value="1">closes in 1 hour</option>
-          <option value="2">closes in 2 hours</option>
-          <option value="4">closes in 4 hours</option>
-          <option value="24">closes in 1 day</option>
-          <option value="2880">closes in 4 months</option>
-        </select>
-        <button id="create">Create</button>
+<div class="app-shell has-sidebar" data-sidebar-shell>
+  <aside class="app-sidebar" data-sidebar id="console-sidebar" aria-label="Console navigation">
+    <div class="sidebar-head">
+      <a class="brand" href="/" title="DataQnA home">
+        <span class="brand-mark" aria-hidden="true">Q</span>
+        <span class="brand-text">DataQnA</span>
+      </a>
+      <button class="icon-button sidebar-toggle" type="button" data-sidebar-toggle aria-expanded="true" aria-controls="console-sidebar" aria-label="Collapse navigation">
+        <svg class="icon sidebar-toggle-open" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 4l-4 4 4 4"/></svg>
+        <svg class="icon sidebar-toggle-closed" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 4l4 4-4 4"/></svg>
+      </button>
+    </div>
+    <nav class="sidebar-nav" aria-label="Console">
+      <div class="sidebar-nav-group">
+        <span class="sidebar-nav-label">Run</span>
+        <a href="/live" title="Live sessions">
+          <svg class="icon" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="8" r="1.8"/><path d="M4.9 11.1a4.4 4.4 0 010-6.2"/><path d="M11.1 4.9a4.4 4.4 0 010 6.2"/><path d="M2.7 13.3a7.5 7.5 0 010-10.6"/><path d="M13.3 2.7a7.5 7.5 0 010 10.6"/></svg>
+          <span>Live Q&amp;A</span>
+        </a>
+        <a href="/admin" aria-current="page" title="Sessions">
+          <svg class="icon" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5.5 2.5H3a1 1 0 00-1 1v9a1 1 0 001 1h10a1 1 0 001-1v-9a1 1 0 00-1-1h-2.5"/><rect x="5.5" y="1.5" width="5" height="3" rx="1"/><path d="M5 8h6M5 11h4"/></svg>
+          <span>Sessions</span>
+        </a>
       </div>
-    </div>
-
-    <h2 style="font-size:1.05rem">Your sessions</h2>
-    <div id="rooms"></div>
-
-    <div class="card stack">
-      <strong>API keys</strong>
-      <p class="muted" style="margin:0">Shown once, at creation.</p>
-      <div class="row wrapping">
-        <input type="text" id="key-name" class="grow" placeholder="Key name" aria-label="Key name">
-        <button id="create-key" class="ghost">Create key</button>
-      </div>
-      <div id="key-reveal" hidden></div>
-      <p class="table-empty" id="keys-empty" hidden>No keys yet.</p>
-      <table id="keys" hidden></table>
-    </div>
-  </div>
-
-  <div id="view-room" hidden>
-    <div class="room-head">
-      <a href="/admin" class="back-link">&larr; All sessions</a>
-      <h1 id="room-title"></h1>
-      <div class="muted room-sub" id="room-sub"></div>
-      <div class="row wrapping room-tools">
-        <a id="present" class="btn" href="#" target="_blank" rel="noopener">Presentation mode</a>
-        <button id="copy-link" class="ghost">Copy link</button>
-      </div>
-    </div>
-
-    <div class="banner" id="cohost-notice" hidden>
-      You're running this session with an invite. Only the owner can add people.
-    </div>
-
-    <div class="banner" id="archived-notice" hidden>
-      This session is archived — its link is closed, the questions below are
-      frozen as they ended, and it is deleted in seven days unless reopened.
-    </div>
-    <div class="row wrapping" id="archived-tools" hidden>
-      <button type="button" id="reopen" class="btn">Reopen session</button>
-      <span class="muted">Back as it was, taking questions again — and the deletion is cancelled.</span>
-    </div>
-
-    <div class="tabs">
-      <button type="button" id="f-all" aria-pressed="true">All</button>
-      <button type="button" id="f-unanswered" aria-pressed="false">Unanswered</button>
-      <button type="button" id="f-answered" aria-pressed="false">Answered</button>
-    </div>
-    <ul class="questions" id="qlist"></ul>
-    <div class="empty" id="qempty" hidden>
-      <h2 id="qempty-title">No questions yet</h2>
-      <p id="qempty-body">Share the link below — questions appear the moment they are asked.</p>
-    </div>
-
-    <div class="group-heading setup-heading">Setup</div>
-    <details class="card" id="share-card">
-      <summary>Share <span class="summary-hint">public link and QR code</span></summary>
-      <div class="details-body share">
-        <div class="qr" id="qr"></div>
-        <div class="stack grow">
-          <a id="public-link" href="#" class="share-url" target="_blank" rel="noopener"></a>
+    </nav>
+  </aside>
+  <div class="sidebar-scrim" data-sidebar-scrim hidden></div>
+  <div class="app-column">
+    <header class="app-toolbar">
+      <button class="icon-button sidebar-menu-toggle" type="button" data-sidebar-menu-toggle aria-expanded="false" aria-controls="console-sidebar" aria-label="Open navigation">
+        <svg class="icon" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><path d="M2.5 4.5h11M2.5 8h11M2.5 11.5h11"/></svg>
+        <span>Menu</span>
+      </button>
+      <nav class="toolbar-nav" aria-label="Account">
+        <span class="muted toolbar-who" id="who"></span>
+        <button type="button" data-theme-toggle class="icon-button" aria-label="Switch to dark theme"></button>
+        <a class="toolbar-link" href="/auth/logout">
+          <svg class="icon" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 2.5H3.5a1 1 0 00-1 1v9a1 1 0 001 1H6"/><path d="M10 5l3 3-3 3"/><path d="M13 8H6"/></svg>
+          <span>Sign out</span>
+        </a>
+      </nav>
+    </header>
+    <main class="app-main">
+      <div id="view-list" hidden>
+        <div class="card stack">
+          <strong>New session</strong>
+          <input type="text" id="new-title" placeholder="Session title" aria-label="Session title">
           <div class="row wrapping">
-            <a id="qr-png" class="btn ghost small" href="#" target="_blank" rel="noopener">QR PNG</a>
-            <a id="qr-svg" class="btn ghost small" href="#" target="_blank" rel="noopener">QR SVG</a>
+            <input type="text" id="new-slug" class="grow" placeholder="custom-link (optional)" aria-label="Slug">
+            <select id="new-state" aria-label="Initial state">
+              <option value="open">Open now</option>
+              <option value="draft">Draft</option>
+            </select>
+            <select id="new-expiry" aria-label="Closes after">
+              <option value="">never closes</option>
+              <option value="1">closes in 1 hour</option>
+              <option value="2">closes in 2 hours</option>
+              <option value="4">closes in 4 hours</option>
+              <option value="24">closes in 1 day</option>
+              <option value="2880">closes in 4 months</option>
+            </select>
+            <button id="create">Create</button>
           </div>
         </div>
-      </div>
-    </details>
-    <details class="card" id="settings-card">
-      <summary>Settings <span class="summary-hint">state and visibility</span></summary>
-      <div class="details-body stack">
-        <div class="row wrapping">
-          <select id="state" aria-label="Session state">
-            <option value="draft">Draft</option>
-            <option value="open">Open</option>
-            <option value="closed">Closed</option>
-          </select>
-          <label class="row check"><input type="checkbox" id="listed"> <span>Show on the front page</span></label>
-        </div>
-        <div class="row wrapping">
-          <button type="button" id="archive" class="ghost small">Archive session</button>
-          <span class="muted">The link closes and the session is deleted in seven days — reopening cancels that.</span>
+
+        <h2 style="font-size:1.05rem">Your sessions</h2>
+        <div id="rooms"></div>
+
+        <div class="card stack">
+          <strong>API keys</strong>
+          <p class="muted" style="margin:0">Shown once, at creation.</p>
+          <div class="row wrapping">
+            <input type="text" id="key-name" class="grow" placeholder="Key name" aria-label="Key name">
+            <button id="create-key" class="ghost">Create key</button>
+          </div>
+          <div id="key-reveal" hidden></div>
+          <p class="table-empty" id="keys-empty" hidden>No keys yet.</p>
+          <table id="keys" hidden></table>
         </div>
       </div>
-    </details>
-    <details class="card" id="cohost-card">
-      <summary>People <span class="summary-hint">co-host invites</span></summary>
-      <div class="details-body stack">
-        <p class="muted" id="room-owner" style="margin:0"></p>
-        <p class="muted" style="margin:0">Send both the link and the passcode. An invite lasts as long as the session.</p>
-        <div class="row wrapping">
-          <input type="text" id="cohost-name" class="grow" placeholder="Name (optional)" aria-label="Name">
-          <input type="text" id="cohost-passcode" class="grow mono" placeholder="Passcode (optional)" aria-label="Passcode">
-          <button id="create-cohost" class="ghost">Create invite</button>
+
+      <div id="view-room" hidden>
+        <div class="room-head">
+          <a href="/admin" class="back-link">&larr; All sessions</a>
+          <h1 id="room-title"></h1>
+          <div class="muted room-sub" id="room-sub"></div>
+          <div class="row wrapping room-tools">
+            <a id="present" class="btn" href="#" target="_blank" rel="noopener">Presentation mode</a>
+            <button id="copy-link" class="ghost">Copy link</button>
+          </div>
         </div>
-        <p class="table-empty" id="cohosts-empty" hidden>No invites yet.</p>
-        <table id="cohosts" hidden></table>
+
+        <div class="banner" id="cohost-notice" hidden>
+          You're running this session with an invite. Only the owner can add people.
+        </div>
+
+        <div class="banner" id="archived-notice" hidden>
+          This session is archived — its link is closed, the questions below are
+          frozen as they ended, and it is deleted in seven days unless reopened.
+        </div>
+        <div class="row wrapping" id="archived-tools" hidden>
+          <button type="button" id="reopen" class="btn">Reopen session</button>
+          <span class="muted">Back as it was, taking questions again — and the deletion is cancelled.</span>
+        </div>
+
+        <div class="tabs">
+          <button type="button" id="f-all" aria-pressed="true">All</button>
+          <button type="button" id="f-unanswered" aria-pressed="false">Unanswered</button>
+          <button type="button" id="f-answered" aria-pressed="false">Answered</button>
+        </div>
+        <ul class="questions" id="qlist"></ul>
+        <div class="empty" id="qempty" hidden>
+          <h2 id="qempty-title">No questions yet</h2>
+          <p id="qempty-body">Share the link below — questions appear the moment they are asked.</p>
+        </div>
+
+        <div class="group-heading setup-heading">Setup</div>
+        <details class="card" id="share-card">
+          <summary>Share <span class="summary-hint">public link and QR code</span></summary>
+          <div class="details-body share">
+            <div class="qr" id="qr"></div>
+            <div class="stack grow">
+              <a id="public-link" href="#" class="share-url" target="_blank" rel="noopener"></a>
+              <div class="row wrapping">
+                <a id="qr-png" class="btn ghost small" href="#" target="_blank" rel="noopener">QR PNG</a>
+                <a id="qr-svg" class="btn ghost small" href="#" target="_blank" rel="noopener">QR SVG</a>
+              </div>
+            </div>
+          </div>
+        </details>
+        <details class="card" id="settings-card">
+          <summary>Settings <span class="summary-hint">state and visibility</span></summary>
+          <div class="details-body stack">
+            <div class="row wrapping">
+              <select id="state" aria-label="Session state">
+                <option value="draft">Draft</option>
+                <option value="open">Open</option>
+                <option value="closed">Closed</option>
+              </select>
+              <label class="row check"><input type="checkbox" id="listed"> <span>Show on the front page</span></label>
+            </div>
+            <div class="row wrapping">
+              <button type="button" id="archive" class="ghost small">Archive session</button>
+              <span class="muted">The link closes and the session is deleted in seven days — reopening cancels that.</span>
+            </div>
+          </div>
+        </details>
+        <details class="card" id="cohost-card">
+          <summary>People <span class="summary-hint">co-host invites</span></summary>
+          <div class="details-body stack">
+            <p class="muted" id="room-owner" style="margin:0"></p>
+            <p class="muted" style="margin:0">Send both the link and the passcode. An invite lasts as long as the session.</p>
+            <div class="row wrapping">
+              <input type="text" id="cohost-name" class="grow" placeholder="Name (optional)" aria-label="Name">
+              <input type="text" id="cohost-passcode" class="grow mono" placeholder="Passcode (optional)" aria-label="Passcode">
+              <button id="create-cohost" class="ghost">Create invite</button>
+            </div>
+            <p class="table-empty" id="cohosts-empty" hidden>No invites yet.</p>
+            <table id="cohosts" hidden></table>
+          </div>
+        </details>
       </div>
-    </details>
+    </main>
   </div>
 </div>
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
+<script>
+/* The family shell behavior: on the desktop the sidebar collapses to an icon
+   rail (the preference persists); on a phone it opens as a modal drawer with
+   a scrim, Escape, and focus restoration. */
+(function () {
+  "use strict";
+  var shell = document.querySelector("[data-sidebar-shell]");
+  var sidebar = shell.querySelector("[data-sidebar]");
+  var toggle = shell.querySelector("[data-sidebar-toggle]");
+  var menuToggle = shell.querySelector("[data-sidebar-menu-toggle]");
+  var scrim = shell.querySelector("[data-sidebar-scrim]");
+  var key = "dq.sidebar.collapsed";
+  var mobile = window.matchMedia("(max-width: 820px)");
+  var lastFocus = null;
+
+  /* Desktop collapse: icon rail, restore control stays visible. */
+  if (toggle) {
+    var storedPreference = function () {
+      try { return localStorage.getItem(key); } catch (e) { return null; }
+    };
+    var setCollapsed = function (collapsed, persist) {
+      shell.classList.toggle("sidebar-collapsed", collapsed);
+      toggle.setAttribute("aria-expanded", String(!collapsed));
+      toggle.setAttribute("aria-label", collapsed ? "Expand navigation" : "Collapse navigation");
+      if (persist !== false) {
+        try { localStorage.setItem(key, collapsed ? "1" : "0"); } catch (e) {}
+      }
+    };
+    setCollapsed(storedPreference() === "1", false);
+    toggle.addEventListener("click", function () {
+      setCollapsed(!shell.classList.contains("sidebar-collapsed"));
+    });
+  }
+
+  /* Mobile drawer. */
+  function setDrawer(open) {
+    shell.classList.toggle("sidebar-open", open);
+    if (scrim) scrim.hidden = !open;
+    if (menuToggle) {
+      menuToggle.setAttribute("aria-expanded", String(open));
+      menuToggle.setAttribute("aria-label", open ? "Close navigation" : "Open navigation");
+    }
+    if (open) {
+      lastFocus = document.activeElement;
+      var first = sidebar.querySelector("a, button");
+      if (first) first.focus();
+    } else if (lastFocus && lastFocus.focus) {
+      lastFocus.focus();
+    }
+  }
+  if (menuToggle) {
+    menuToggle.addEventListener("click", function () {
+      setDrawer(!shell.classList.contains("sidebar-open"));
+    });
+  }
+  if (scrim) scrim.addEventListener("click", function () { setDrawer(false); });
+  document.addEventListener("keydown", function (event) {
+    if (event.key === "Escape" && shell.classList.contains("sidebar-open")) setDrawer(false);
+    /* A modal drawer keeps focus: cycle Tab inside the sidebar while open. */
+    if (event.key === "Tab" && shell.classList.contains("sidebar-open")) {
+      var focusable = sidebar.querySelectorAll("a[href], button:not([disabled])");
+      if (!focusable.length) return;
+      var first = focusable[0];
+      var last = focusable[focusable.length - 1];
+      if (event.shiftKey && document.activeElement === first) { last.focus(); event.preventDefault(); }
+      else if (!event.shiftKey && document.activeElement === last) { first.focus(); event.preventDefault(); }
+    }
+  });
+  if (mobile.addEventListener) {
+    mobile.addEventListener("change", function (event) {
+      if (!event.matches) setDrawer(false);
+    });
+  }
+  /* Choosing a destination closes the drawer, the way a menu dismisses. */
+  sidebar.addEventListener("click", function (event) {
+    if (event.target.closest("a") && shell.classList.contains("sidebar-open")) setDrawer(false);
+  });
+})();
+</script>
 <script src="/assets/qna.js"></script>
 <script src="/assets/theme.js" defer></script>
 <script src="/assets/admin.js"></script>

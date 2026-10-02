@@ -110,6 +110,10 @@
      dark mapping, where the plate is the hero band. */
   --qr-ink: var(--dk-text-primary);
   --qr-paper: transparent;
+
+  /* The drawer's scrim over the page. Lives in the token block because the
+     layer rule forbids raw color below it. */
+  --scrim-bg: rgba(15, 23, 42, .45);
 }
 
 /* Dark: dakit remaps every --dk-* role under :root[data-theme="dark"], so
@@ -126,6 +130,7 @@
   --toast-line: rgba(255, 255, 255, .16);
   --qr-ink: var(--dk-text-on-deep);
   --qr-paper: var(--hero-bg);
+  --scrim-bg: rgba(1, 4, 9, .6);
 }
 
 /* ---------------------------------------------------------------- base */
@@ -162,6 +167,293 @@ svg { flex: 0 0 auto; }
 .row.wrapping > .grow { min-width: 160px; }
 .right { margin-left: auto; }
 .stack > * + * { margin-top: var(--dk-space-3); }
+
+/* ------------------------------------------------- console shell
+
+   The family shell from dakit's spec: a persistent 268px sidebar on the
+   muted surface carrying the product mark and icon-plus-text nav rows, and
+   a canvas with a slim toolbar for global actions. The geometry is the
+   dataops console's — the family one shell, so the tools read as siblings.
+
+   Console controls sit on dakit's desktop control scale (34px, 13px text,
+   radius-md), not the room's touch-first one; the :where keeps this scope
+   from out-specifying the component rules below it, so .icon-btn stays a
+   44px touch target and .tabs keep their pill. */
+
+.app-shell {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  min-height: 100vh;
+  background: var(--dk-bg-page);
+  font-size: var(--dk-text-body);
+}
+
+.app-shell :where(button, .btn) {
+  min-height: var(--dk-size-control-md);
+  padding: 0 var(--dk-space-4);
+  font-size: var(--dk-text-md);
+  border-radius: var(--dk-radius-md);
+}
+.app-shell :where(button.small, .btn.small) {
+  min-height: var(--dk-size-control-sm);
+  padding: 0 var(--dk-space-3);
+  font-size: var(--dk-text-sm);
+}
+.app-shell :where(input[type=text], select) {
+  min-height: var(--dk-size-control-md);
+  padding: var(--dk-space-2) var(--dk-space-3);
+  font-size: var(--dk-text-md);
+  border-radius: var(--dk-radius-md);
+}
+.app-shell .tabs button {
+  min-height: var(--dk-size-control-sm);
+  padding: var(--dk-space-1) var(--dk-space-3);
+}
+
+/* Quiet chrome button — 28px, no border until hover. Chrome, not touch:
+   the 44px .icon-btn stays for controls that sit in the flow of work. */
+.icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--dk-space-2);
+  width: auto;
+  min-width: 28px;
+  min-height: 28px;
+  height: 28px;
+  padding: 0 var(--dk-space-2);
+  border: 1px solid transparent;
+  border-radius: var(--dk-radius-md);
+  background: transparent;
+  color: var(--dk-text-muted);
+  font-size: var(--dk-text-md);
+  cursor: pointer;
+  text-decoration: none;
+}
+.icon-button:hover {
+  color: var(--dk-text-primary);
+  border-color: var(--dk-border-default);
+  background: var(--dk-bg-hover);
+  text-decoration: none;
+}
+
+.app-shell.has-sidebar {
+  grid-template-columns: var(--dk-size-sidebar) minmax(0, 1fr);
+}
+
+.app-shell.has-sidebar.sidebar-collapsed {
+  grid-template-columns: 56px minmax(0, 1fr);
+}
+
+.app-sidebar {
+  position: sticky;
+  top: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--dk-space-4);
+  height: 100vh;
+  padding: var(--dk-space-3);
+  overflow-y: auto;
+  border-right: 1px solid var(--dk-border-default);
+  background: var(--dk-bg-muted);
+}
+
+.sidebar-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--dk-space-1);
+  min-height: 32px;
+}
+
+.sidebar-head .brand { min-height: 0; }
+
+/* The family's brand mark: the product initial on an accent chip, like the
+   sibling tools' consoles. */
+.brand-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--dk-radius-md);
+  background: var(--dk-accent-default);
+  color: var(--dk-text-on-accent);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.brand-text {
+  overflow: hidden;
+  font-size: var(--dk-text-md);
+  font-weight: 600;
+  letter-spacing: var(--tracking-snug);
+  white-space: nowrap;
+}
+
+/* The drawer open control lives in the toolbar on phones. */
+.sidebar-menu-toggle { display: none; }
+
+.sidebar-nav {
+  display: grid;
+  gap: var(--dk-space-5);
+  align-content: start;
+  flex: 1;
+}
+
+.sidebar-nav-group { display: grid; gap: 2px; }
+
+.sidebar-nav-label {
+  margin: 18px 10px 5px;
+  color: var(--dk-text-muted);
+  font-size: var(--dk-text-xs);
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+/* Family nav row: 36px icon+text, radius-md, medium weight; the filled row
+   is the whole selection signal — no rail, no stripe. */
+.sidebar-nav a {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 36px;
+  padding: 6px 10px;
+  border-radius: var(--dk-radius-md);
+  color: var(--dk-text-primary);
+  font-size: var(--dk-text-body);
+  font-weight: 500;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.sidebar-nav a .icon { color: var(--dk-text-muted); }
+.sidebar-nav a span { overflow: hidden; text-overflow: ellipsis; }
+.sidebar-nav a:hover { background: var(--dk-bg-hover); text-decoration: none; }
+
+.sidebar-nav a[aria-current="page"] {
+  background: var(--dk-accent-soft);
+  color: var(--dk-accent-default);
+  font-weight: 600;
+}
+
+.sidebar-nav a[aria-current="page"] .icon { color: var(--dk-accent-default); }
+
+/* Collapsed rail: icon-only rows, the restore control stays visible. */
+.sidebar-collapsed .app-sidebar { padding: var(--dk-space-2); }
+.sidebar-collapsed .sidebar-head { justify-content: center; }
+.sidebar-collapsed .brand-text,
+.sidebar-collapsed .sidebar-nav-label,
+.sidebar-collapsed .sidebar-nav a span { display: none; }
+.sidebar-collapsed .sidebar-nav a { justify-content: center; padding: 0; }
+
+.sidebar-toggle-closed { display: none; }
+.sidebar-collapsed .sidebar-toggle-open { display: none; }
+.sidebar-collapsed .sidebar-toggle-closed { display: block; }
+
+.sidebar-scrim { display: none; }
+
+/* --- canvas toolbar -------------------------------------------------------
+   Global actions above the canvas only, right-aligned like the sibling
+   consoles. The toolbar is quiet: links and icon buttons, no fills. */
+
+.app-toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  min-height: 48px;
+  padding: 0 var(--dk-space-6);
+  border-bottom: 1px solid var(--dk-border-default);
+  background: var(--dk-bg-page);
+}
+
+.toolbar-nav {
+  display: flex;
+  align-items: center;
+  gap: var(--dk-space-1);
+}
+
+.toolbar-who {
+  padding-right: var(--dk-space-2);
+  font-size: var(--dk-text-sm);
+}
+
+.toolbar-link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--dk-space-2);
+  height: 32px;
+  padding: 0 var(--dk-space-3);
+  border-radius: var(--dk-radius-md);
+  color: var(--dk-text-muted);
+  font-size: var(--dk-text-md);
+  font-weight: 500;
+}
+.toolbar-link:hover {
+  color: var(--dk-text-primary);
+  background: var(--dk-bg-hover);
+  text-decoration: none;
+}
+
+.app-main {
+  width: 100%;
+  max-width: var(--dk-size-content-max);
+  margin: 0 auto;
+  padding: var(--dk-space-7) var(--dk-space-6) 64px;
+}
+
+@media (max-width: 820px) {
+  /* One pane at a time: the canvas takes the width, the nav becomes a
+     modal drawer with a scrim. Without JS the sidebar simply stacks. */
+  .app-shell,
+  .app-shell.has-sidebar,
+  .app-shell.has-sidebar.sidebar-collapsed {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .app-toolbar {
+    justify-content: space-between;
+    min-height: 64px;
+    padding: 0 var(--dk-space-4);
+  }
+
+  .sidebar-menu-toggle { display: inline-flex; }
+  .toolbar-who { display: none; }
+
+  html.js .app-sidebar {
+    position: fixed;
+    inset: 0 auto 0 0;
+    z-index: 30;
+    width: min(300px, 84vw);
+    transform: translateX(-102%);
+  }
+  html.js .app-shell.sidebar-open .app-sidebar { transform: none; }
+  html.js .sidebar-scrim {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 25;
+    background: var(--scrim-bg);
+  }
+
+  /* The room's touch scale is for hands, not pointers — the console keeps
+     it on a phone, where the pointer is a finger again. */
+  .app-shell :where(button:not(.icon-button):not(.icon-btn), .btn:not(.icon-btn)) {
+    min-height: var(--dk-size-touch);
+  }
+  .app-shell :where(input[type=text], select) { min-height: var(--dk-size-touch); }
+  .app-shell .tabs button { min-height: var(--dk-size-touch); padding: var(--dk-space-2) var(--dk-space-4); }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  html.js .app-sidebar { transition: transform var(--duration-3) var(--ease-out); }
+}
+
 
 /* --------------------------------------------------------------- type */
 
