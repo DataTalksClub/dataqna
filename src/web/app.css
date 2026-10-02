@@ -123,7 +123,9 @@ body {
   -webkit-text-size-adjust: 100%;
 }
 
-a { color: var(--dk-accent-default); }
+/* Links take the family link role, not the bare accent (same value
+   today, but the role is what dataops names and what the theme remaps). */
+a { color: var(--dk-text-link); }
 
 /* The family's keyboard indicator (dakit docs/family.md, dataops
    styles.css): always visible, 3px of the translucent --dk-focus-ring, so
