@@ -73,51 +73,88 @@
     </header>
     <main class="app-main">
       <div id="view-list" hidden>
-        <div class="card stack">
-          <strong>New session</strong>
-          <input type="text" id="new-title" placeholder="Session title" aria-label="Session title">
-          <div class="row wrapping">
-            <input type="text" id="new-slug" class="grow" placeholder="custom-link (optional)" aria-label="Slug">
-            <select id="new-state" aria-label="Initial state">
-              <option value="open">Open now</option>
-              <option value="draft">Draft</option>
-            </select>
-            <select id="new-expiry" aria-label="Closes after">
-              <option value="">never closes</option>
-              <option value="1">closes in 1 hour</option>
-              <option value="2">closes in 2 hours</option>
-              <option value="4">closes in 4 hours</option>
-              <option value="24">closes in 1 day</option>
-              <option value="2880">closes in 4 months</option>
-            </select>
-            <button id="create">Create</button>
+        <header class="page-head">
+          <div>
+            <h1>Sessions</h1>
+            <p class="page-desc">Live Q&amp;A rooms you run, and the keys other tools use to create them.</p>
           </div>
-        </div>
+        </header>
 
-        <h2 style="font-size:1.05rem">Your sessions</h2>
+        <section class="panel">
+          <div class="panel-header"><h2>New session</h2></div>
+          <div class="panel-body stack">
+            <div class="field">
+              <label class="field-label" for="new-title">Title</label>
+              <input type="text" id="new-title" placeholder="Session title" aria-label="Session title">
+            </div>
+            <div class="field-grid">
+              <div class="field">
+                <label class="field-label" for="new-slug">Custom link</label>
+                <input type="text" id="new-slug" placeholder="custom-link (optional)" aria-label="Slug">
+              </div>
+              <div class="field">
+                <label class="field-label" for="new-state">Initial state</label>
+                <select id="new-state" aria-label="Initial state">
+                  <option value="open">Open now</option>
+                  <option value="draft">Draft</option>
+                </select>
+              </div>
+              <div class="field">
+                <label class="field-label" for="new-expiry">Closes after</label>
+                <select id="new-expiry" aria-label="Closes after">
+                  <option value="">never closes</option>
+                  <option value="1">closes in 1 hour</option>
+                  <option value="2">closes in 2 hours</option>
+                  <option value="4">closes in 4 hours</option>
+                  <option value="24">closes in 1 day</option>
+                  <option value="2880">closes in 4 months</option>
+                </select>
+              </div>
+            </div>
+          </div>
+          <div class="panel-footer">
+            <span class="muted">Participants join through the session link or its QR code.</span>
+            <button id="create">Create session</button>
+          </div>
+        </section>
+
         <div id="rooms"></div>
 
-        <div class="card stack">
-          <strong>API keys</strong>
-          <p class="muted" style="margin:0">Shown once, at creation.</p>
-          <div class="row wrapping">
-            <input type="text" id="key-name" class="grow" placeholder="Key name" aria-label="Key name">
-            <button id="create-key" class="ghost">Create key</button>
+        <section class="panel">
+          <div class="panel-header">
+            <h2>API keys</h2>
+            <span class="muted panel-hint">Shown once, at creation.</span>
           </div>
-          <div id="key-reveal" hidden></div>
-          <p class="table-empty" id="keys-empty" hidden>No keys yet.</p>
-          <table id="keys" hidden></table>
-        </div>
+          <div class="panel-body stack">
+            <div class="row wrapping">
+              <input type="text" id="key-name" class="grow" placeholder="Key name" aria-label="Key name">
+              <button id="create-key" class="ghost">Create key</button>
+            </div>
+            <div id="key-reveal" hidden></div>
+            <p class="table-empty" id="keys-empty" hidden>No keys yet.</p>
+            <div class="table-wrap"><table id="keys" hidden></table></div>
+          </div>
+        </section>
       </div>
 
       <div id="view-room" hidden>
         <div class="room-head">
           <a href="/admin" class="back-link">&larr; All sessions</a>
-          <h1 id="room-title"></h1>
-          <div class="muted room-sub" id="room-sub"></div>
-          <div class="row wrapping room-tools">
-            <a id="present" class="btn" href="#" target="_blank" rel="noopener">Presentation mode</a>
-            <button id="copy-link" class="ghost">Copy link</button>
+          <div class="page-head">
+            <div>
+              <h1 id="room-title"></h1>
+              <p class="page-desc" id="room-sub"></p>
+            </div>
+            <div class="page-actions">
+              <a id="present" class="btn" href="#" target="_blank" rel="noopener">Presentation mode</a>
+              <button id="copy-link" class="ghost">Copy link</button>
+            </div>
+          </div>
+          <div class="stats-strip">
+            <div class="stat"><span class="stat-label">Questions</span><span class="stat-value" id="stat-questions">–</span></div>
+            <div class="stat"><span class="stat-label">Answered</span><span class="stat-value" id="stat-answered">–</span></div>
+            <div class="stat"><span class="stat-label">State</span><span class="stat-value" id="stat-state">–</span></div>
+            <div class="stat"><span class="stat-label">Closes</span><span class="stat-value" id="stat-closes">–</span></div>
           </div>
         </div>
 
@@ -130,23 +167,27 @@
           frozen as they ended, and it is deleted in seven days unless reopened.
         </div>
         <div class="row wrapping" id="archived-tools" hidden>
-          <button type="button" id="reopen" class="btn">Reopen session</button>
+          <button type="button" id="reopen" class="btn ghost">Reopen session</button>
           <span class="muted">Back as it was, taking questions again — and the deletion is cancelled.</span>
         </div>
 
-        <div class="tabs">
-          <button type="button" id="f-all" aria-pressed="true">All</button>
-          <button type="button" id="f-unanswered" aria-pressed="false">Unanswered</button>
-          <button type="button" id="f-answered" aria-pressed="false">Answered</button>
-        </div>
-        <ul class="questions" id="qlist"></ul>
-        <div class="empty" id="qempty" hidden>
-          <h2 id="qempty-title">No questions yet</h2>
-          <p id="qempty-body">Share the link below — questions appear the moment they are asked.</p>
-        </div>
+        <section class="panel queue-panel">
+          <div class="panel-header">
+            <h2>Questions</h2>
+            <div class="tabs" role="group" aria-label="Filter questions">
+              <button type="button" id="f-all" aria-pressed="true">All</button>
+              <button type="button" id="f-unanswered" aria-pressed="false">Unanswered</button>
+              <button type="button" id="f-answered" aria-pressed="false">Answered</button>
+            </div>
+          </div>
+          <ul class="questions" id="qlist"></ul>
+          <div class="empty" id="qempty" hidden>
+            <h2 id="qempty-title">No questions yet</h2>
+            <p id="qempty-body">Share the link below — questions appear the moment they are asked.</p>
+          </div>
+        </section>
 
-        <div class="group-heading setup-heading">Setup</div>
-        <details class="card" id="share-card">
+        <details class="panel" id="share-card">
           <summary>Share <span class="summary-hint">public link and QR code</span></summary>
           <div class="details-body share">
             <div class="qr" id="qr"></div>
@@ -159,7 +200,7 @@
             </div>
           </div>
         </details>
-        <details class="card" id="settings-card">
+        <details class="panel" id="settings-card">
           <summary>Settings <span class="summary-hint">state and visibility</span></summary>
           <div class="details-body stack">
             <div class="row wrapping">
@@ -176,7 +217,7 @@
             </div>
           </div>
         </details>
-        <details class="card" id="cohost-card">
+        <details class="panel" id="cohost-card">
           <summary>People <span class="summary-hint">co-host invites</span></summary>
           <div class="details-body stack">
             <p class="muted" id="room-owner" style="margin:0"></p>
@@ -187,7 +228,7 @@
               <button id="create-cohost" class="ghost">Create invite</button>
             </div>
             <p class="table-empty" id="cohosts-empty" hidden>No invites yet.</p>
-            <table id="cohosts" hidden></table>
+            <div class="table-wrap"><table id="cohosts" hidden></table></div>
           </div>
         </details>
       </div>

@@ -78,6 +78,19 @@
   /* ---- room list ---- */
 
   var GROUPS = [["open", "Open"], ["draft", "Draft"], ["closed", "Closed"], ["archived", "Archived"]];
+  /* Session states speak in the family's status badges: open is live
+     (success), archived carries its pending deletion (danger); draft and
+     closed are ordinary stops, so they stay neutral. */
+  var STATE_TAGS = {
+    open: ["open", "Open"],
+    draft: ["", "Draft"],
+    closed: ["", "Closed"],
+    archived: ["archived", "Archived"]
+  };
+
+  var CHEVRON_RIGHT = '<svg class="icon row-chev" width="16" height="16" viewBox="0 0 16 16" fill="none" ' +
+    'stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+    '<path d="M6 3l5 5-5 5"/></svg>';
 
   function renderRooms(items) {
     var host = $("rooms");
@@ -89,31 +102,42 @@
     GROUPS.forEach(function (group) {
       var inGroup = items.filter(function (room) { return room.state === group[0]; });
       if (!inGroup.length) return;
-      var heading = document.createElement("div");
-      heading.className = "group-heading";
-      heading.textContent = group[1] + " · " + inGroup.length;
-      host.appendChild(heading);
+
+      var panel = document.createElement("section");
+      panel.className = "panel";
+      var header = document.createElement("div");
+      header.className = "panel-header";
+      var heading = document.createElement("h2");
+      heading.textContent = group[1];
+      var count = document.createElement("span");
+      count.className = "muted panel-hint";
+      count.textContent = inGroup.length;
+      header.appendChild(heading);
+      header.appendChild(count);
+      panel.appendChild(header);
 
       inGroup.forEach(function (room) {
-        var card = document.createElement("div");
-        card.className = "card room-card row wrapping";
+        var row = document.createElement("div");
+        row.className = "panel-row";
+        var main = document.createElement("div");
+        main.className = "row-main";
         var link = document.createElement("a");
-        // Stretched so the whole card is the hit target, not just the words.
-        link.className = "stretched";
+        // Stretched so the whole row is the hit target, not just the words.
+        link.className = "row-link stretched";
         link.href = "/admin/rooms/" + room.room_id;
         link.textContent = room.title;
-        link.style.fontWeight = "600";
-        card.appendChild(link);
-        var meta = document.createElement("div");
-        meta.className = "muted";
-        meta.style.width = "100%";
+        var meta = document.createElement("span");
+        meta.className = "row-meta";
         meta.textContent = "/r/" + room.slug + " · " +
           room.counts.questions + (room.counts.questions === 1 ? " question, " : " questions, ") +
           room.counts.answered + " answered";
-        card.appendChild(link);
-        card.appendChild(meta);
-        host.appendChild(card);
+        main.appendChild(link);
+        main.appendChild(meta);
+        row.appendChild(main);
+        row.insertAdjacentHTML("beforeend", CHEVRON_RIGHT);
+        panel.appendChild(row);
       });
+      host.appendChild(panel);
     });
   }
 
@@ -248,10 +272,21 @@
       );
     }
     $("room-title").textContent = room.title;
-    $("room-sub").textContent = room.state + " · " + room.counts.questions +
-      (room.counts.questions === 1 ? " question" : " questions") +
-      (room.expires_at ? " · closes " + new Date(room.expires_at).toLocaleString() : "");
+    // The description line carries provenance; the numbers below are the
+    // strip's job, so they are not repeated here.
+    $("room-sub").textContent = "/r/" + room.slug + " — hosted by " + room.owner;
     $("room-owner").textContent = "Owner: " + room.owner;
+    var stateTag = STATE_TAGS[room.state] || ["", room.state];
+    $("stat-questions").textContent = room.counts.questions;
+    $("stat-answered").textContent = room.counts.answered;
+    $("stat-state").innerHTML = "";
+    var badge = document.createElement("span");
+    badge.className = "tag" + (stateTag[0] ? " " + stateTag[0] : "");
+    badge.textContent = stateTag[1];
+    $("stat-state").appendChild(badge);
+    $("stat-closes").textContent = room.expires_at
+      ? new Date(room.expires_at).toLocaleString()
+      : "Never";
     $("public-link").href = room.url;
     $("public-link").textContent = room.url;
     $("present").href = "/admin/rooms/" + room.room_id + "/present";

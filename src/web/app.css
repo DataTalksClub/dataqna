@@ -407,6 +407,298 @@ svg { flex: 0 0 auto; }
   padding: var(--dk-space-7) var(--dk-space-6) 64px;
 }
 
+/* --- console surfaces -----------------------------------------------------
+   The family's page anatomy: a 32px page header with a one-line muted
+   description, then content in bordered panels whose header and footer
+   bands sit on the muted surface, with hairline-divided rows inside.
+   Rows carry one primary label, one metadata line, and at most one
+   affordance — never a nested card. */
+
+.page-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--dk-space-2) var(--dk-space-4);
+  margin-bottom: var(--dk-space-5);
+}
+
+.page-head h1 {
+  margin: 0;
+  font-size: var(--dk-text-page);
+  font-weight: 600;
+  letter-spacing: var(--tracking-tight);
+  line-height: var(--dk-leading-tight);
+  overflow-wrap: anywhere;
+}
+
+.page-desc {
+  margin: var(--dk-space-1) 0 0;
+  color: var(--dk-text-muted);
+  font-size: var(--dk-text-body);
+}
+
+.page-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--dk-space-2);
+}
+
+.panel {
+  border: 1px solid var(--dk-border-default);
+  border-radius: var(--dk-radius-md);
+  background: var(--dk-bg-surface);
+  overflow: hidden;
+  margin-bottom: var(--dk-space-4);
+}
+
+.panel-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--dk-space-2) var(--dk-space-3);
+  padding: var(--dk-space-3) var(--dk-space-4);
+  border-bottom: 1px solid var(--dk-border-default);
+  background: var(--dk-bg-muted);
+}
+
+.panel-header h2,
+.panel-header h3 {
+  margin: 0;
+  font-size: var(--dk-text-body);
+  font-weight: 600;
+}
+
+.panel-hint { font-size: var(--dk-text-sm); }
+
+.panel-body { padding: var(--dk-space-4); }
+.panel-body > * + * { margin-top: var(--dk-space-3); }
+
+.panel-footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--dk-space-2) var(--dk-space-3);
+  padding: var(--dk-space-2) var(--dk-space-4);
+  border-top: 1px solid var(--dk-border-default);
+  background: var(--dk-bg-muted);
+}
+
+/* Forms: labels above controls, stacked fields; a grid only for short
+   comparable ones. */
+.field { display: grid; gap: var(--dk-space-1); }
+
+.field-label {
+  font-size: var(--dk-text-sm);
+  font-weight: 600;
+  color: var(--dk-text-heading);
+}
+
+.field-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--dk-space-3);
+}
+
+/* A list row: the family's divided row, not a card. */
+.panel-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--dk-space-3);
+  min-height: 40px;
+  padding: var(--dk-space-2) var(--dk-space-4);
+  border-bottom: 1px solid var(--dk-border-default);
+}
+
+.panel-row:last-child { border-bottom: 0; }
+.panel-row:hover { background: var(--dk-bg-hover); }
+
+.row-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.row-link {
+  color: var(--dk-text-primary);
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.panel-row:hover .row-link { color: var(--dk-accent-default); }
+
+.row-meta {
+  color: var(--dk-text-muted);
+  font-size: var(--dk-text-sm);
+  overflow-wrap: anywhere;
+}
+
+.row-chev { color: var(--dk-text-faint); }
+
+/* Summary strip: one segmented hairline row, not a card grid. Cells carry
+   their hairlines and negative margins so wrapping never opens a gap or
+   doubles a line at the container edge. */
+.stats-strip {
+  display: flex;
+  flex-wrap: wrap;
+  margin-bottom: var(--dk-space-5);
+  border: 1px solid var(--dk-border-default);
+  border-radius: var(--dk-radius-md);
+  background: var(--dk-bg-page);
+  overflow: hidden;
+}
+
+.stats-strip .stat {
+  flex: 1 1 auto;
+  min-width: 140px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: var(--dk-space-2) var(--dk-space-4);
+  border-right: 1px solid var(--dk-border-default);
+  border-bottom: 1px solid var(--dk-border-default);
+  margin-right: -1px;
+  margin-bottom: -1px;
+}
+
+.stat-label {
+  color: var(--dk-text-muted);
+  font-size: var(--dk-text-xs);
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.stat-value {
+  font-family: var(--dk-font-mono);
+  font-size: 18px;
+  font-weight: 500;
+  line-height: var(--dk-leading-tight);
+  overflow-wrap: anywhere;
+}
+
+/* Status badges on the dakit triplet roles: text+border+background change
+   together, and a badge exists only where it changes what the host does. */
+.tag {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--dk-space-1);
+  padding: 1px var(--dk-space-2);
+  border: 1px solid var(--dk-border-default);
+  border-radius: var(--dk-radius-sm);
+  background: var(--dk-bg-muted);
+  color: var(--dk-text-muted);
+  font-size: var(--dk-text-xs);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.tag.pinned,
+.tag.you {
+  color: var(--dk-accent-default);
+  border-color: var(--dk-accent-border);
+  background: var(--dk-accent-soft);
+}
+
+.tag.answered,
+.tag.open {
+  color: var(--dk-success-text);
+  border-color: var(--dk-success-border);
+  background: var(--dk-success-bg);
+}
+
+.tag.archived {
+  color: var(--dk-danger-text);
+  border-color: var(--dk-danger-border);
+  background: var(--dk-danger-bg);
+}
+
+/* Family tables: quiet uppercase headers, hairline rows, hover bands. */
+.table-wrap {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border: 1px solid var(--dk-border-default);
+  border-radius: var(--dk-radius-sm);
+}
+
+.table-wrap table { min-width: 0; }
+
+.table-wrap th {
+  padding: var(--dk-space-2) var(--dk-space-3);
+  font-size: var(--dk-text-xs);
+  letter-spacing: 0.05em;
+}
+
+.table-wrap td { border-bottom: 1px solid var(--dk-border-default); }
+.table-wrap tr:last-child td { border-bottom: 0; }
+.table-wrap tbody tr:hover td { background: var(--dk-bg-muted); }
+
+/* The queue is the room view's dominant content: one panel, divided rows.
+   The generic .question card stays for the participant room; inside the
+   console panel the same anatomy reads as rows. */
+.queue-panel .tabs { margin: 0; }
+
+.queue-panel ul.questions { padding: 0; }
+
+.queue-panel li.q {
+  border: 0;
+  border-bottom: 1px solid var(--dk-border-default);
+  border-radius: 0;
+  margin: 0;
+  background: transparent;
+}
+
+.queue-panel li.q:last-child { border-bottom: 0; }
+.queue-panel li.q:hover { background: var(--dk-bg-hover); }
+
+/* Collapsible setup panels: collapsed 44px rows that open into a banded
+   header, the family's done-once furniture. */
+details.panel { padding: 0; }
+
+details.panel > summary {
+  display: flex;
+  align-items: center;
+  gap: var(--dk-space-2);
+  min-height: 44px;
+  padding: var(--dk-space-2) var(--dk-space-4);
+  font-weight: 600;
+  font-size: var(--dk-text-body);
+  cursor: pointer;
+  list-style: none;
+}
+
+details.panel > summary::-webkit-details-marker { display: none; }
+details.panel > summary:hover { background: var(--dk-bg-hover); }
+
+details.panel[open] > summary {
+  border-bottom: 1px solid var(--dk-border-default);
+  background: var(--dk-bg-muted);
+}
+
+/* Open/closed is a shape, not a color: the chevron flips. */
+details.panel > summary::after {
+  content: "";
+  flex: 0 0 auto;
+  margin-left: auto;
+  width: 9px;
+  height: 9px;
+  border-right: 2px solid var(--dk-text-muted);
+  border-bottom: 2px solid var(--dk-text-muted);
+  transform: translateY(-2px) rotate(45deg);
+}
+
+details.panel[open] > summary::after { transform: translateY(2px) rotate(225deg); }
+
+.details-body { padding: var(--dk-space-3) var(--dk-space-4) var(--dk-space-4); }
+
+
 @media (max-width: 820px) {
   /* One pane at a time: the canvas takes the width, the nav becomes a
      modal drawer with a scrim. Without JS the sidebar simply stacks. */
@@ -473,10 +765,10 @@ svg { flex: 0 0 auto; }
 .brand svg { color: var(--dk-accent-default); }
 
 .group-heading {
-  font-size: var(--dk-text-sm);
+  font-size: var(--dk-text-xs);
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: var(--tracking-wide);
+  letter-spacing: 0.07em;
   color: var(--dk-text-muted);
   margin: var(--dk-space-5) 0 var(--dk-space-2);
 }
@@ -567,7 +859,7 @@ button, .btn {
   font: 600 var(--dk-text-lg)/var(--leading-snug) var(--dk-font-sans);
   padding: var(--dk-space-2) var(--dk-space-4);
   min-height: 44px;
-  border-radius: var(--dk-radius-lg);
+  border-radius: var(--dk-radius-md);
   border: 1px solid transparent;
   background: var(--accent-fill);
   color: var(--on-accent);
@@ -582,12 +874,14 @@ button, .btn {
 button:disabled { opacity: .5; cursor: default; }
 button:not(:disabled):hover, .btn:hover { background: var(--accent-fill-hover); }
 
+/* The family's secondary: muted surface, neutral border, primary text —
+   dakit's own --secondary pairing. */
 button.ghost, .btn.ghost {
-  background: var(--dk-bg-surface);
+  background: var(--dk-bg-muted);
   color: var(--dk-text-primary);
   border-color: var(--dk-border-default);
 }
-button.ghost:not(:disabled):hover, .btn.ghost:hover { background: var(--dk-bg-hover); }
+button.ghost:not(:disabled):hover, .btn.ghost:hover { border-color: var(--dk-border-strong); background: var(--dk-bg-hover); }
 
 /* Small trims padding and type, never the touch target. */
 button.small, .btn.small { padding: var(--dk-space-1) var(--dk-space-3); font-size: var(--dk-text-body); }
@@ -655,7 +949,7 @@ textarea, input[type=text], input[type=email], input[type=number], select {
   color: var(--dk-text-primary);
   background: var(--dk-bg-surface);
   border: 1px solid var(--dk-border-default);
-  border-radius: var(--dk-radius-lg);
+  border-radius: var(--dk-radius-md);
   outline: none;
 }
 
@@ -735,7 +1029,7 @@ textarea:focus-visible, input:focus-visible, select:focus-visible {
 .composer {
   background: var(--dk-bg-surface);
   border: 1px solid var(--dk-border-default);
-  border-radius: var(--dk-radius-lg);
+  border-radius: var(--dk-radius-md);
   box-shadow: var(--dk-shadow-overlay);
   padding: var(--dk-space-4);
   margin-bottom: var(--dk-space-3);
@@ -762,7 +1056,7 @@ textarea:focus-visible, input:focus-visible, select:focus-visible {
 .card {
   background: var(--dk-bg-surface);
   border: 1px solid var(--dk-border-default);
-  border-radius: var(--dk-radius-lg);
+  border-radius: var(--dk-radius-md);
   padding: var(--dk-space-4);
   margin-bottom: var(--dk-space-3);
 }
@@ -770,7 +1064,7 @@ textarea:focus-visible, input:focus-visible, select:focus-visible {
 .banner {
   margin: var(--dk-space-3) 0;
   padding: var(--dk-space-2) var(--dk-space-4);
-  border-radius: var(--dk-radius-lg);
+  border-radius: var(--dk-radius-md);
   border: 1px solid var(--dk-border-default);
   background: var(--dk-bg-hover);
   color: var(--dk-text-muted);
@@ -788,9 +1082,9 @@ th, td { text-align: left; padding: var(--dk-space-2) var(--dk-space-2); border-
 th {
   color: var(--dk-text-muted);
   font-weight: 600;
-  font-size: var(--dk-text-sm);
+  font-size: var(--dk-text-xs);
   text-transform: uppercase;
-  letter-spacing: var(--tracking-wide);
+  letter-spacing: 0.05em;
 }
 
 /* ------------------------------------------------- admin room header
@@ -821,40 +1115,10 @@ th {
 .room-sub { font-size: var(--dk-text-body); }
 .room-tools { margin-top: var(--dk-space-3); }
 
-/* Setup panels: share, settings, people. Collapsed one-line rows, so the
-   done-once tasks stay reachable without pushing the queue off screen. */
-.setup-heading { margin-top: var(--dk-space-7); }
-details.card { padding: 0; }
-details.card > summary {
-  display: flex;
-  align-items: center;
-  gap: var(--dk-space-2);
-  min-height: 48px;
-  padding: var(--dk-space-3) var(--dk-space-4);
-  font-weight: 600;
-  cursor: pointer;
-  border-radius: calc(var(--dk-radius-lg) - 1px);
-  list-style: none;
-}
-details.card > summary::-webkit-details-marker { display: none; }
-details.card > summary:hover { background: var(--dk-bg-hover); }
-details.card[open] > summary {
-  border-radius: calc(var(--dk-radius-lg) - 1px) calc(var(--dk-radius-lg) - 1px) 0 0;
-}
-/* Open/closed is a shape, not a color: the chevron flips. */
-details.card > summary::after {
-  content: "";
-  flex: 0 0 auto;
-  margin-left: auto;
-  width: 9px;
-  height: 9px;
-  border-right: 2px solid var(--dk-text-muted);
-  border-bottom: 2px solid var(--dk-text-muted);
-  transform: translateY(-2px) rotate(45deg);
-}
-details.card[open] > summary::after { transform: translateY(2px) rotate(225deg); }
+/* Setup panels: share, settings, people — collapsed rows so the done-once
+   tasks stay reachable without pushing the queue off screen. Their geometry
+   is the console panel's (details.panel, in the surfaces section). */
 .summary-hint { color: var(--dk-text-muted); font-weight: 400; font-size: var(--dk-text-body); }
-.details-body { padding: var(--dk-space-1) var(--dk-space-4) var(--dk-space-4); }
 
 label.check { min-height: 44px; cursor: pointer; }
 input[type=checkbox] { width: 18px; height: 18px; accent-color: var(--accent-fill); }
@@ -872,7 +1136,7 @@ input[type=checkbox] { width: 18px; height: 18px; accent-color: var(--accent-fil
   padding: var(--dk-space-1);
   color: var(--qr-ink);
   background: var(--qr-paper);
-  border-radius: var(--dk-radius-lg);
+  border-radius: var(--dk-radius-md);
 }
 .share .share-url {
   display: inline-flex;
@@ -935,7 +1199,7 @@ li.q {
   gap: var(--dk-space-2);
   background: var(--dk-bg-surface);
   border: 1px solid var(--dk-border-default);
-  border-radius: var(--dk-radius-lg);
+  border-radius: var(--dk-radius-md);
   padding: var(--dk-space-3) var(--dk-space-4);
   margin-bottom: var(--dk-space-2);
 }
@@ -1108,7 +1372,7 @@ body.present { overflow: hidden; background: var(--dk-bg-page); }
   padding: var(--dk-space-3);
   color: var(--qr-ink);
   background: var(--qr-paper);
-  border-radius: var(--dk-radius-lg);
+  border-radius: var(--dk-radius-md);
 }
 .present-join .qr svg { width: 100%; height: 100%; display: block; }
 .present-join .join-label {
@@ -1180,7 +1444,7 @@ ol.present-list {
   gap: var(--dk-space-5);
   background: var(--dk-bg-surface);
   border: 1px solid var(--dk-border-default);
-  border-radius: var(--dk-radius-lg);
+  border-radius: var(--dk-radius-md);
   padding: var(--dk-space-4) var(--dk-space-5);
 }
 .present-list li.selected {
@@ -1392,7 +1656,7 @@ ol.present-list {
   padding: var(--dk-space-4);
   color: var(--qr-ink);
   background: var(--qr-paper);
-  border-radius: var(--dk-radius-lg);
+  border-radius: var(--dk-radius-md);
 }
 .present-overlay .qr svg { width: 100%; height: 100%; display: block; }
 .present-overlay .url { font-size: clamp(1.6rem, 3.6vw, 2.8rem); font-weight: 750; letter-spacing: var(--tracking-tight); overflow-wrap: anywhere; text-align: center; }
