@@ -370,7 +370,7 @@
     meta.textContent = "";
     var score = document.createElement("span");
     score.className = "q-score";
-    score.innerHTML = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" ' +
+    score.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" ' +
       'stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ' +
       'aria-hidden="true"><path d="m18 15-6-6-6 6"/></svg><span>' + item.score + "</span>";
     meta.appendChild(score);
