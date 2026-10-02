@@ -8,21 +8,22 @@
   var state = { room: null, filter: "all", items: [], etag: null, armedDelete: null, busy: {} };
 
   function svg(paths) {
-    /* The family icon language: 16x16, stroke 1.5, round caps, no fills. */
-    return '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" ' +
-      'stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+    /* The family icon language: 24-grid paths rendered at 20px, stroke 1.8,
+       round caps, no fills — the dataops geometry the spec codified. */
+    return '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" ' +
+      'stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
       paths + "</svg>";
   }
 
   /* The moderation glyphs are presentation mode's, verbatim: the host runs
      both surfaces in the same session, so one vocabulary. */
   var I = {
-    check: svg('<path d="M13 4.5 6.5 11 3 7.5"/>'),
-    pin: svg('<path d="M6 2.5h4"/><path d="M6.5 2.5v3.2L4.3 8.3v1.2h7.4V8.3L9.5 5.7V2.5"/>' +
-      '<path d="M8 9.5v4"/>'),
-    trash: svg('<path d="M2.5 4h11"/><path d="M5.5 4V3a1.5 1.5 0 011.5-1.5h2A1.5 1.5 0 0110.5 3v1"/>' +
-      '<path d="M12.5 4v8.5a1.5 1.5 0 01-1.5 1.5H5a1.5 1.5 0 01-1.5-1.5V4"/>' +
-      '<path d="M6.5 7v4M9.5 7v4"/>')
+    check: svg('<path d="M20 6 9 17l-5-5"/>'),
+    pin: svg('<path d="M9 3.75h6"/><path d="M9.75 3.75v4.8L6.45 12.45v1.8h11.1v-1.8L14.25 8.55v-4.8"/>' +
+      '<path d="M12 14.25v6"/>'),
+    trash: svg('<path d="M3.75 6h16.5"/><path d="M8.25 6V4.5a2.25 2.25 0 012.25-2.25h3a2.25 2.25 0 012.25 2.25V6"/>' +
+      '<path d="M18.75 6v12.75a2.25 2.25 0 01-2.25 2.25h-9a2.25 2.25 0 01-2.25-2.25V6"/>' +
+      '<path d="M9.75 10.5v6M14.25 10.5v6"/>')
   };
 
   function $(id) { return document.getElementById(id); }
@@ -91,9 +92,9 @@
     archived: ["archived", "Archived"]
   };
 
-  var CHEVRON_RIGHT = '<svg class="row-chev" width="16" height="16" viewBox="0 0 16 16" fill="none" ' +
-    'stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
-    '<path d="M6 3l5 5-5 5"/></svg>';
+  var CHEVRON_RIGHT = '<svg class="row-chev" width="20" height="20" viewBox="0 0 24 24" fill="none" ' +
+    'stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+    '<path d="m9 18 6-6-6-6"/></svg>';
 
   function renderRooms(items) {
     var host = $("rooms");
@@ -371,9 +372,9 @@
       // Displays a score; it is not a control, so it must not look like one.
       score.className = "vote static";
       score.setAttribute("aria-hidden", "true");
-      score.innerHTML = '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" ' +
-        'stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">' +
-        '<path d="M4 9.5 8 5l4 4.5"/></svg><span>' + item.score + "</span>";
+      score.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" ' +
+        'stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">' +
+        '<path d="M6 14.25 12 7.5l6 7.5"/></svg><span>' + item.score + "</span>";
 
       /* Moderation is routine — twelve times a session — so it whispers:
          quiet labelled buttons sharing the foot line with the score. The

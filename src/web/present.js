@@ -21,38 +21,38 @@
   var MAX_ROWS = 6;
 
   function svg(paths, size) {
-    /* The family icon language: 16x16, stroke 1.5, round caps, no fills —
-       the same drawing the console ships, so a host's two surfaces read as
-       one product mid-session. Display sizes stay contextual; the projector
-       scales the glyph, not the drawing. */
-    return '<svg width="' + (size || 20) + '" height="' + (size || 20) + '" viewBox="0 0 16 16" ' +
-      'fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" ' +
+    /* The family icon language: 24-grid paths rendered at 20px, stroke 1.8,
+       round caps, no fills — the same drawing the console ships, so a host's
+       two surfaces read as one product mid-session. Display sizes stay
+       contextual; the projector scales the glyph, not the drawing. */
+    return '<svg width="' + (size || 20) + '" height="' + (size || 20) + '" viewBox="0 0 24 24" ' +
+      'fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" ' +
       'stroke-linejoin="round" aria-hidden="true">' + paths + "</svg>";
   }
 
   var I = {
-    chevron: svg('<path d="M4 9.5 8 5l4 4.5"/>', 26),
-    pin: svg('<path d="M6 2.5h4"/><path d="M6.5 2.5v3.2L4.3 8.3v1.2h7.4V8.3L9.5 5.7V2.5"/>' +
-      '<path d="M8 9.5v4"/>'),
-    check: svg('<path d="M13 4.5 6.5 11 3 7.5"/>'),
-    focus: svg('<path d="M5.5 2.5H4A1.5 1.5 0 0 0 2.5 4v1.5"/><path d="M10.5 2.5H12A1.5 1.5 0 0 1 13.5 4v1.5"/>' +
-      '<path d="M13.5 10.5V12a1.5 1.5 0 0 1-1.5 1.5h-1.5"/><path d="M2.5 10.5V12A1.5 1.5 0 0 0 4 13.5h1.5"/>' +
-      '<path d="M8 8v.01"/>', 18),
-    undo: svg('<path d="M2.7 8a5.3 5.3 0 1 0 1.5-3.7L2.7 5.8"/><path d="M2.7 2.5v3.3h3.3"/>', 18),
-    qr: svg('<rect x="2" y="2" width="4.7" height="4.7" rx="0.8"/><rect x="9.3" y="2" width="4.7" ' +
-      'height="4.7" rx="0.8"/><rect x="2" y="9.3" width="4.7" height="4.7" rx="0.8"/>' +
-      '<path d="M9.3 9.3h1.9v1.9H9.3z"/><path d="M13.9 9.3v2.4"/><path d="M9.3 13.9h2.4"/>', 18),
-    sun: svg('<circle cx="8" cy="8" r="2.7"/><path d="M8 1.2v1.7M8 13.1v1.7M2.9 2.9l1.2 1.2M11.9 11.9l1.2 ' +
-      '1.2M1.2 8h1.7M13.1 8h1.7M2.9 13.1l1.2-1.2M11.9 4.1l1.2-1.2"/>', 18),
-    moon: svg('<path d="M13.2 9.6A5.5 5.5 0 116.4 2.8a4.3 4.3 0 006.8 6.8z"/>', 18),
-    expand: svg('<path d="M6 2.5H4A1.5 1.5 0 0 0 2.5 4v2"/><path d="M10 2.5H12A1.5 1.5 0 0 1 13.5 4v2"/>' +
-      '<path d="M13.5 10v2a1.5 1.5 0 0 1-1.5 1.5h-2"/><path d="M2.5 10v2A1.5 1.5 0 0 0 4 13.5h2"/>', 18),
-    shrink: svg('<path d="M2.5 6H4a1.5 1.5 0 0 0 1.5-1.5V3"/><path d="M13.5 6H12a1.5 1.5 0 0 1-1.5-1.5V3"/>' +
-      '<path d="M13.5 10H12a1.5 1.5 0 0 0-1.5 1.5V13"/><path d="M2.5 10H4a1.5 1.5 0 0 1 1.5 1.5V13"/>', 18),
-    close: svg('<path d="M4 4l8 8"/><path d="M12 4l-8 8"/>', 18),
-    left: svg('<path d="M9.7 3.7 5.4 8l4.3 4.3"/>'),
-    right: svg('<path d="M6.3 3.7 10.6 8l-4.3 4.3"/>'),
-    back: svg('<path d="M9.7 3.7 5.4 8l4.3 4.3"/>', 18)
+    chevron: svg('<path d="M6 14.25 12 7.5l6 7.5"/>', 26),
+    pin: svg('<path d="M9 3.75h6"/><path d="M9.75 3.75v4.8L6.45 12.45v1.8h11.1v-1.8L14.25 8.55v-4.8"/>' +
+      '<path d="M12 14.25v6"/>'),
+    check: svg('<path d="M20 6 9 17l-5-5"/>'),
+    focus: svg('<path d="M8.25 3.75H6A2.25 2.25 0 0 0 3.75 6v2.25"/><path d="M15.75 3.75H18A2.25 2.25 0 0 1 20.25 6v2.25"/>' +
+      '<path d="M20.25 15.75V18a2.25 2.25 0 0 1-2.25 2.25h-2.25"/><path d="M3.75 15.75V18A2.25 2.25 0 0 0 6 20.25h2.25"/>' +
+      '<path d="M12 12v.01"/>', 18),
+    undo: svg('<path d="M4.05 12a7.95 7.95 0 1 0 2.25-5.55L4.05 8.7"/><path d="M4.05 3.75v4.95h4.95"/>', 18),
+    qr: svg('<rect x="3" y="3" width="7.05" height="7.05" rx="1.2"/><rect x="13.95" y="3" width="7.05" ' +
+      'height="7.05" rx="1.2"/><rect x="3" y="13.95" width="7.05" height="7.05" rx="1.2"/>' +
+      '<path d="M13.95 13.95h2.85v2.85h-2.85z"/><path d="M20.85 13.95v3.6"/><path d="M13.95 20.85h3.6"/>', 18),
+    sun: svg('<circle cx="12" cy="12" r="4.8"/><path d="M12 1.8v2.55M12 19.65v2.55M4.35 4.35l1.8 1.8M17.85 17.85l1.8 ' +
+      '1.8M1.8 12h2.55M19.65 12h2.55M4.35 19.65l1.8-1.8M17.85 6.15l1.8-1.8"/>', 18),
+    moon: svg('<path d="M19.8 14.4A8.25 8.25 0 119.6 4.2a6.45 6.45 0 0010.2 10.2Z"/>', 18),
+    expand: svg('<path d="M9 3.75H6A2.25 2.25 0 0 0 3.75 6v3"/><path d="M15 3.75H18A2.25 2.25 0 0 1 20.25 6v3"/>' +
+      '<path d="M20.25 15v3a2.25 2.25 0 0 1-2.25 2.25h-3"/><path d="M3.75 15v3A2.25 2.25 0 0 0 6 20.25h3"/>', 18),
+    shrink: svg('<path d="M3.75 9H6a2.25 2.25 0 0 0 2.25-2.25V4.5"/><path d="M20.25 9H18a2.25 2.25 0 0 1-2.25-2.25V4.5"/>' +
+      '<path d="M20.25 15H18a2.25 2.25 0 0 0-2.25 2.25V19.5"/><path d="M3.75 15H6a2.25 2.25 0 0 1 2.25 2.25V19.5"/>', 18),
+    close: svg('<path d="M6 6l12 12"/><path d="M18 6 6 18"/>', 18),
+    left: svg('<path d="M14.55 5.55 8.1 12l6.45 6.45"/>'),
+    right: svg('<path d="M9.45 5.55 15.9 12l-6.45 6.45"/>'),
+    back: svg('<path d="M14.55 5.55 8.1 12l6.45 6.45"/>', 18)
   };
   var state = {
     items: [],
@@ -368,9 +368,9 @@
     meta.textContent = "";
     var score = document.createElement("span");
     score.className = "q-score";
-    score.innerHTML = '<svg width="22" height="22" viewBox="0 0 16 16" fill="none" ' +
-      'stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" ' +
-      'aria-hidden="true"><path d="M4 9.5 8 5l4 4.5"/></svg><span>' + item.score + "</span>";
+    score.innerHTML = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" ' +
+      'stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ' +
+      'aria-hidden="true"><path d="M6 14.25 12 7.5l6 7.5"/></svg><span>' + item.score + "</span>";
     meta.appendChild(score);
     var who = document.createElement("span");
     who.textContent = item.author_name || "Anonymous";

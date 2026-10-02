@@ -707,9 +707,9 @@ details.panel[open] > summary {
   background: var(--dk-bg-muted);
 }
 
-/* Open/closed is a shape, not a color: the family chevron — the shared
-   16-box, stroke-1.5 glyph, drawn inline in the summary markup — rotates
-   from pointing right to pointing down. */
+/* Open/closed is a shape, not a color: the family disclosure chevron — the
+   canonical 24-grid, stroke-1.8 glyph from the dakit showcase set, drawn
+   inline in the summary markup — flips from pointing down to pointing up. */
 details.panel > summary .chevron {
   flex: 0 0 auto;
   margin-left: auto;
@@ -717,7 +717,7 @@ details.panel > summary .chevron {
   transition: transform var(--duration-2) var(--ease-out);
 }
 
-details.panel[open] > summary .chevron { transform: rotate(90deg); }
+details.panel[open] > summary .chevron { transform: rotate(180deg); }
 
 .details-body { padding: var(--dk-space-3) var(--dk-space-4) var(--dk-space-4); }
 
