@@ -7,9 +7,9 @@
   var MOTION = window.matchMedia("(prefers-reduced-motion: no-preference)").matches;
   var RING = 75.4; /* 2πr for the limit ring's r=12 circle */
 
-  var CHEVRON = '<svg class="arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" ' +
-    'stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" ' +
-    'aria-hidden="true"><path d="M6 14l6-7 6 7"/></svg>';
+  var CHEVRON = '<svg class="arrow" width="16" height="16" viewBox="0 0 16 16" fill="none" ' +
+    'stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" ' +
+    'aria-hidden="true"><path d="M4 9.5 8 5l4 4.5"/></svg>';
   // The host's two ways back. A cog for the console and a screen for the
   // projector: both are read at a glance mid-session, which is more than a
   // word-shaped button gets on a page whose job is the question composer.

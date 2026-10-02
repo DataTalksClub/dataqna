@@ -371,9 +371,9 @@
       // Displays a score; it is not a control, so it must not look like one.
       score.className = "vote static";
       score.setAttribute("aria-hidden", "true");
-      score.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" ' +
-        'stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">' +
-        '<path d="M6 14l6-7 6 7"/></svg><span>' + item.score + "</span>";
+      score.innerHTML = '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" ' +
+        'stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">' +
+        '<path d="M4 9.5 8 5l4 4.5"/></svg><span>' + item.score + "</span>";
 
       /* Moderation is routine — twelve times a session — so it whispers:
          the quiet icon squares from presentation mode, sharing the foot
