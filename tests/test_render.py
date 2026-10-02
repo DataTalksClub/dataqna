@@ -59,6 +59,18 @@ def test_unknown_assets_and_traversal_are_refused():
     assert render.asset_response("../dataqna/config.py")["statusCode"] == 404
 
 
+def test_fonts_travel_as_binary_not_decoded_text():
+    """woff2 is bytes; the asset route used to .decode() every payload as
+    utf-8 and served a 500 notice page in place of every font."""
+    import base64
+
+    response = render.asset_response("fonts/inter-var.woff2")
+    assert response["statusCode"] == 200
+    assert response["isBase64Encoded"] is True
+    assert base64.b64decode(response["body"]) == render.asset_bytes("fonts/inter-var.woff2")
+    assert response["headers"]["content-type"] == "font/woff2"
+
+
 def test_dakit_tokens_ship_before_the_stylesheet():
     """app.css resolves its colors through the vendored dakit sheet, so the
     cascade needs the tokens first — on every page that links one and in the

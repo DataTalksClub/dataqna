@@ -113,10 +113,17 @@ def asset_response(name):
     extension = os.path.splitext(name)[1]
     # Versioned by the query string above, so a long life is safe.
     cache = "public, max-age=86400, immutable"
+    content_type = CONTENT_TYPES.get(extension, "application/octet-stream")
+    if extension == ".woff2":
+        # Fonts are binary; decoding them as response text is how the whole
+        # route used to 500 on them.
+        return http.binary_response(
+            200, payload, content_type=content_type, headers={"cache-control": cache}
+        )
     return http.response(
         200,
         payload.decode("utf-8"),
-        content_type=CONTENT_TYPES.get(extension, "application/octet-stream"),
+        content_type=content_type,
         headers={"cache-control": cache},
     )
 

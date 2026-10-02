@@ -1,5 +1,6 @@
 """Helpers for API Gateway HTTP API payload format 2.0."""
 
+import base64
 import decimal
 import json
 
@@ -33,6 +34,21 @@ def response(status, body="", *, content_type="text/plain; charset=utf-8", heade
     if cookies:
         result["cookies"] = cookies
     return result
+
+
+def binary_response(status, body, *, content_type, headers=None):
+    """A response whose body is bytes — fonts, the QR PNG.
+
+    Payload 2.0 carries text as a string; bytes go base64-encoded with the
+    flag set, so API Gateway decodes them on the way out. Decoding them as
+    text instead is exactly how the fonts used to 500.
+    """
+    return {
+        "statusCode": status,
+        "headers": {"content-type": content_type, **(headers or {})},
+        "body": base64.b64encode(body).decode("ascii"),
+        "isBase64Encoded": True,
+    }
 
 
 def json_response(status, body, *, headers=None, cookies=None):

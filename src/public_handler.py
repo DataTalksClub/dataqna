@@ -110,19 +110,16 @@ def _serve_qr(identifier, extension, query):
             content_type="image/svg+xml",
             headers={"cache-control": "public, max-age=3600"},
         )
-    import base64
-
     try:
         size = max(64, min(2048, int(query.get("size", 512))))
     except (TypeError, ValueError):
         size = 512
-    payload = qr.png(url, size=size)
-    return {
-        "statusCode": 200,
-        "headers": {"content-type": "image/png", "cache-control": "public, max-age=3600"},
-        "body": base64.b64encode(payload).decode(),
-        "isBase64Encoded": True,
-    }
+    return http.binary_response(
+        200,
+        qr.png(url, size=size),
+        content_type="image/png",
+        headers={"cache-control": "public, max-age=3600"},
+    )
 
 
 RECENT_WINDOW_SECONDS = 7 * 86400
