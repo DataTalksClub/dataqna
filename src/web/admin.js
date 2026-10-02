@@ -376,8 +376,8 @@
         '<path d="M4 9.5 8 5l4 4.5"/></svg><span>' + item.score + "</span>";
 
       /* Moderation is routine — twelve times a session — so it whispers:
-         the quiet icon squares from presentation mode, sharing the foot
-         line with the score. The question text keeps the card. */
+         quiet labelled buttons sharing the foot line with the score. The
+         question text keeps the card. */
       var foot = document.createElement("div");
       foot.className = "q-foot";
       var actions = document.createElement("div");
@@ -421,14 +421,15 @@
     });
   }
 
-  /* Icon-only, named for the screen reader and the tooltip. The armed
-     delete below is the one action that speaks in words instead — a
-     destructive confirm should be read, not recognised. */
+  /* Row actions speak in words: the family pairs icon + text on rows, so
+     the label sits next to the glyph (aria-label stays for the toggle
+     state). The armed delete below is the one action that changes its
+     words instead — a destructive confirm should be read, not recognised. */
   function actionButton(item, name, icon, payload, pressed, undoLabel) {
     var button = document.createElement("button");
     button.type = "button";
-    button.className = "icon-btn";
-    button.innerHTML = icon;
+    button.className = "row-action";
+    button.innerHTML = icon + "<span>" + name + "</span>";
     button.setAttribute("aria-label", name);
     button.title = name;
     // Answered and pinned are toggles; pressed shows which side is on.
@@ -471,8 +472,8 @@
       button.className = "small arm";
       button.textContent = "Really delete?";
     } else {
-      button.className = "icon-btn";
-      button.innerHTML = I.trash;
+      button.className = "row-action";
+      button.innerHTML = I.trash + "<span>Delete</span>";
       button.setAttribute("aria-label", "Delete");
       button.title = "Delete";
     }

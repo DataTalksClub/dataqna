@@ -350,6 +350,11 @@ svg { flex: 0 0 auto; }
 .sidebar-nav a span { overflow: hidden; text-overflow: ellipsis; }
 .sidebar-nav a:hover { background: var(--dk-bg-hover); text-decoration: none; }
 
+/* Nav rows sit flush against each other, so a ring at the default offset
+   is painted over by the next row — the family insets the indicator on
+   full-bleed and adjacent rows (dakit docs/family.md). */
+.sidebar-nav a:focus-visible { outline-offset: -3px; }
+
 .sidebar-nav a[aria-current="page"] {
   background: var(--dk-accent-soft);
   color: var(--dk-accent-default);
@@ -699,19 +704,17 @@ details.panel[open] > summary {
   background: var(--dk-bg-muted);
 }
 
-/* Open/closed is a shape, not a color: the chevron flips. */
-details.panel > summary::after {
-  content: "";
+/* Open/closed is a shape, not a color: the family chevron — the shared
+   16-box, stroke-1.5 glyph, drawn inline in the summary markup — rotates
+   from pointing right to pointing down. */
+details.panel > summary .chevron {
   flex: 0 0 auto;
   margin-left: auto;
-  width: 9px;
-  height: 9px;
-  border-right: 2px solid var(--dk-text-muted);
-  border-bottom: 2px solid var(--dk-text-muted);
-  transform: translateY(-2px) rotate(45deg);
+  color: var(--dk-text-muted);
+  transition: transform var(--duration-2) var(--ease-out);
 }
 
-details.panel[open] > summary::after { transform: translateY(2px) rotate(225deg); }
+details.panel[open] > summary .chevron { transform: rotate(90deg); }
 
 .details-body { padding: var(--dk-space-3) var(--dk-space-4) var(--dk-space-4); }
 
@@ -922,6 +925,35 @@ button.small, .btn.small { padding: var(--dk-space-1) var(--dk-space-3); font-si
   box-shadow: none;
 }
 .icon-btn:not(:disabled):hover { background: var(--dk-bg-hover); color: var(--dk-text-primary); }
+
+/* Console row actions speak in words: family rows pair icon + text, so the
+   per-row moderation controls carry their label next to the glyph. The
+   pressed state is the family selection — soft accent, accent text — and
+   the shell scope above sizes them onto the 34px desktop control scale. */
+.row-action {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--dk-space-2);
+  min-height: 44px;
+  padding: 0 var(--dk-space-3);
+  background: transparent;
+  color: var(--dk-text-muted);
+  border: 1px solid var(--dk-border-default);
+  border-radius: var(--dk-radius-md);
+  font-weight: 600;
+  font-size: var(--dk-text-body);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.row-action svg { flex: 0 0 auto; }
+.row-action:not(:disabled):hover { background: var(--dk-bg-hover); color: var(--dk-text-primary); }
+.row-action[aria-pressed=true],
+.row-action[aria-pressed=true]:not(:disabled):hover {
+  background: var(--dk-accent-soft);
+  color: var(--dk-accent-default);
+  border-color: var(--dk-accent-border);
+}
+
 /* Icon toggles (pin, answered, hidden): the on state is a soft accent fill.
    Accent-on-soft is 6.04:1 light / 5.45:1 dark (dakit's translucent soft,
    composited over a card). Toggled buttons never sit on the hero band, where
@@ -1281,12 +1313,14 @@ li.q .tag.answered { background: var(--dk-success-bg); color: var(--dk-success-t
   touch-action: manipulation;
 }
 .vote:not(:disabled):hover { background: var(--dk-accent-soft); }
+/* Voted reads like every family selection: the soft accent fill with
+   accent text and border — not a second solid fill in the view. */
 .vote[aria-pressed=true] {
-  background: var(--accent-fill);
-  border-color: var(--accent-fill);
-  color: var(--on-accent);
+  background: var(--dk-accent-soft);
+  border-color: var(--dk-accent-border);
+  color: var(--dk-accent-default);
 }
-.vote[aria-pressed=true]:not(:disabled):hover { background: var(--accent-fill); }
+.vote[aria-pressed=true]:not(:disabled):hover { background: var(--dk-accent-soft); }
 .vote:disabled { border-color: var(--dk-border-default); color: var(--dk-text-muted); }
 /* The admin list reuses this shape to display a score. It is not a control. */
 .vote.static { border-color: var(--dk-border-default); color: var(--dk-text-muted); background: transparent; min-height: 36px; }
@@ -1434,44 +1468,49 @@ body.present { overflow: hidden; background: var(--dk-bg-page); }
 ol.present-list {
   list-style: none;
   margin: 0;
-  padding: 2px;
+  padding: 0;
   /* Content-sized, so the frame's leftover height stays below the list and
-     cards always stack from the top. */
+     rows always stack from the top. */
   flex: 0 1 auto;
   min-height: 0;
   overflow-y: auto;
-  /* Both animations transform a card out of the box for a moment — a leaving
-     card slides right, a re-ranked one starts at its old row — and the
+  /* Both animations transform a row out of the box for a moment — a leaving
+     row slides right, a re-ranked one starts at its old row — and the
      scrollbars that overflow raises flickered across the projected frame for
      the length of every animation. The list scrolls by touch on the host's
      phone and never on the projector, so the bars have no work to do. */
   overflow-x: hidden;
   scrollbar-width: none;
+  /* The family container: one bordered list, rows divided by hairlines —
+     not a stack of separate cards. Projector text sizes are untouched. */
+  background: var(--dk-bg-surface);
+  border: 1px solid var(--dk-border-default);
+  border-radius: var(--dk-radius-md);
   display: flex;
   flex-direction: column;
-  gap: var(--dk-space-3);
 }
+.present-list:empty { border: 0; }
 .present-list::-webkit-scrollbar { display: none; }
 .present-list li {
   flex: 0 0 auto;
   display: flex;
   align-items: center;
   gap: var(--dk-space-5);
-  background: var(--dk-bg-surface);
-  border: 1px solid var(--dk-border-default);
-  border-radius: var(--dk-radius-md);
   padding: var(--dk-space-4) var(--dk-space-5);
 }
+.present-list li + li { border-top: 1px solid var(--dk-border-default); }
+/* The row the host is holding up: the family selection — the soft accent
+   fill carried by an inset ring, legible from the back of the room over
+   both the plain and the pinned row. */
 .present-list li.selected {
-  border-color: var(--dk-accent-default);
-  box-shadow: 0 0 0 2px var(--dk-accent-default), var(--dk-shadow-overlay);
+  background: var(--dk-accent-soft);
+  box-shadow: inset 0 0 0 2px var(--dk-accent-default);
 }
-/* The pin is exclusive, so the one tinted card reads as the question the
-   host is holding up — legible from the back of the room, not only in the
-   button state the host is looking at. */
+/* The pin is exclusive, so the one tinted row reads as the question the
+   host pinned — legible from the back of the room, not only in the button
+   state the host is looking at. */
 .present-list li.pinned {
   background: var(--dk-accent-soft);
-  border-color: var(--dk-accent-default);
 }
 .present-list .p-score {
   flex: 0 0 auto;

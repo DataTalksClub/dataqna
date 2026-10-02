@@ -249,7 +249,9 @@ def directory_page(live, recent, *, signed_in=None):
         THEME_TOGGLE,
     ]
     if signed_in:
-        parts.append('<a class="btn small" href="/admin">Your sessions</a>')
+        # Secondary: the view's one fill belongs to the primary action
+        # ("New session" below); this is a way back, not the next step.
+        parts.append('<a class="btn ghost small" href="/admin">Your sessions</a>')
     else:
         parts.append('<a class="btn ghost small" href="/auth/login">Sign in</a>')
     parts.append("</div>")
