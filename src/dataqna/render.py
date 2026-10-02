@@ -99,7 +99,8 @@ def version():
     if _version is None:
         digest = hashlib.sha256()
         for name in sorted((
-            "dakit-tokens.css", "app.css", "theme.js", "room.js", "admin.js",
+            "dakit-tokens.css", "dakit-base.css", "dakit-components.css",
+            "app.css", "theme.js", "room.js", "admin.js",
             "present.js", "qna.js",
         )):
             digest.update(asset_bytes(name) or b"")
@@ -176,6 +177,8 @@ def _shell(title, inner, *, status=200):
 {THEME_SCRIPT}
 <link rel="icon" href="{FAVICON}">
 <link rel="stylesheet" href="/assets/dakit-tokens.css">
+<link rel="stylesheet" href="/assets/dakit-base.css">
+<link rel="stylesheet" href="/assets/dakit-components.css">
 <link rel="stylesheet" href="/assets/app.css"></head>
 <body><div class="wrap">{inner}</div>
 <script src="/assets/theme.js" defer></script></body></html>"""

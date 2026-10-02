@@ -71,18 +71,23 @@ def test_fonts_travel_as_binary_not_decoded_text():
     assert response["headers"]["content-type"] == "font/woff2"
 
 
-def test_dakit_tokens_ship_before_the_stylesheet():
-    """app.css resolves its colors through the vendored dakit sheet, so the
-    cascade needs the tokens first — on every page that links one and in the
-    server-rendered shell — and the asset route has to serve them."""
+def test_dakit_layers_ship_in_cascade_order():
+    """app.css resolves its colors through the vendored dakit sheets, so the
+    cascade needs them in dakit's own order — tokens, then the base layer
+    (element defaults, select chevron, the color-scheme pin), then the .dk-*
+    components — ahead of the app sheet, on every page that links one and in
+    the server-rendered shell. The asset route has to serve all three."""
     import public_handler
 
-    assert "dakit-tokens.css" in public_handler.ASSETS
+    order = ("dakit-tokens.css", "dakit-base.css", "dakit-components.css", "app.css")
+    for name in order:
+        assert name in public_handler.ASSETS
+        assert render.asset_response(name)["statusCode"] == 200
     bodies = [render.asset_bytes(name).decode() for name in ("room.html", "admin.html", "present.html")]
     bodies.append(render.notice("Gone", "Nothing here.")["body"])
     for body in bodies:
-        assert body.index("/assets/dakit-tokens.css") < body.index("/assets/app.css")
-    assert render.asset_response("dakit-tokens.css")["statusCode"] == 200
+        positions = [body.index(f"/assets/{name}") for name in order]
+        assert positions == sorted(positions), "dakit layers are out of cascade order"
 
 
 def test_hidden_attribute_is_forced_over_button_display():

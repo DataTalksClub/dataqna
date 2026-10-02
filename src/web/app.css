@@ -1,13 +1,14 @@
 /* DataQnA — read on a phone, in a dark room, one-handed.
 
    The visual system is dakit (../dakit), the design system shared with
-   dapier, dataops and relay. The vendored dakit-tokens.css (refresh with
-   scripts/sync_dakit.sh) defines every --dk-* semantic role in both themes;
-   this file defines only the roles the product adds on top — the room hero
-   band, the QR plate, toasts, the deep accent fills — and dresses every
-   component with those roles. Components never touch a --dk-* ramp and
-   never a raw hex: a theme is an alternative mapping of the semantic layer,
-   and nothing else.
+   dapier, dataops and relay. The vendored dakit sheets (refresh with
+   scripts/sync_dakit.sh) — tokens, base layer, .dk-* components — define
+   every --dk-* semantic role in both themes, the element defaults, and the
+   shared component classes; this file defines only the roles the product
+   adds on top — the room hero band, the QR plate, toasts, the deep accent
+   fills — and dresses every component with those roles. Components never
+   touch a --dk-* ramp and never a raw hex: a theme is an alternative
+   mapping of the semantic layer, and nothing else.
 
    Light is the default for everybody, whatever their device prefers — a
    link handed to a room full of people who did not choose to be here should
@@ -33,30 +34,9 @@
    red at 5.64:1. */
 
 /* Dakit's faces, self-hosted (SIL OFL, see fonts/LICENSE.md) and the same
-   files every internal tool ships: prose reads as Inter, quantities and IDs
-   as IBM Plex Mono — data should read as data, not prose. */
-
-@font-face {
-  font-family: "Inter";
-  font-style: normal;
-  font-weight: 400 700;
-  font-display: swap;
-  src: url("/assets/fonts/inter-var.woff2") format("woff2");
-}
-@font-face {
-  font-family: "IBM Plex Mono";
-  font-style: normal;
-  font-weight: 400;
-  font-display: swap;
-  src: url("/assets/fonts/ibm-plex-mono-400.woff2") format("woff2");
-}
-@font-face {
-  font-family: "IBM Plex Mono";
-  font-style: normal;
-  font-weight: 500;
-  font-display: swap;
-  src: url("/assets/fonts/ibm-plex-mono-500.woff2") format("woff2");
-}
+   files every internal tool ships, arrive with dakit-base.css — prose reads
+   as Inter, quantities and IDs as IBM Plex Mono: data should read as data,
+   not prose. */
 
 :root {
   color-scheme: light;
@@ -89,11 +69,6 @@
   /* Space: dakit's 4px grid. 48px stays as an app step under the hero. */
   --space-9: 48px;
 
-  /* Dakit's dropdown chevron (dakit css/base.css). The glyph is an image
-     and cannot read a token, so the ink is baked to match --dk-text-muted
-     per theme; the dark value flips in the dark block below. */
-  --dk-select-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%2357606a' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
-
   /* The room hero band: dakit's accent as a field. The deep steps exist so
      white ink clears AA on every stop of the gradient, in both themes. */
   --hero-bg: linear-gradient(135deg, var(--dk-accent-deep), var(--dk-accent-deeper));
@@ -122,7 +97,6 @@
    which borrows it, moves with it for free. */
 :root[data-theme="dark"] {
   color-scheme: dark;
-  --dk-select-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%239198a1' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
   --hero-muted: var(--dk-accent-hover);
   --hero-line: rgba(255, 255, 255, .35);
   --toast-bg: var(--dk-bg-hover);
@@ -947,17 +921,9 @@ textarea, input[type=text], input[type=email], input[type=number], select {
   outline: none;
 }
 
-/* Dakit's shared dropdown (css/base.css), copied because this app vendors
-   dakit's tokens only — keep these declarations mirroring the base layer. */
-select:not([multiple]) {
-  appearance: none;
-  -webkit-appearance: none;
-  padding-right: calc(2 * var(--dk-space-3) + 10px);
-  background-image: var(--dk-select-chevron);
-  background-repeat: no-repeat;
-  background-position: right var(--dk-space-3) center;
-  cursor: pointer;
-}
+/* Dakit's shared dropdown ships in dakit-base.css: the native arrow is gone,
+   the chevron sits 12px off the right edge, and the opened list follows the
+   pinned color-scheme. */
 textarea { resize: vertical; min-height: 84px; }
 textarea:focus-visible, input:focus-visible, select:focus-visible {
   border-color: var(--dk-accent-default);
