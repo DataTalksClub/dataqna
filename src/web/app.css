@@ -309,8 +309,11 @@ svg { flex: 0 0 auto; }
   white-space: nowrap;
 }
 
-/* The drawer open control lives in the toolbar on phones. */
+/* The drawer open control lives in the toolbar on phones, where the bar
+   also carries the page's name (hidden on desktop — the sidebar brands
+   the page there). */
 .sidebar-menu-toggle { display: none; }
+.toolbar-title { display: none; }
 
 .sidebar-nav {
   display: grid;
@@ -736,6 +739,18 @@ details.panel[open] > summary .chevron { transform: rotate(90deg); }
 
   .sidebar-menu-toggle { display: inline-flex; }
   .toolbar-who { display: none; }
+  .toolbar-title {
+    display: block;
+    flex: 1;
+    min-width: 0;
+    margin-left: var(--dk-space-2);
+    font-weight: 600;
+    font-size: var(--dk-text-md);
+    color: var(--dk-text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
 
   /* The family's mobile header scale. */
   .page-head h1 { font-size: var(--dk-text-xl); }

@@ -62,7 +62,7 @@
     <header class="app-toolbar">
       <button class="icon-button sidebar-menu-toggle" type="button" data-sidebar-menu-toggle aria-expanded="false" aria-controls="console-sidebar" aria-label="Open navigation">
         <svg class="icon" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><path d="M2.5 4.5h11M2.5 8h11M2.5 11.5h11"/></svg>
-        <span>Menu</span>
+      <span class="toolbar-title" aria-hidden="true"></span>
       </button>
       <nav class="toolbar-nav" aria-label="Account">
         <span class="muted toolbar-who" id="who"></span>
@@ -310,6 +310,25 @@
   if (mobile.addEventListener) {
     mobile.addEventListener("change", function (event) {
       if (!event.matches) setDrawer(false);
+    });
+  }
+  /* The family's phone bar titles itself with the page (dataops' bar says
+     "Today"), so the toolbar mirrors whichever view is visible — including
+     the room title admin.js fills in later. */
+  var toolbarTitle = document.querySelector(".toolbar-title");
+  function syncToolbarTitle() {
+    if (!toolbarTitle) return;
+    var view = document.querySelector("#view-list:not([hidden]), #view-room:not([hidden])");
+    var heading = view ? view.querySelector("h1") : null;
+    toolbarTitle.textContent = heading ? heading.textContent.trim() : "";
+  }
+  syncToolbarTitle();
+  if (mobile.addEventListener) mobile.addEventListener("change", syncToolbarTitle);
+  if (window.MutationObserver) {
+    var titleObserver = new MutationObserver(syncToolbarTitle);
+    ["view-list", "view-room"].forEach(function (id) {
+      var el = document.getElementById(id);
+      if (el) titleObserver.observe(el, { attributes: true, attributeFilter: ["hidden"], subtree: true, childList: true, characterData: true });
     });
   }
   /* Choosing a destination closes the drawer, the way a menu dismisses. */
