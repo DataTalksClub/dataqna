@@ -125,7 +125,10 @@ body {
 
 a { color: var(--dk-accent-default); }
 
-:focus-visible { outline: 2px solid var(--dk-accent-default); outline-offset: 2px; }
+/* The family's keyboard indicator (dakit docs/family.md, dataops
+   styles.css): always visible, 3px of the translucent --dk-focus-ring, so
+   it reads on every surface in both themes — never the plain accent. */
+:focus-visible { outline: 3px solid var(--dk-focus-ring); outline-offset: 2px; }
 
 svg { flex: 0 0 auto; }
 
@@ -918,17 +921,20 @@ textarea, input[type=text], input[type=email], input[type=number], select {
   background: var(--dk-bg-surface);
   border: 1px solid var(--dk-border-default);
   border-radius: var(--dk-radius-md);
-  outline: none;
 }
 
 /* Dakit's shared dropdown ships in dakit-base.css: the native arrow is gone,
    the chevron sits 12px off the right edge, and the opened list follows the
    pinned color-scheme. */
 textarea { resize: vertical; min-height: 84px; }
-textarea:focus-visible, input:focus-visible, select:focus-visible {
+/* The family's text-control focus recipe (dataops styles.css): the border
+   goes accent and the halo is --dk-focus-ring, not the soft surface the
+   pre-redesign sheet haloed with — on the page background that wash read
+   as nothing at all. */
+input:focus, select:focus, textarea:focus {
   border-color: var(--dk-accent-default);
-  box-shadow: 0 0 0 3px var(--dk-accent-soft);
   outline: none;
+  box-shadow: 0 0 0 3px var(--dk-focus-ring);
 }
 
 /* A full-width select inside a flex row wraps the row and strands its siblings. */
@@ -1006,7 +1012,7 @@ textarea:focus-visible, input:focus-visible, select:focus-visible {
 .composer textarea:focus-visible { box-shadow: none; }
 .composer:focus-within {
   border-color: var(--dk-accent-default);
-  box-shadow: 0 0 0 3px var(--dk-accent-soft), var(--dk-shadow-overlay);
+  box-shadow: 0 0 0 3px var(--dk-focus-ring), var(--dk-shadow-overlay);
 }
 .composer .composer-foot { display: flex; gap: var(--dk-space-2); align-items: center; }
 .composer .composer-foot input { flex: 1; min-width: 0; }
