@@ -138,10 +138,59 @@ sprite in dakit's showcase) are recorded below.
 ## Needed from dakit (not changed here)
 
 1. A `--dk-border-muted` semantic role (row hairlines); every family app
-   currently substitutes `--dk-border-default`.
+   currently substitutes `--dk-border-default`. — **Resolved upstream
+   2026-10-02**: dakit `15ca9e6` fixed the spec's row-hairline role to
+   `--dk-border-default`, which is what this app already ships; the
+   substitution is now the spec, not a gap.
 2. The canonical icon sprite family.md promises in `showcase.html` — the
    showcase carries no SVG set today, so each app redraws the shared shapes
-   (dataqna's now live in `admin.js`/`present.js`/`room.js`/`theme.js`).
+   (dataqna's now live in `admin.js`/`present.js`/`room.js`/`theme.js`). —
+   **Partially resolved upstream 2026-10-02**: dakit `15ca9e6` added the
+   canonical icon set to the showcase; per-app redraws stay byte-identical
+   to it, so nothing to change here.
 3. If the family wants the room's 16px body officially, widen the sanctioned
    exception from "dataqna room" to "dataqna participant surfaces", or ship a
    `--dk-text-body-phone` role so it stops reading as an app-local override.
+   — still open (dakit's spec still names "dataqna room" only).
+
+## Round 2 — the reconciliation audit (2026-10-02, `04cf277`)
+
+Re-audited against dakit at `1be906a` (the spec, base layer, component
+classes and family-reference captures all moved during the first round).
+Findings and what changed:
+
+- **Vendored layers already current.** Re-running `scripts/sync_dakit.sh`
+  against dakit `1be906a` is a byte-for-byte no-op: tokens, base and
+  component sheets in `src/web/` match dakit's build output, and the
+  cascade-order test still pins tokens → base → components → app on every
+  rendered page and the asset route.
+- **The focus recipe was the one real drift.** The pre-redesign sheet still
+  drew the keyboard indicator its own way: a 2px outline in the plain
+  accent, and text-control halos in `--dk-accent-soft` — a wash so pale on
+  the page background that the halo read as nothing (measured:
+  `rgb(237,245,255)` on white). Fixed in `00d346c` to the family recipe:
+  `:focus-visible` is 3px translucent `--dk-focus-ring` (measured after:
+  `rgba(49,95,143,0.6) solid 3px`), text controls trade the outline for an
+  accent border plus a focus-ring halo on `:focus`, and the ask composer's
+  focus-within halo follows the same role. Before/after crops:
+  `tmp/audit-shots/composites/cmp-focus-{light,dark}-before-vs-after.png`.
+  Note for dakit: its own base layer still ships `outline: 2px` at
+  `:focus-visible` while the spec and dataops say 3px — the app carries the
+  spec values locally until the base layer catches up.
+- **Links now take the family link role** (`04cf277`): `--dk-text-link`
+  instead of the bare accent — the same rendered value today, the correct
+  role for theme remaps tomorrow.
+- **Re-measured, all on the family scale**: sidebar 268px on
+  `--dk-bg-muted` with a 1px right border; h1 32px/600; nav rows 36px at
+  radius-md; group labels 11px/600/uppercase/0.07em; selected row = accent
+  soft fill, no left border; panel rows 40px; primary control 34px high at
+  13px text (`--dk-size-control-md`); exactly one accent fill per view
+  (`Create session` on the admin list); every control glyph 16×16, stroke
+  1.5, round caps, no fills.
+
+Judge for this round: an independent dataops session (`knowledge`, reached
+over aplexer as DQ-JUDGE-R1) reviewed the after renders, the composites and
+the dataops reference captures against the spec. Its verdict is recorded
+verbatim under `tmp/JUDGE-round2-verdict.md`; this session has no
+subagent-spawning tool, so the cross-session route is the independence
+mechanism, replacing round 1's self-review fallback.
