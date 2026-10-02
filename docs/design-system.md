@@ -231,10 +231,12 @@ Notes that are not obvious from the code:
   `archived` danger, draft and closed neutral.
 - **Icons are one language**: inline SVG, 16×16 box, `stroke="currentColor"`,
   stroke-width 1.5, round caps and joins, no fills — nav rows, the toolbar, the
-  theme toggle, and the moderation squares all draw it. The upvote chevron is
-  the exception on purpose: it is the product's brand glyph (it is in the
-  favicon too). Presentation mode keeps its 24-box shapes because the
-  projector scales them, but at the family stroke.
+  theme toggle, the moderation squares, and every presentation-mode glyph all
+  draw it, so a host's two surfaces render one action with one drawing.
+  Display sizes stay contextual (the projector scales a glyph, not the
+  drawing). The upvote chevron is the exception on purpose: it is the
+  product's brand glyph (it is in the favicon too), as is the room's 48px
+  empty-state bubble — an illustration, not a control glyph.
 - **Touch targets are 44px minimum** (dakit's `--dk-size-touch`, applied as a
   floor rather than a control height — dakit's 34px control is a desktop
   measure). `.btn.small` trims padding and type, never the target. `.icon-btn`
