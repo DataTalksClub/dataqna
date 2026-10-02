@@ -776,6 +776,10 @@ details.panel[open] > summary::after { transform: translateY(2px) rotate(225deg)
 }
 .hero h1 {
   margin: 0;
+  /* dakit's base layer gives every h1 the heading ink, which goes near-black
+     on the band's navy in light theme (1.9:1) — the title takes the band's
+     on-deep color like every other hero line. */
+  color: inherit;
   font-size: var(--dk-text-page);
   font-weight: 700;
   letter-spacing: var(--tracking-tight);
