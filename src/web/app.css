@@ -155,9 +155,11 @@ svg { flex: 0 0 auto; }
    dataops console's — the family one shell, so the tools read as siblings.
 
    Console controls sit on dakit's desktop control scale (34px, 13px text,
-   radius-md), not the room's touch-first one; the :where keeps this scope
-   from out-specifying the component rules below it, so .icon-btn stays a
-   44px touch target and .tabs keep their pill. */
+   radius-md), not the room's touch-first one. The scope carries the
+   specificity — a bare :where cannot beat the sheet's 44px touch defaults
+   below — while the :where groups keep the exclusions cheap: .icon-btn and
+   .icon-button stay touch/chrome sizes, and the phone media block re-raises
+   the rest to --dk-size-touch. */
 
 .app-shell {
   display: grid;
@@ -167,26 +169,62 @@ svg { flex: 0 0 auto; }
   font-size: var(--dk-text-body);
 }
 
-.app-shell :where(button, .btn) {
+.app-shell button:where(:not(.icon-btn):not(.icon-button)),
+.app-shell .btn:where(:not(.icon-btn)) {
   min-height: var(--dk-size-control-md);
   padding: 0 var(--dk-space-4);
   font-size: var(--dk-text-md);
   border-radius: var(--dk-radius-md);
 }
-.app-shell :where(button.small, .btn.small) {
+.app-shell button.small,
+.app-shell .btn.small {
   min-height: var(--dk-size-control-sm);
   padding: 0 var(--dk-space-3);
   font-size: var(--dk-text-sm);
 }
-.app-shell :where(input[type=text], select) {
+.app-shell input[type=text],
+.app-shell input[type=email],
+.app-shell input[type=number],
+.app-shell select {
   min-height: var(--dk-size-control-md);
-  padding: var(--dk-space-2) var(--dk-space-3);
+  padding: var(--dk-space-2) 10px;
   font-size: var(--dk-text-md);
   border-radius: var(--dk-radius-md);
 }
+.app-shell textarea { padding: var(--dk-space-2) 10px; font-size: var(--dk-text-md); }
 .app-shell .tabs button {
   min-height: var(--dk-size-control-sm);
   padding: var(--dk-space-1) var(--dk-space-3);
+}
+
+/* The public operator pages (directory, notices, co-host handoff) sit on
+   the same desktop control scale once the viewport is a desk, not a hand;
+   the room alone keeps its sanctioned phone-first touch scale at every
+   width — participants never meet a pointer. */
+@media (min-width: 821px) {
+  .wrap button:where(:not(.icon-btn):not(.icon-button):not(.vote)),
+  .wrap .btn:where(:not(.icon-btn)) {
+    min-height: var(--dk-size-control-md);
+    padding: 0 var(--dk-space-4);
+    font-size: var(--dk-text-md);
+  }
+  .wrap button.small, .wrap .btn.small {
+    min-height: var(--dk-size-control-sm);
+    padding: 0 var(--dk-space-3);
+    font-size: var(--dk-text-sm);
+  }
+  .wrap input[type=text], .wrap input[type=email], .wrap input[type=number], .wrap select {
+    min-height: var(--dk-size-control-md);
+    padding: var(--dk-space-2) 10px;
+    font-size: var(--dk-text-md);
+  }
+  .room-wrap button:where(:not(.icon-btn):not(.icon-button):not(.vote)),
+  .room-wrap .btn:where(:not(.icon-btn)),
+  .room-wrap input[type=text], .room-wrap textarea {
+    min-height: var(--dk-size-touch);
+    padding: var(--dk-space-2) var(--dk-space-4);
+  }
+  .room-wrap input[type=text], .room-wrap textarea { font-size: var(--dk-text-lg); }
 }
 
 /* Quiet chrome button — 28px, no border until hover. Chrome, not touch:
@@ -716,11 +754,21 @@ details.panel[open] > summary::after { transform: translateY(2px) rotate(225deg)
   }
 
   /* The room's touch scale is for hands, not pointers — the console keeps
-     it on a phone, where the pointer is a finger again. */
-  .app-shell :where(button:not(.icon-button):not(.icon-btn), .btn:not(.icon-btn)) {
+     it on a phone, where the pointer is a finger again. The selectors
+     mirror the desktop scope's specificity so the re-raise wins. */
+  .app-shell button:where(:not(.icon-button):not(.icon-btn)),
+  .app-shell .btn:where(:not(.icon-btn)) {
     min-height: var(--dk-size-touch);
+    padding: 0 var(--dk-space-4);
   }
-  .app-shell :where(input[type=text], select) { min-height: var(--dk-size-touch); }
+  .app-shell button.small, .app-shell .btn.small { min-height: var(--dk-size-touch); }
+  .app-shell input[type=text], .app-shell input[type=email],
+  .app-shell input[type=number], .app-shell select {
+    min-height: var(--dk-size-touch);
+    padding: var(--dk-space-3);
+    font-size: var(--dk-text-lg);
+  }
+  .app-shell textarea { padding: var(--dk-space-3); font-size: var(--dk-text-lg); }
   .app-shell .tabs button { min-height: var(--dk-size-touch); padding: var(--dk-space-2) var(--dk-space-4); }
 }
 
