@@ -85,10 +85,6 @@
      dark mapping, where the plate is the hero band. */
   --qr-ink: var(--dk-text-primary);
   --qr-paper: transparent;
-
-  /* The drawer's scrim over the page. Lives in the token block because the
-     layer rule forbids raw color below it. */
-  --scrim-bg: rgba(15, 23, 42, .45);
 }
 
 /* Dark: dakit remaps every --dk-* role under :root[data-theme="dark"], so
@@ -104,7 +100,6 @@
   --toast-line: rgba(255, 255, 255, .16);
   --qr-ink: var(--dk-text-on-deep);
   --qr-paper: var(--hero-bg);
-  --scrim-bg: rgba(1, 4, 9, .6);
 }
 
 /* ---------------------------------------------------------------- base */
@@ -710,7 +705,8 @@ details.panel[open] > summary::after { transform: translateY(2px) rotate(225deg)
     position: fixed;
     inset: 0;
     z-index: 25;
-    background: var(--scrim-bg);
+    /* The family's backdrop, straight from the token sheet. */
+    background: var(--dk-bg-backdrop);
   }
 
   /* The room's touch scale is for hands, not pointers — the console keeps
@@ -991,12 +987,12 @@ textarea:focus, input:focus, select:focus {
 .limit-ring.over .left { color: var(--dk-danger-text); }
 
 /* The ask composer: the card is the field. One border does the outlining,
-   so the textarea inside goes naked. */
+   so the textarea inside goes naked. A static container carries the family's
+   border and no shadow — shadows belong to overlays. */
 .composer {
   background: var(--dk-bg-surface);
   border: 1px solid var(--dk-border-default);
   border-radius: var(--dk-radius-md);
-  box-shadow: var(--dk-shadow-overlay);
   padding: var(--dk-space-4);
   margin-bottom: var(--dk-space-3);
 }
@@ -1012,7 +1008,7 @@ textarea:focus, input:focus, select:focus {
 .composer textarea:focus-visible { box-shadow: none; }
 .composer:focus-within {
   border-color: var(--dk-accent-default);
-  box-shadow: 0 0 0 3px var(--dk-focus-ring), var(--dk-shadow-overlay);
+  box-shadow: 0 0 0 3px var(--dk-focus-ring);
 }
 .composer .composer-foot { display: flex; gap: var(--dk-space-2); align-items: center; }
 .composer .composer-foot input { flex: 1; min-width: 0; }
@@ -1413,7 +1409,7 @@ ol.present-list {
 }
 .present-list li.selected {
   border-color: var(--dk-accent-default);
-  box-shadow: 0 0 0 2px var(--dk-accent-default), var(--dk-shadow-overlay);
+  box-shadow: 0 0 0 2px var(--dk-accent-default);
 }
 /* The pin is exclusive, so the one tinted card reads as the question the
    host is holding up — legible from the back of the room, not only in the
