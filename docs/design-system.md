@@ -99,30 +99,22 @@ accent-on-soft 6.03:1 (light) and 5.45:1 over a card (dark, dakit's translucent
 soft composited); hero-muted on the band's lightest stop 7.94:1 (light) / 5.37:1
 (dark).
 
-One divergence from dakit's own dark buttons, carried deliberately:
+Filled controls follow dakit's own pairing in both themes — the accent under
+its `--dk-text-on-accent` ink, `accent-hover` on hover — the same buttons
+dataops ships. In dark that is the bright accent (#58a6ff) with near-black ink
+at 7.49:1; since the pairing is defined and measured at dakit's build, it is
+verified there rather than re-asserted here. The solid danger button also
+follows dakit: dakit has no deep red that could hold white ink in dark — its
+dark danger (#f85149) is built to be a text color, and white on it is 3.35:1 —
+so the fill is `--dk-danger-text` and the ink is the same `--dk-text-on-accent`:
+white in light (5.35:1 on #cf222e) and near-black in dark (5.64:1 on #f85149).
+The hover is dakit's `--dk-danger-hover`, no filter.
 
-- **Accent fills keep white ink on the deep end of the ramp.** Dakit's dark theme
-  pairs its bright accent (#58a6ff) with near-black ink — fine on a console,
-  strange on a phone in a dark hall, and this app's audience is the phone. So the
-  fill goes to `--dk-accent-deep` in dark (#1c3d5e) and the ink stays
-  `--dk-text-on-deep`: white on the fill is 11.16:1. In light the fill is the
-  accent itself (#315f8f, 6.64:1 under white) and the hover is `accent-deep-hover`
-  (#244d78) — the same value deeper in light and brighter in dark, because blue-600
-  lies between each theme's fill and its accent. Text, strokes and links follow
-  dakit's bright dark accent (7.49:1 on the page); dakit's `accent-deep/deeper/
-  deep-hover/text-on-deep` roles were added for this pairing, so it is verified at
-  dakit's build rather than asserted here.
-- **The solid danger button is the exception to the exception.** Dakit has no deep
-  red that could hold white ink in dark — its dark danger (#f85149) is built to be
-  a text color, and white on it is 3.35:1. So the danger fill stays
-  `--dk-danger-text` and its ink is `--on-danger`: dakit's own pairing,
-  `--dk-text-on-accent`, which is white in light (5.35:1 on #cf222e) and near-black
-  in dark (5.64:1 on #f85149). The hover is dakit's `--dk-danger-hover`, no filter.
-- **The dark hero band keeps the brand.** It is the same gradient in both themes —
-  `accent-deep → accent-deeper` — darkened by the role remap, 20.5 L* off the dark
-  page at the stop that shows. A navy panel once cleared every text check on it
-  and was still invisible at 1.21:1 against the page; the L* floor in
-  `test_theme.py` exists because of that.
+The dark hero band keeps the brand. It is the same gradient in both themes —
+`accent-deep → accent-deeper` — darkened by the role remap, 20.5 L* off the dark
+page at the stop that shows. A navy panel once cleared every text check on it
+and was still invisible at 1.21:1 against the page; the L* floor in
+`test_theme.py` exists because of that.
 
 The QR is one pair of tokens, `--qr-ink` / `--qr-paper`, and the theme decides
 what paper is. In light the page itself is paper: no plate, the code is drawn in
