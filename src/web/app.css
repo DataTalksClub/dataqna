@@ -610,7 +610,7 @@ svg { flex: 0 0 auto; }
 
 .table-wrap td { border-bottom: 1px solid var(--dk-border-default); }
 .table-wrap tr:last-child td { border-bottom: 0; }
-.table-wrap tbody tr:hover td { background: var(--dk-bg-muted); }
+.table-wrap tbody tr:hover td { background: var(--dk-bg-hover); }
 
 /* The queue is the room view's dominant content: one panel, divided rows.
    The generic .question card stays for the participant room; inside the
@@ -914,7 +914,10 @@ textarea, input[type=text], input[type=email], input[type=number], select {
   padding: var(--dk-space-3);
   font: inherit;
   color: var(--dk-text-primary);
-  background: var(--dk-bg-surface);
+  /* The family's control ground is the page, not the card — dakit's .dk-input
+     and dataops's fields both sit on --dk-bg-page, which in dark reads darker
+     than a surface card and is how the siblings draw a field on one. */
+  background: var(--dk-bg-page);
   border: 1px solid var(--dk-border-default);
   border-radius: var(--dk-radius-md);
   outline: none;
@@ -1065,9 +1068,9 @@ th {
 }
 .back-link:hover { color: var(--dk-text-primary); }
 .room-head h1 {
+  /* Size and weight come from .page-head's rule (32px semibold, 22px on a
+     phone) — the room header is that page header, with a back link above. */
   margin: 0 0 var(--dk-space-1);
-  font-size: var(--dk-text-xl);
-  font-weight: 700;
   letter-spacing: var(--tracking-tight);
   line-height: var(--dk-leading-tight);
   overflow-wrap: anywhere;
