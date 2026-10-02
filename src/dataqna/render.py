@@ -36,8 +36,8 @@ FAVICON = (
 
 THEME_META = '<meta name="theme-color" content="#ffffff">'
 
-# The class does nothing until app.css lands; color-scheme is what the UA reads
-# in the meantime, and light is what it should read.
+# Pinned before app.css lands: color-scheme is what the UA reads in the
+# meantime, and light is what it should read.
 THEME_CANVAS = "<style>:root{color-scheme:light}</style>"
 
 # Applies a pinned dark theme before first paint, so server-rendered pages match
@@ -47,7 +47,6 @@ THEME_CANVAS = "<style>:root{color-scheme:light}</style>"
 THEME_SCRIPT = (
     "<script>(function(){try{"
     'if(localStorage.getItem("dq_theme")!=="dark")return;'
-    'document.documentElement.classList.add("theme-dark");'
     'document.documentElement.setAttribute("data-theme","dark");'
     'document.documentElement.style.colorScheme="dark";'
     "var m=document.querySelectorAll('meta[name=\"theme-color\"]');"
