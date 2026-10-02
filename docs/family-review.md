@@ -145,3 +145,37 @@ sprite in dakit's showcase) are recorded below.
 3. If the family wants the room's 16px body officially, widen the sanctioned
    exception from "dataqna room" to "dataqna participant surfaces", or ship a
    `--dk-text-body-phone` role so it stops reading as an app-local override.
+
+## Round-8 independent judge (addendum; supersedes F5 above)
+
+The review above was recorded mid-lane. The lane's final commits (`d8bbc8a`
+through `ad25ea6`) moved every glyph onto the family's locked 24-grid, took
+the family focus ring, the scrim/overlay shadow recipes and the remaining
+family recipes, and gave the hero title the band's on-deep ink — the F5 row
+above no longer describes the tip. An independent judge pass over the
+rendered tip closed the gap:
+
+- Judged at `0a27986`; the follow-up `ad25ea6` raised the one flagged glyph
+  (the spotlight's 22px score chevron) to the locked 20px, DOM-verified on
+  the served tip. Evidence: 24 renders — 6 surfaces × light/dark ×
+  1440×900/390×844 — from the preview rig, against `dakit/docs/family.md`
+  and the dataops reference captures, with PIL pixel samples and Playwright
+  DOM/CSS measurements behind every claim.
+- **Verdict: pass, 0 blocking.** Surface scores: home 9, admin 9,
+  admin-room 8, cohost 9, present 8, room 9.
+- F5, corrected: every control glyph renders a 24×24 viewBox at 20px,
+  stroke 1.8, round caps/joins, currentColor, no fills; zero 16-grid hits
+  across the served assets and DOM.
+- Measured against the reference: the console sidebar is exactly 268px on
+  muted with a 1px border and the accent-soft fill as the only selection
+  signal (no rail); one filled accent control per view; shadowless panels
+  with muted header bands over 40px hairline rows; the dark ramp is
+  pixel-identical to dataops (#0d1117 / #161b22 / #21262d / #30363d, accent
+  #58a6ff); the focus ring is the family's 3px at 2px offset with the input
+  halo; the hero title reads light ink on the deep band in light theme
+  (`0a27986`).
+- Carried nonblocking: room-console header controls sit on the 44px touch
+  base (classed buttons outrank the shell's `:where()` 34px default —
+  on-scale); the projector's footer glyphs scale to 18px/26px for distance
+  legibility on the same 24-grid geometry; the room hero h1 keeps its 700
+  weight on the sanctioned band.
