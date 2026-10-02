@@ -153,7 +153,7 @@ sprite in dakit's showcase) are recorded below.
    `--dk-text-body-phone` role so it stops reading as an app-local override.
    — still open (dakit's spec still names "dataqna room" only).
 
-## Round 2 — the reconciliation audit (2026-10-02, `04cf277`)
+## Round 2 — the reconciliation audit (2026-10-02, `00d346c`..`2700f8a`)
 
 Re-audited against dakit at `1be906a` (the spec, base layer, component
 classes and family-reference captures all moved during the first round).
@@ -189,8 +189,37 @@ Findings and what changed:
   1.5, round caps, no fills.
 
 Judge for this round: an independent dataops session (`knowledge`, reached
-over aplexer as DQ-JUDGE-R1) reviewed the after renders, the composites and
-the dataops reference captures against the spec. Its verdict is recorded
-verbatim under `tmp/JUDGE-round2-verdict.md`; this session has no
-subagent-spawning tool, so the cross-session route is the independence
-mechanism, replacing round 1's self-review fallback.
+over aplexer — this session has no subagent-spawning tool, so cross-session
+review is the independence mechanism, replacing round 1's self-review
+fallback) reviewed the renders, composites and dataops reference captures
+against the spec.
+
+- **DQ-JUDGE-R1: FAIL** — six criteria, F1/F3/F6 clean, and four findings
+  this app could not wave off: the console heading sat at 22px/700 instead
+  of the 32px page scale; the shell's 34px control scope lost the cascade
+  (a bare `:where` cannot beat the touch defaults) so console buttons and
+  fields rendered at the 44px/47px touch sizes on a desktop; the directory
+  carried two solid primaries and the pressed vote pill a second fill; the
+  projector stacked separate bordered cards; console rows exposed three
+  icon-only actions; the setup-panel chevron was a CSS border trick outside
+  the SVG language; the adjacent nav rows clipped the focus ring; and the
+  base layer's `h1` rule laid near-black ink over the light hero.
+- **The fixes** landed in `42eccdc` (desktop control scale, with the public
+  operator pages on it past 820px and the room alone keeping its sanctioned
+  touch scale at every width), `1ac64f4` (console heading onto the page
+  scale), and `2700f8a` (labelled row actions, inset nav focus ring, one
+  bordered list on the projector, soft-accent voted pill, secondary
+  directory back-link, inline-SVG disclosure chevrons, hero ink).
+- **DQ-JUDGE-R2: PASS, no required fixes.** The re-review went to the
+  `invoice` dataops session (DQ-JUDGE-R2B — `knowledge` had gone stale-idle
+  and its delivery queue refused fresh submission) over the same aplexer
+  route, against the equal-scale composites built to round 1's evidence
+  caveat. All six criteria pass (F2/F5/F6 at 10, F1/F3/F4 at 8 with one
+  nameable deviation each), the focus recipe passes, and its three optional
+  polish items are recorded: titling the phone bar with the page (done in
+  the commit above), unifying empty-state framing, and one footer-padding
+  variance — the last two left open. Verdict verbatim under
+  `tmp/JUDGE-round2-verdict.md`. One spec note for the next round: dakit
+  `579b01b` redefined the icon geometry to dataops' rendered form (24-grid
+  paths at 20px, stroke 1.8), superseding the 16/1.5 geometry this review
+  scored; migrating the app's glyphs to it is underway in this tree.
