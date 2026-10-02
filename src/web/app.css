@@ -23,16 +23,13 @@
    dakit's translucent soft, composited), hero-muted on the band's lightest
    stop 7.94:1 (light) / 5.37:1 (dark), white on the band 8.73:1 / 11.16:1.
 
-   One deliberate divergence from dakit's own dark buttons: filled controls
-   keep white ink on the deep end of the accent ramp — dakit pairs its dark
-   accent (#58a6ff) with near-black ink at 7.49:1, but a room full of phones
-   reads white-on-deep-blue better than near-black-on-bright-blue, and the
-   deep roles exist so the pairing is verified rather than asserted: fills
-   take --dk-accent-deep in dark, ink takes --dk-text-on-deep, white on the
-   fill is 11.16:1. Text, strokes and links follow dakit's bright dark
-   accent (7.49:1 on the page). The solid danger button is the exception on
-   purpose: dakit has no deep red to hold white ink in dark, so its ink
-   follows dakit's own pairing (--dk-text-on-accent), near-black on bright
+   Filled controls follow dakit's own pairing in both themes — accent under
+   its on-accent ink, accent.hover on hover — the same buttons dataops
+   ships: in dark that is the bright accent (#58a6ff) with near-black ink
+   at 7.49:1. Text, strokes and links follow dakit's accent too. The hero
+   band and the dark QR plate still sit on the deep end of the ramp; their
+   numbers are above. The solid danger button also follows dakit: dakit has
+   no deep red, so its ink is --dk-text-on-accent, near-black on bright
    red at 5.64:1. */
 
 /* Dakit's faces, self-hosted (SIL OFL, see fonts/LICENSE.md) and the same
@@ -65,13 +62,12 @@
   color-scheme: light;
 
   /* The app's own roles — everything else components use is a --dk-* token
-     from the vendored sheet. Fills are the product's one accent divergence:
-     the deep end of the ramp under white ink, one hover for both themes
-     (blue-600 lies between each theme's deep fill and its accent, so hover
-     is deeper in light and brighter in dark at the same value). */
+     from the vendored sheet. Fills are dakit's own pairing — accent under
+     its on-accent ink, accent.hover on hover — the same buttons dataops
+     ships; the app names exist so components read them by product name. */
   --accent-fill: var(--dk-accent-default);
-  --accent-fill-hover: var(--dk-accent-deep-hover);
-  --on-accent: var(--dk-text-on-deep);
+  --accent-fill-hover: var(--dk-accent-hover);
+  --on-accent: var(--dk-text-on-accent);
   /* The solid danger button has no deep red to hold white ink in dark, so
      its ink follows dakit's own pairing and flips with the theme. */
   --danger-fill: var(--dk-danger-text);
@@ -117,7 +113,6 @@
    which borrows it, moves with it for free. */
 :root[data-theme="dark"] {
   color-scheme: dark;
-  --accent-fill: var(--dk-accent-deep);
   --hero-muted: var(--dk-accent-hover);
   --hero-line: rgba(255, 255, 255, .35);
   --toast-bg: var(--dk-bg-hover);

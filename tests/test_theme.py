@@ -111,13 +111,21 @@ def test_light_is_what_a_link_opens_in():
 
 
 def test_ink_is_legible_on_every_filled_control():
-    """The pair that inverted in dark: a fill light enough to read as text on
-    the page is too light to carry its ink. Accent fills keep white on the
-    deep end of the ramp in dark (the app's one divergence from dakit's dark
-    buttons), so they share --on-accent; the solid danger button has no deep
-    red to sit under white, so its ink follows dakit's own pairing and flips
-    with --on-danger."""
+    """Fills follow dakit's own pairing — the same buttons dataops ships —
+    pinned by equality so the app cannot drift from the system: accent and
+    its hover under --on-accent (dakit's ink flips with the theme), the
+    solid danger button under --on-danger. The contrast floor is re-checked
+    rather than trusted: accent.hover's pair is not in dakit's own list, and
+    a missing definition fails var() silent — the danger button lost its
+    fill once already."""
     for name, block in THEMES.items():
+        for fill, source in (("accent-fill", "dk-accent-default"),
+                             ("accent-fill-hover", "dk-accent-hover"),
+                             ("on-accent", "dk-text-on-accent"),
+                             ("danger-fill", "dk-danger-text"),
+                             ("on-danger", "dk-text-on-accent")):
+            assert resolve(block, fill) == resolve(block, source), \
+                f"{name}: {fill} left dakit's pairing"
         for fill, ink in (("accent-fill", "on-accent"),
                           ("accent-fill-hover", "on-accent"),
                           ("danger-fill", "on-danger")):
