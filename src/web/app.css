@@ -125,7 +125,10 @@ body {
 
 a { color: var(--dk-accent-default); }
 
-:focus-visible { outline: 2px solid var(--dk-accent-default); outline-offset: 2px; }
+/* The family's keyboard indicator: always visible, from --dk-focus-ring, at
+   the recipe's 3px with a 2px offset. Text controls swap it for the accent
+   border plus the ring's halo (the forms section below). */
+:focus-visible { outline: 3px solid var(--dk-focus-ring); outline-offset: 2px; }
 
 svg { flex: 0 0 auto; }
 
@@ -925,9 +928,12 @@ textarea, input[type=text], input[type=email], input[type=number], select {
    the chevron sits 12px off the right edge, and the opened list follows the
    pinned color-scheme. */
 textarea { resize: vertical; min-height: 84px; }
-textarea:focus-visible, input:focus-visible, select:focus-visible {
+/* The family's text-control focus: accent border plus the focus ring's halo,
+   on :focus — the indicator a typing field shows is this pair, not the
+   outline. */
+textarea:focus, input:focus, select:focus {
   border-color: var(--dk-accent-default);
-  box-shadow: 0 0 0 3px var(--dk-accent-soft);
+  box-shadow: 0 0 0 3px var(--dk-focus-ring);
   outline: none;
 }
 
@@ -1006,7 +1012,7 @@ textarea:focus-visible, input:focus-visible, select:focus-visible {
 .composer textarea:focus-visible { box-shadow: none; }
 .composer:focus-within {
   border-color: var(--dk-accent-default);
-  box-shadow: 0 0 0 3px var(--dk-accent-soft), var(--dk-shadow-overlay);
+  box-shadow: 0 0 0 3px var(--dk-focus-ring), var(--dk-shadow-overlay);
 }
 .composer .composer-foot { display: flex; gap: var(--dk-space-2); align-items: center; }
 .composer .composer-foot input { flex: 1; min-width: 0; }
