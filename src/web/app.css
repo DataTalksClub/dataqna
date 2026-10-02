@@ -89,6 +89,11 @@
   /* Space: dakit's 4px grid. 48px stays as an app step under the hero. */
   --space-9: 48px;
 
+  /* Dakit's dropdown chevron (dakit css/base.css). The glyph is an image
+     and cannot read a token, so the ink is baked to match --dk-text-muted
+     per theme; the dark value flips in the dark block below. */
+  --dk-select-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%2357606a' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+
   /* The room hero band: dakit's accent as a field. The deep steps exist so
      white ink clears AA on every stop of the gradient, in both themes. */
   --hero-bg: linear-gradient(135deg, var(--dk-accent-deep), var(--dk-accent-deeper));
@@ -113,6 +118,7 @@
    which borrows it, moves with it for free. */
 :root[data-theme="dark"] {
   color-scheme: dark;
+  --dk-select-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%239198a1' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
   --hero-muted: var(--dk-accent-hover);
   --hero-line: rgba(255, 255, 255, .35);
   --toast-bg: var(--dk-bg-hover);
@@ -361,6 +367,18 @@ textarea, input[type=text], input[type=email], input[type=number], select {
   border-radius: var(--dk-radius-lg);
   box-shadow: var(--dk-shadow-card);
   outline: none;
+}
+
+/* Dakit's shared dropdown (css/base.css), copied because this app vendors
+   dakit's tokens only — keep these declarations mirroring the base layer. */
+select:not([multiple]) {
+  appearance: none;
+  -webkit-appearance: none;
+  padding-right: calc(2 * var(--dk-space-3) + 10px);
+  background-image: var(--dk-select-chevron);
+  background-repeat: no-repeat;
+  background-position: right var(--dk-space-3) center;
+  cursor: pointer;
 }
 textarea { resize: vertical; min-height: 84px; }
 textarea:focus-visible, input:focus-visible, select:focus-visible {
