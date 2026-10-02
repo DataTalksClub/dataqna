@@ -11,7 +11,15 @@ from dataqna.http import HttpError
 
 logging.getLogger().setLevel(logging.INFO)
 
-ASSETS = {"app.css", "theme.js", "room.js", "admin.js", "present.js", "qna.js"}
+ASSETS = {
+    "dakit-tokens.css",
+    "app.css",
+    "theme.js",
+    "room.js",
+    "admin.js",
+    "present.js",
+    "qna.js",
+}
 
 
 def _room_config(room, participant, host_links=None):

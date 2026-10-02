@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex">
 <title>DataQnA admin</title>
-<meta name="theme-color" content="#f6f8fb">
+<meta name="theme-color" content="#f6f8fa">
 <!-- The class means nothing until app.css arrives, and until then the UA
      paints its own canvas. Light is the default, so this is what it says;
      the script below overrides it when dark is pinned. -->
@@ -16,13 +16,17 @@
   try {
     if (localStorage.getItem("dq_theme") !== "dark") return;
     document.documentElement.classList.add("theme-dark");
+    /* dakit's token sheet keys its dark values off data-theme, so the
+       attribute rides along with the class. */
+    document.documentElement.setAttribute("data-theme", "dark");
     document.documentElement.style.colorScheme = "dark";
     var metas = document.querySelectorAll('meta[name="theme-color"]');
-    for (var i = 0; i < metas.length; i++) metas[i].setAttribute("content", "#0d1220");
+    for (var i = 0; i < metas.length; i++) metas[i].setAttribute("content", "#0d1117");
   } catch (e) {}
 })();
 </script>
 <link rel="icon" href="{{FAVICON}}">
+<link rel="stylesheet" href="/assets/dakit-tokens.css">
 <link rel="stylesheet" href="/assets/app.css">
 </head>
 <body>

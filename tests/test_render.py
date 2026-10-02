@@ -59,6 +59,20 @@ def test_unknown_assets_and_traversal_are_refused():
     assert render.asset_response("../dataqna/config.py")["statusCode"] == 404
 
 
+def test_dakit_tokens_ship_before_the_stylesheet():
+    """app.css resolves its colors through the vendored dakit sheet, so the
+    cascade needs the tokens first — on every page that links one and in the
+    server-rendered shell — and the asset route has to serve them."""
+    import public_handler
+
+    assert "dakit-tokens.css" in public_handler.ASSETS
+    bodies = [render.asset_bytes(name).decode() for name in ("room.html", "admin.html", "present.html")]
+    bodies.append(render.notice("Gone", "Nothing here.")["body"])
+    for body in bodies:
+        assert body.index("/assets/dakit-tokens.css") < body.index("/assets/app.css")
+    assert render.asset_response("dakit-tokens.css")["statusCode"] == 200
+
+
 def test_hidden_attribute_is_forced_over_button_display():
     """`display: inline-block` on button beats the UA `[hidden]` rule, so the
     Answered tab rendered even with the attribute set."""

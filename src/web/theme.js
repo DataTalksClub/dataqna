@@ -20,8 +20,8 @@
 
   /* The address bar matches the top of the page, which is the hero band in a
      room and the page background everywhere else. */
-  var DARK = root.getAttribute("data-theme-dark") || "#0d1220";
-  var LIGHT = root.getAttribute("data-theme-light") || "#f6f8fb";
+  var DARK = root.getAttribute("data-theme-dark") || "#0d1117";
+  var LIGHT = root.getAttribute("data-theme-light") || "#f6f8fa";
 
   var SUN = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" ' +
     'stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
@@ -49,6 +49,9 @@
   function toggle() {
     var next = effective() === "dark" ? "light" : "dark";
     root.classList.toggle("theme-dark", next === "dark");
+    /* dakit's token sheet keys its dark values off data-theme, so the
+       attribute moves with the class. */
+    root.setAttribute("data-theme", next);
     root.style.colorScheme = next;
     try {
       if (next === "dark") localStorage.setItem("dq_theme", "dark");

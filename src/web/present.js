@@ -541,9 +541,12 @@
      slides wash out in a lit room. Dark is an explicit choice, kept across
      sessions for the hosts who present from an OLED in a dim studio. */
   function applyTheme(theme) {
-    document.documentElement.classList.toggle("theme-dark", theme === "dark");
-    document.documentElement.classList.toggle("theme-light", theme !== "dark");
-    var color = theme === "dark" ? "#0d1220" : "#ffffff";
+    var root = document.documentElement;
+    root.classList.toggle("theme-dark", theme === "dark");
+    root.classList.toggle("theme-light", theme !== "dark");
+    /* dakit's token sheet keys its dark values off data-theme. */
+    root.setAttribute("data-theme", theme);
+    var color = theme === "dark" ? "#0d1117" : "#ffffff";
     var metas = document.querySelectorAll('meta[name="theme-color"]');
     Array.prototype.forEach.call(metas, function (meta) { meta.setAttribute("content", color); });
   }

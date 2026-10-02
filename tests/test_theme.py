@@ -23,13 +23,19 @@ def tokens(block):
 
 
 # `:root` holds the raw ramps and the light mapping; a dark block overlays it,
-# exactly as the cascade does.
+# exactly as the cascade does. The ramps resolve into dakit's vendored sheet,
+# so its light values join the table — and for the dark block its dark remap
+# joins too, which is what `:root[data-theme="dark"]` does in the browser.
+DK = render.asset_bytes("dakit-tokens.css").decode()
+DK_ROOT = tokens(re.search(r"^:root \{(.*?)^}", DK, re.S | re.M).group(1))
+DK_DARK = tokens(re.search(r'^:root\[data-theme="dark"\] \{(.*?)^}', DK, re.S | re.M).group(1))
+
 ROOT = tokens(re.search(r"^:root \{(.*?)^}", CSS, re.S | re.M).group(1))
 
 
 def resolve(block, name):
     """Follow a token through its var() chain to a literal value."""
-    table = ROOT | tokens(block)
+    table = ROOT | DK_ROOT | (DK_DARK if block is DARK else {}) | tokens(block)
     seen = set()
     value = table[name].strip()
     while value.startswith("var(--") and value.endswith(")"):

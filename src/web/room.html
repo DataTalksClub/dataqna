@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en" data-theme-dark="#332b8c" data-theme-light="#5951e8">
+<html lang="en" data-theme-dark="#1c3d5e" data-theme-light="#315f8f">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -8,7 +8,7 @@
 <meta property="og:title" content="{{TITLE}}">
 <meta property="og:description" content="Ask and upvote questions — live.">
 <meta property="og:type" content="website">
-<meta name="theme-color" content="#5951e8">
+<meta name="theme-color" content="#315f8f">
 <!-- The class means nothing until app.css arrives, and until then the UA
      paints its own canvas. Light is the default, so this is what it says;
      the script below overrides it when dark is pinned. -->
@@ -19,13 +19,17 @@
   try {
     if (localStorage.getItem("dq_theme") !== "dark") return;
     document.documentElement.classList.add("theme-dark");
+    /* dakit's token sheet keys its dark values off data-theme, so the
+       attribute rides along with the class. */
+    document.documentElement.setAttribute("data-theme", "dark");
     document.documentElement.style.colorScheme = "dark";
     var metas = document.querySelectorAll('meta[name="theme-color"]');
-    for (var i = 0; i < metas.length; i++) metas[i].setAttribute("content", "#332b8c");
+    for (var i = 0; i < metas.length; i++) metas[i].setAttribute("content", "#1c3d5e");
   } catch (e) {}
 })();
 </script>
 <link rel="icon" href="{{FAVICON}}">
+<link rel="stylesheet" href="/assets/dakit-tokens.css">
 <link rel="stylesheet" href="/assets/app.css">
 </head>
 <body>

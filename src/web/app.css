@@ -1,52 +1,54 @@
 /* DataQnA — read on a phone, in a dark room, one-handed.
 
    The system, in brief: raw color ramps (slate for neutrals, navy for dark
-   surfaces, blurple for the accent) feed semantic tokens (--bg, --text,
-   --accent…), and components only ever touch the semantic layer. Themes are
-   just alternative mappings. Light is the default one, for everybody, whatever
-   their device prefers: a link here is handed to a room full of people who did
-   not choose to be here, and it should open the same way for all of them. A
-   visible toggle pins dark with html.theme-dark, and the pin is applied before
-   first paint by an inline script in each page's head.
+   surfaces) and the accent semantics feed the tokens (--bg, --text,
+   --accent…), and components only ever touch the semantic layer. The values
+   are dakit's (vendored as src/web/dakit-tokens.css): slate carries dakit's
+   gray ramp, navy points at dakit's neutral dark surfaces, and the accent is
+   dakit's shared blue — blurple is gone. Themes are just alternative
+   mappings. Light is the default one, for everybody, whatever their device
+   prefers: a link here is handed to a room full of people who did not choose
+   to be here, and it should open the same way for all of them. A visible
+   toggle pins dark with html.theme-dark, and the pin is applied before first
+   paint by an inline script in each page's head; the script also sets
+   data-theme="dark", which is what flips dakit's own sheet.
    Space runs on a 4px scale, type on a modular scale with tight tracking on
    headings, motion is 120–260ms and always behind prefers-reduced-motion.
 
-   Every text/background pair below was checked numerically for WCAG AA:
-   the tightest are hero-muted on the hero gradient 4.81:1 and accent-on-soft
-   4.84:1 (light) / 5.59:1 (dark). */
+   Every text/background pair below was checked numerically for WCAG AA —
+   recomputed after the dakit remap. The tightest are accent-on-soft 6.04:1
+   (light) / 5.45:1 over a card (dark; dakit's translucent soft, composited)
+   and hero-muted on the band's lightest stop 6.04:1 (light) / 5.38:1 (dark). */
 
 :root {
-  /* Neutrals: a cool slate ramp. */
-  --slate-50: #f6f8fb;
-  --slate-100: #eef1f6;
-  --slate-200: #e3e7ef;
-  --slate-300: #c9d0dd;
-  --slate-400: #9aa3b8;
-  --slate-500: #6b7590;
-  --slate-600: #5b6478;
-  --slate-700: #3c4257;
-  --slate-800: #262c40;
-  --slate-900: #1a1f36;
+  /* Neutrals: dakit's gray ramp, under the long-standing slate names. */
+  --slate-50: var(--dk-gray-50);
+  --slate-100: var(--dk-gray-100);
+  --slate-200: var(--dk-gray-200);
+  --slate-300: var(--dk-gray-300);
+  --slate-400: var(--dk-gray-400);
+  --slate-500: var(--dk-gray-500);
+  --slate-600: var(--dk-gray-600);
+  --slate-700: var(--dk-gray-700);
+  --slate-800: var(--dk-gray-800);
+  --slate-900: var(--dk-gray-900);
 
-  /* Dark-theme surfaces: desaturated navy, never pure black. */
-  --navy-950: #0d1220;
-  --navy-900: #151b2e;
-  --navy-850: #1d2438;
-  --navy-700: #2c3550;
-  --navy-500: #454f85;
-  --navy-300: #98a3c0;
-  --navy-50: #e9edf6;
+  /* Dark-theme surfaces: dakit's neutral dark roles, not a navy tint. The
+     navy ramp keeps its name so the dark mapping reads as before; the values
+     are dakit's, so they flip with data-theme="dark". (The old navy-500 has
+     no neutral role — the accent line it served now follows the accent.) */
+  --navy-950: var(--dk-bg-page);
+  --navy-900: var(--dk-bg-surface);
+  --navy-850: var(--dk-bg-muted);
+  --navy-700: var(--dk-border-default);
+  --navy-300: var(--dk-text-muted);
+  --navy-50: var(--dk-text-primary);
 
-  /* Blurple. 500 is the brand hue; it is 4.70:1 on white — passing, but
-     thin — so interactive text and fills use 600 (5.57:1) instead. */
-  --blurple-100: #edeefd;
-  --blurple-200: #b9c0f5;
-  --blurple-400: #8f9dff;
-  --blurple-500: #635bff;
-  --blurple-600: #5951e8;
-  --blurple-700: #4a43d4;
-  --blurple-800: #4338c9;
-  --blurple-850: #232a4d;
+  /* The accent has no local ramp any more: it is dakit's semantic accent,
+     the one blue every internal tool shares (#315f8f in light, #58a6ff in
+     dark). Accent defaults were 4.70:1 on white as blurple; dakit's blue is
+     6.64:1 — past AA with room to spare, so one value can carry text and
+     fill here exactly as it could before. */
 
   /* Type */
   --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
@@ -91,30 +93,31 @@
   /* Semantic mapping: light. */
   color-scheme: light;
   --bg: var(--slate-50);
-  --surface: #ffffff;
+  --surface: var(--dk-bg-surface);
   --surface-2: var(--slate-100);
-  --field: #ffffff;
+  --field: var(--dk-bg-surface);
   /* Elevation, named by direction rather than by shade. `surface-2` was doing
      both jobs, and the two themes order it oppositely against `surface`, so a
      raised thing built from it came out sunken in dark. */
-  --raised: #ffffff;
+  --raised: var(--dk-bg-surface);
   --sunken: var(--slate-100);
   --border: var(--slate-200);
   --text: var(--slate-900);
   --muted: var(--slate-600);
-  --brand: var(--blurple-500);
+  --brand: var(--dk-accent-default);
   /* Two jobs, two tokens. `accent` is the brand as text and stroke, on a page
      background; `accent-fill` is the brand as a mass that has to carry ink.
      In light one value does both, and naming them apart costs nothing. In dark
-     no single value can: light enough to read on navy is too light to take
-     white. Keeping them separate is what lets the dark theme use the same
-     purple for its buttons as this one. */
-  --accent: var(--blurple-600);
-  --accent-hover: var(--blurple-700);
-  --accent-fill: var(--blurple-600);
-  --accent-fill-hover: var(--blurple-700);
-  --accent-soft: var(--blurple-100);
-  --accent-line: var(--blurple-200);
+     no single value can: dakit's dark accent (#58a6ff) reads on the page but
+     is far too light to take white. Keeping them separate is what lets dark
+     text and strokes take #58a6ff while its buttons keep the deep end of the
+     same ramp and the white ink every filled control shares. */
+  --accent: var(--dk-accent-default);
+  --accent-hover: var(--dk-accent-hover);
+  --accent-fill: var(--dk-accent-default);
+  --accent-fill-hover: var(--dk-accent-hover);
+  --accent-soft: var(--dk-accent-soft);
+  --accent-line: var(--dk-accent-border);
   --on-accent: #ffffff;
   --danger: #c62f2f;
   --danger-fill: #c62f2f;
@@ -123,11 +126,12 @@
   --ok-soft: #e7f5ec;
   --warn: #9a5b12;
   --warn-soft: #fcf2e2;
-  /* The room hero band. White is 5.57:1 on the gradient's lightest stop;
-     hero-muted #ecedff is 4.81:1 on it. */
-  --hero-bg: linear-gradient(135deg, var(--blurple-600), var(--blurple-800));
+  /* The room hero band: the accent's own two stops, deep end first.
+     White is 6.64:1 on the lightest stop; hero-muted (dakit's accent-soft,
+     #edf5ff) is 6.04:1 on it. */
+  --hero-bg: linear-gradient(135deg, var(--dk-accent-default), var(--dk-blue-700));
   --hero-text: #ffffff;
-  --hero-muted: #ecedff;
+  --hero-muted: var(--dk-accent-soft);
   --hero-chip: rgba(255, 255, 255, .14);
   --hero-line: rgba(255, 255, 255, .45);
   /* The inverted pill that carries a toast. */
@@ -140,9 +144,10 @@
   --qr-ink: var(--text);
   --qr-paper: transparent;
   /* Stripe-style elevation: a hairline border does the outlining, so the
-     shadows stay layered and low-opacity. */
-  --shadow-sm: 0 1px 1px rgba(26, 31, 54, .04), 0 1px 3px rgba(26, 31, 54, .06);
-  --shadow-md: 0 2px 5px -1px rgba(26, 31, 54, .08), 0 8px 20px -6px rgba(26, 31, 54, .1);
+     shadows stay layered and low-opacity. Tinted with dakit's near-black
+     (gray-950), like dakit's own shadows. */
+  --shadow-sm: 0 1px 1px rgba(15, 23, 42, .04), 0 1px 3px rgba(15, 23, 42, .06);
+  --shadow-md: 0 2px 5px -1px rgba(15, 23, 42, .08), 0 8px 20px -6px rgba(15, 23, 42, .1);
 }
 
 /* Semantic mapping: dark. Opt-in only — light is what a link opens in, so
@@ -150,11 +155,12 @@
 html.theme-dark {
   color-scheme: dark;
   --bg: var(--navy-950);
-  /* Raised a step: the card-to-page difference was 4.5 L*, against a page
-     too dark for a shadow to add anything on top of it. */
-  --surface: #1a2136;
+  /* Surface needs no override any more: it is a dakit reference and dakit's
+     dark remap darkens it with everything else. Raised keeps its own
+     declaration because it stays a step above the surface — 9.9 L* — on a
+     page too dark for a shadow to add anything on top of it. */
   --surface-2: var(--navy-850);
-  --raised: #28304a;
+  --raised: var(--dk-bg-hover);
   --sunken: var(--navy-950);
   /* A field darker than the surface it sits on reads as a hole. Light has
      field and surface both white; dark keeps the same relationship. */
@@ -162,22 +168,16 @@ html.theme-dark {
   --border: var(--navy-700);
   --text: var(--navy-50);
   --muted: var(--navy-300);
-  --brand: var(--blurple-400);
-  /* Periwinkle reads on navy; it cannot take ink. White on it is 2.49:1, and
-     dark ink on it turns the Send button into a pale chip on a black page —
-     a light-mode control pasted into dark. So text and stroke take the pale
-     value and fills take the brand purple, which is 5.57:1 under white here
-     exactly as it is in light. */
-  --accent: var(--blurple-400);
-  --accent-hover: #a5b0ff;
-  --accent-fill: var(--blurple-600);
+  /* Text, strokes, links and the soft/line pair need no overrides at all:
+     they are var(--dk-accent-*) references, and dakit's dark remap turns
+     them into #58a6ff and its tint — 7.49:1 on the page, 5.45:1 on the soft
+     where it sits over a card. Fills are declared here because they hold
+     the line at the ramp's deep end: white on #58a6ff is 2.53:1, and every
+     filled control shares one ink, so the fill goes to dakit's dark-blue
+     stop (11.18:1 under white) where light uses the accent itself. */
+  --accent-fill: var(--dk-blue-700);
   /* Hover goes brighter in dark, where light goes deeper. */
-  --accent-fill-hover: var(--blurple-500);
-  /* blurple-850 was 1.23:1 on the surface — the pressed state of an icon
-     toggle rested entirely on its glyph going periwinkle. */
-  --accent-soft: #2a3160;
-  --accent-line: var(--navy-500);
-  --on-accent: #ffffff;
+  --accent-fill-hover: var(--dk-blue-600);
   --danger: #ff8a8a;
   --danger-fill: #c62f2f;
   /* Pastels inverted badly: at L* 16-17 with full chroma these were lighter
@@ -188,16 +188,19 @@ html.theme-dark {
   --ok-soft: #16281f;
   --warn: #f0b366;
   --warn-soft: #2a2318;
-  /* The band is the brand, in both themes. A navy panel here was 1.21:1
-     against the page — no band at all, and the composer has nothing to climb
-     into. Dark does not need less colour, it needs the same hue at lower
-     lightness: white is 11.26:1 on this, hero-muted is 7.59:1. */
-  --hero-bg: linear-gradient(135deg, #332b8c, #241f57);
+  /* The band is the brand, in both themes: the same blue ramp, held at the
+     deep stop dakit keeps for dark and faded to the page toward its lower
+     edge — 20.0 L* off the page at the stop that shows, so the composer
+     still has something to climb into. The fade also keeps every stop dark
+     enough for the QR plate, which borrows this gradient: white ink is
+     11.18:1 on the lightest stop, hero-muted (dakit's dark accent hover,
+     #79b8ff) is 5.38:1 there and 9.11:1 at the deep one. */
+  --hero-bg: linear-gradient(135deg, var(--dk-blue-700), var(--dk-bg-page));
   --hero-text: #ffffff;
-  --hero-muted: #cdd2f7;
+  --hero-muted: var(--dk-accent-hover);
   --hero-chip: rgba(255, 255, 255, .14);
   --hero-line: rgba(255, 255, 255, .35);
-  --toast-bg: #2c3550;
+  --toast-bg: var(--dk-bg-hover);
   --toast-text: var(--text);
   --toast-line: rgba(255, 255, 255, .16);
   /* A dark page is not paper, so here the code gets its own: the brand band.
@@ -401,7 +404,10 @@ button.small, .btn.small { padding: var(--space-1) var(--space-3); font-size: va
 }
 .icon-btn:not(:disabled):hover { background: var(--surface-2); color: var(--text); }
 /* Icon toggles (pin, answered, hidden): the on state is a soft accent fill.
-   Accent-on-soft is 4.84:1 light / 5.59:1 dark. */
+   Accent-on-soft is 6.04:1 light / 5.45:1 dark (dakit's translucent soft,
+   composited over a card). Toggled buttons never sit on the hero band, where
+   that composite would thin out — they live in the console and the
+   presentation toolbar. */
 .icon-btn[aria-pressed=true],
 .icon-btn[aria-pressed=true]:not(:disabled):hover {
   background: var(--accent-soft);

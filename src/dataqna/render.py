@@ -26,28 +26,31 @@ CONTENT_TYPES = {
 FAVICON = (
     "data:image/svg+xml,"
     "%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E"
-    "%3Crect width='32' height='32' rx='8' fill='%23635bff'/%3E"
+    "%3Crect width='32' height='32' rx='8' fill='%23315f8f'/%3E"
     "%3Cpath d='M9 20.5h10l4 4v-4h0a2 2 0 0 0 2-2v-9a2 2 0 0 0-2-2H9a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2z'"
     " fill='none' stroke='white' stroke-width='0'/%3E"
     "%3Cpath d='M10.5 18.5l5.5-6 5.5 6' fill='none' stroke='white' stroke-width='2.6'"
     " stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"
 )
 
-THEME_META = '<meta name="theme-color" content="#f6f8fb">'
+THEME_META = '<meta name="theme-color" content="#f6f8fa">'
 
 # The class does nothing until app.css lands; color-scheme is what the UA reads
 # in the meantime, and light is what it should read.
 THEME_CANVAS = "<style>:root{color-scheme:light}</style>"
 
 # Applies a pinned dark theme before first paint, so server-rendered pages match
-# without a flash. Light needs nothing: it is the default.
+# without a flash. Light needs nothing: it is the default. The data-theme
+# attribute rides along because the dakit token sheet keys its dark remap off
+# :root[data-theme="dark"], not off the class.
 THEME_SCRIPT = (
     "<script>(function(){try{"
     'if(localStorage.getItem("dq_theme")!=="dark")return;'
     'document.documentElement.classList.add("theme-dark");'
+    'document.documentElement.setAttribute("data-theme","dark");'
     'document.documentElement.style.colorScheme="dark";'
     "var m=document.querySelectorAll('meta[name=\"theme-color\"]');"
-    'for(var i=0;i<m.length;i++)m[i].setAttribute("content","#0d1220");'
+    'for(var i=0;i<m.length;i++)m[i].setAttribute("content","#0d1117");'
     "}catch(e){}})();</script>"
 )
 
@@ -90,7 +93,10 @@ def version():
     global _version
     if _version is None:
         digest = hashlib.sha256()
-        for name in sorted(("app.css", "theme.js", "room.js", "admin.js", "present.js", "qna.js")):
+        for name in sorted((
+            "dakit-tokens.css", "app.css", "theme.js", "room.js", "admin.js",
+            "present.js", "qna.js",
+        )):
             digest.update(asset_bytes(name) or b"")
         _version = digest.hexdigest()[:10]
     return _version
@@ -157,6 +163,7 @@ def _shell(title, inner, *, status=200):
 {THEME_CANVAS}
 {THEME_SCRIPT}
 <link rel="icon" href="{FAVICON}">
+<link rel="stylesheet" href="/assets/dakit-tokens.css">
 <link rel="stylesheet" href="/assets/app.css"></head>
 <body><div class="wrap">{inner}</div>
 <script src="/assets/theme.js" defer></script></body></html>"""
