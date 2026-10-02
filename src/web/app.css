@@ -830,6 +830,10 @@ details.panel[open] > summary::after { transform: translateY(2px) rotate(225deg)
 }
 .hero h1 {
   margin: 0;
+  /* The base layer's h1 rule carries --dk-text-heading; on the hero band
+     the band's own ink must win, or light theme sets near-black type on
+     the deep accent. */
+  color: var(--hero-text);
   font-size: var(--dk-text-page);
   font-weight: 700;
   letter-spacing: var(--tracking-tight);
@@ -1119,12 +1123,9 @@ th {
 }
 .back-link:hover { color: var(--dk-text-primary); }
 .room-head h1 {
+  /* The console heading is the family page heading: .page-head h1 supplies
+     32px/600 and the 22px phone step — this rule only positions it. */
   margin: 0 0 var(--dk-space-1);
-  font-size: var(--dk-text-xl);
-  font-weight: 700;
-  letter-spacing: var(--tracking-tight);
-  line-height: var(--dk-leading-tight);
-  overflow-wrap: anywhere;
 }
 .room-sub { font-size: var(--dk-text-body); }
 .room-tools { margin-top: var(--dk-space-3); }
