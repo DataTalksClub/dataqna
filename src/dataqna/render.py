@@ -61,9 +61,9 @@ BRAND = (
 
 # The family's list-row affordance, shared with the console's panels.
 ROW_CHEVRON = (
-    '<svg class="row-chev" width="16" height="16" viewBox="0 0 16 16" fill="none"'
-    ' stroke="currentColor" stroke-width="1.5" stroke-linecap="round"'
-    ' stroke-linejoin="round" aria-hidden="true"><path d="M6 3l5 5-5 5"/></svg>'
+    '<svg class="row-chev" width="20" height="20" viewBox="0 0 24 24" fill="none"'
+    ' stroke="currentColor" stroke-width="1.8" stroke-linecap="round"'
+    ' stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>'
 )
 
 # theme.js fills the glyph in. Every page that can be someone's first — the

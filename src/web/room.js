@@ -7,20 +7,19 @@
   var MOTION = window.matchMedia("(prefers-reduced-motion: no-preference)").matches;
   var RING = 75.4; /* 2πr for the limit ring's r=12 circle */
 
-  var CHEVRON = '<svg class="arrow" width="16" height="16" viewBox="0 0 16 16" fill="none" ' +
-    'stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" ' +
-    'aria-hidden="true"><path d="M4 9.5 8 5l4 4.5"/></svg>';
+  var CHEVRON = '<svg class="arrow" width="20" height="20" viewBox="0 0 24 24" fill="none" ' +
+    'stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ' +
+    'aria-hidden="true"><path d="m18 15-6-6-6 6"/></svg>';
   // The host's two ways back. A cog for the console and a screen for the
   // projector: both are read at a glance mid-session, which is more than a
   // word-shaped button gets on a page whose job is the question composer.
-  // Glyphs are the family's 16px stroke language.
-  var COG = '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" ' +
-    'stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
-    '<path d="M2.5 4.5h6M11 4.5h2.5M2.5 11.5h2.5M7.5 11.5h6"/><circle cx="9.5" cy="4.5" r="1.6"/>' +
-    '<circle cx="6" cy="11.5" r="1.6"/></svg>';
-  var SCREEN = '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" ' +
-    'stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
-    '<rect x="2" y="3" width="12" height="8.5" rx="1.5"/><path d="M6 13.5h4M8 11.5v2"/></svg>';
+  // Glyphs are the family's 24-grid stroke language.
+  var COG = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" ' +
+    'stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+    '<path d="M20 7h-9"/><path d="M14 17H5"/><circle cx="17" cy="17" r="3"/><circle cx="7" cy="7" r="3"/></svg>';
+  var SCREEN = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" ' +
+    'stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+    '<rect width="20" height="14" x="2" y="3" rx="2"/><path d="M8 21h8"/><path d="M12 17v4"/></svg>';
 
   var el = {
     ask: document.getElementById("ask"),
