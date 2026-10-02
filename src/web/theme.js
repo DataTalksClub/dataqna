@@ -21,7 +21,7 @@
   /* The address bar matches the top of the page, which is the hero band in a
      room and the page background everywhere else. */
   var DARK = root.getAttribute("data-theme-dark") || "#0d1117";
-  var LIGHT = root.getAttribute("data-theme-light") || "#f6f8fa";
+  var LIGHT = root.getAttribute("data-theme-light") || "#ffffff";
 
   var SUN = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" ' +
     'stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +

@@ -14,8 +14,8 @@ from dataqna import render
 
 CSS = render.asset_bytes("app.css").decode()
 
-LIGHT = re.search(r"/\* Semantic mapping: light\. \*/(.*?)\n}", CSS, re.S).group(1)
-DARK = re.search(r"^html\.theme-dark \{(.*?)^}", CSS, re.S | re.M).group(1)
+LIGHT = re.search(r"^:root \{(.*?)^}", CSS, re.S | re.M).group(1)
+DARK = re.search(r'^:root\[data-theme="dark"\] \{(.*?)^}', CSS, re.S | re.M).group(1)
 
 
 def tokens(block):
@@ -81,18 +81,25 @@ THEMES = {"light": LIGHT, "dark": DARK}
 def test_light_is_what_a_link_opens_in():
     """Dark is opt-in, for everyone, whatever their device prefers. A room link
     goes to people who did not choose to be here; it opens the same for all of
-    them, and the toggle is how anyone changes that."""
+    them, and the toggle is how anyone changes that. The app layer pins it the
+    way dakit's sheet does, with data-theme on the root element."""
     assert "prefers-color-scheme: dark" not in CSS
-    assert CSS.count("html.theme-dark {") == 1, "dark is mapped in more than one place"
+    assert CSS.count(':root[data-theme="dark"] {') == 1, "dark is mapped in more than one place"
 
 
 def test_ink_is_legible_on_every_filled_control():
     """The pair that inverted in dark: a fill light enough to read as text on
-    the page is too light to carry white."""
+    the page is too light to carry its ink. Accent fills keep white on the
+    deep end of the ramp in dark (the app's one divergence from dakit's dark
+    buttons), so they share --on-accent; the solid danger button has no deep
+    red to sit under white, so its ink follows dakit's own pairing and flips
+    with --on-danger."""
     for name, block in THEMES.items():
-        for fill in ("accent-fill", "accent-fill-hover", "danger-fill"):
-            ratio = contrast(resolve(block, "on-accent"), resolve(block, fill))
-            assert ratio >= 4.5, f"{name}: on-accent on {fill} is {ratio:.2f}:1"
+        for fill, ink in (("accent-fill", "on-accent"),
+                          ("accent-fill-hover", "on-accent"),
+                          ("danger-fill", "on-danger")):
+            ratio = contrast(resolve(block, ink), resolve(block, fill))
+            assert ratio >= 4.5, f"{name}: {ink} on {fill} is {ratio:.2f}:1"
 
 
 def test_body_and_muted_text_are_legible_on_the_page():

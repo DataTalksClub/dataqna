@@ -1,88 +1,106 @@
 /* DataQnA — read on a phone, in a dark room, one-handed.
 
-   The system, in brief: raw color ramps (slate for neutrals, navy for dark
-   surfaces) and the accent semantics feed the tokens (--bg, --text,
-   --accent…), and components only ever touch the semantic layer. The values
-   are dakit's (vendored as src/web/dakit-tokens.css): slate carries dakit's
-   gray ramp, navy points at dakit's neutral dark surfaces, and the accent is
-   dakit's shared blue — blurple is gone. Themes are just alternative
-   mappings. Light is the default one, for everybody, whatever their device
-   prefers: a link here is handed to a room full of people who did not choose
-   to be here, and it should open the same way for all of them. A visible
-   toggle pins dark with html.theme-dark, and the pin is applied before first
-   paint by an inline script in each page's head; the script also sets
-   data-theme="dark", which is what flips dakit's own sheet.
-   Space runs on a 4px scale, type on a modular scale with tight tracking on
-   headings, motion is 120–260ms and always behind prefers-reduced-motion.
+   The visual system is dakit (../dakit), the design system shared with
+   dapier, dataops and relay. The vendored dakit-tokens.css (refresh with
+   scripts/sync_dakit.sh) defines every --dk-* semantic role in both themes;
+   this file adds only what the product needs on top — the room hero band,
+   the QR plate, toasts — plus a compatibility layer mapping this app's
+   older token names onto dakit's. Components only ever touch the semantic
+   layer, never a --dk-* ramp and never a raw hex: a theme is an alternative
+   mapping of that layer, and nothing else.
 
-   Every text/background pair below was checked numerically for WCAG AA —
-   recomputed after the dakit remap. The tightest are accent-on-soft 6.04:1
-   (light) / 5.45:1 over a card (dark; dakit's translucent soft, composited)
-   and hero-muted on the band's lightest stop 6.04:1 (light) / 5.38:1 (dark). */
+   Light is the default for everybody, whatever their device prefers — a
+   link handed to a room full of people who did not choose to be here should
+   open the same way for all of them — and dark is pinned with
+   data-theme="dark" before first paint by an inline script in each head.
+   Space runs on dakit's 4px grid; type on dakit's scale, with the phone's
+   16px body noted below; motion is 120–260ms and always behind
+   prefers-reduced-motion.
+
+   Every text/background pair is checked numerically for WCAG AA in
+   tests/test_theme.py — both themes, hero band and QR plate included. The
+   tightest: accent-on-soft 6.03:1 (light) and 5.45:1 over a card (dark;
+   dakit's translucent soft, composited), hero-muted on the band's lightest
+   stop 7.94:1 (light) / 5.37:1 (dark), white on the band 8.73:1 / 11.16:1.
+
+   One deliberate divergence from dakit's own dark buttons: filled controls
+   keep white ink on the deep end of the accent ramp — dakit pairs its dark
+   accent (#58a6ff) with near-black ink at 7.49:1, but a room full of phones
+   reads white-on-deep-blue better than near-black-on-bright-blue, and the
+   deep roles exist so the pairing is verified rather than asserted: fills
+   take --dk-accent-deep in dark, ink takes --dk-text-on-deep, white on the
+   fill is 11.16:1. Text, strokes and links follow dakit's bright dark
+   accent (7.49:1 on the page). The solid danger button is the exception on
+   purpose: dakit has no deep red to hold white ink in dark, so its ink
+   follows dakit's own pairing (--dk-text-on-accent), near-black on bright
+   red at 5.64:1. */
+
+/* Dakit's faces, self-hosted (SIL OFL, see fonts/LICENSE.md) and the same
+   files every internal tool ships: prose reads as Inter, quantities and IDs
+   as IBM Plex Mono — data should read as data, not prose. */
+
+@font-face {
+  font-family: "Inter";
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url("/assets/fonts/inter-var.woff2") format("woff2");
+}
+@font-face {
+  font-family: "IBM Plex Mono";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/assets/fonts/ibm-plex-mono-400.woff2") format("woff2");
+}
+@font-face {
+  font-family: "IBM Plex Mono";
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("/assets/fonts/ibm-plex-mono-500.woff2") format("woff2");
+}
 
 :root {
-  /* Neutrals: dakit's gray ramp, under the long-standing slate names. */
-  --slate-50: var(--dk-gray-50);
-  --slate-100: var(--dk-gray-100);
-  --slate-200: var(--dk-gray-200);
-  --slate-300: var(--dk-gray-300);
-  --slate-400: var(--dk-gray-400);
-  --slate-500: var(--dk-gray-500);
-  --slate-600: var(--dk-gray-600);
-  --slate-700: var(--dk-gray-700);
-  --slate-800: var(--dk-gray-800);
-  --slate-900: var(--dk-gray-900);
+  color-scheme: light;
 
-  /* Dark-theme surfaces: dakit's neutral dark roles, not a navy tint. The
-     navy ramp keeps its name so the dark mapping reads as before; the values
-     are dakit's, so they flip with data-theme="dark". (The old navy-500 has
-     no neutral role — the accent line it served now follows the accent.) */
-  --navy-950: var(--dk-bg-page);
-  --navy-900: var(--dk-bg-surface);
-  --navy-850: var(--dk-bg-muted);
-  --navy-700: var(--dk-border-default);
-  --navy-300: var(--dk-text-muted);
-  --navy-50: var(--dk-text-primary);
-
-  /* The accent has no local ramp any more: it is dakit's semantic accent,
-     the one blue every internal tool shares (#315f8f in light, #58a6ff in
-     dark). Accent defaults were 4.70:1 on white as blurple; dakit's blue is
-     6.64:1 — past AA with room to spare, so one value can carry text and
-     fill here exactly as it could before. */
-
-  /* Type */
-  --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-  --font-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
-  --text-xs: .75rem;
-  --text-sm: .875rem;
-  --text-base: 1rem;
-  --text-lg: 1.125rem;
-  --text-xl: 1.375rem;
-  --text-2xl: 1.75rem;
-  --leading-tight: 1.2;
+  /* Compatibility: this app's original token names, now defined by dakit.
+     Components migrate to the --dk-* names and each row dies with its last
+     user; the mapping table lives in dakit's docs/adoption.md. */
+  --font-sans: var(--dk-font-sans);
+  --font-mono: var(--dk-font-mono);
+  /* Type. The body keeps 16px — dakit's ops tools run 14px, but this text
+     is read on phones one-handed, and iOS zooms any focused field set
+     smaller than 16px — so base maps to dakit's 16px step. */
+  --text-xs: var(--dk-text-sm);
+  --text-sm: var(--dk-text-body);
+  --text-base: var(--dk-text-lg);
+  --text-lg: var(--dk-text-lg);
+  --text-xl: var(--dk-text-xl);
+  --text-2xl: var(--dk-text-page);
+  --leading-tight: var(--dk-leading-tight);
   --leading-snug: 1.35;
-  --leading-body: 1.55;
+  --leading-body: var(--dk-leading-normal);
   --tracking-tight: -.02em;
   --tracking-snug: -.01em;
   --tracking-wide: .08em;
 
-  /* Space: 4px base. */
-  --space-1: 4px;
-  --space-2: 8px;
-  --space-3: 12px;
-  --space-4: 16px;
-  --space-5: 20px;
-  --space-6: 24px;
-  --space-7: 32px;
-  --space-8: 40px;
+  /* Space: dakit's 4px grid. 48px stays as an app step under the hero. */
+  --space-1: var(--dk-space-1);
+  --space-2: var(--dk-space-2);
+  --space-3: var(--dk-space-3);
+  --space-4: var(--dk-space-4);
+  --space-5: var(--dk-space-5);
+  --space-6: var(--dk-space-6);
+  --space-7: var(--dk-space-7);
+  --space-8: var(--dk-space-8);
   --space-9: 48px;
-  --space-10: 64px;
 
-  /* Shape */
-  --radius-sm: 6px;
-  --radius-md: 8px;
-  --radius-lg: 12px;
-  --radius-full: 999px;
+  /* Shape: the card and control radii collapse onto dakit's 10px step. */
+  --radius-sm: var(--dk-radius-md);
+  --radius-md: var(--dk-radius-lg);
+  --radius-lg: var(--dk-radius-lg);
+  --radius-full: var(--dk-radius-full);
 
   /* Motion */
   --ease-out: cubic-bezier(.22, .61, .36, 1);
@@ -90,133 +108,75 @@
   --duration-2: 180ms;
   --duration-3: 260ms;
 
-  /* Semantic mapping: light. */
-  color-scheme: light;
-  --bg: var(--slate-50);
+  /* Surfaces, ink, borders. */
+  --bg: var(--dk-bg-page);
   --surface: var(--dk-bg-surface);
-  --surface-2: var(--slate-100);
+  --surface-2: var(--dk-bg-hover);
+  /* A field darker than the surface it sits on reads as a hole, so light
+     has field and surface both white and dark keeps the same relationship —
+     dakit's own fields sit on the page instead; this app's sit on cards. */
   --field: var(--dk-bg-surface);
-  /* Elevation, named by direction rather than by shade. `surface-2` was doing
-     both jobs, and the two themes order it oppositely against `surface`, so a
-     raised thing built from it came out sunken in dark. */
-  --raised: var(--dk-bg-surface);
-  --sunken: var(--slate-100);
-  --border: var(--slate-200);
-  --text: var(--slate-900);
-  --muted: var(--slate-600);
+  /* A segmented track and the step above it: the tabs sit on muted, the
+     active pill on raised — lighter than the track in both themes. */
+  --raised: var(--dk-bg-raised);
+  --sunken: var(--dk-bg-muted);
+  --border: var(--dk-border-default);
+  --text: var(--dk-text-primary);
+  --muted: var(--dk-text-muted);
   --brand: var(--dk-accent-default);
-  /* Two jobs, two tokens. `accent` is the brand as text and stroke, on a page
-     background; `accent-fill` is the brand as a mass that has to carry ink.
-     In light one value does both, and naming them apart costs nothing. In dark
-     no single value can: dakit's dark accent (#58a6ff) reads on the page but
-     is far too light to take white. Keeping them separate is what lets dark
-     text and strokes take #58a6ff while its buttons keep the deep end of the
-     same ramp and the white ink every filled control shares. */
   --accent: var(--dk-accent-default);
   --accent-hover: var(--dk-accent-hover);
+  /* Fills take the deep end and one hover for both themes: blue-600 lies
+     between each theme's deep fill and its accent, so hover is deeper in
+     light and brighter in dark at the same value. */
   --accent-fill: var(--dk-accent-default);
-  --accent-fill-hover: var(--dk-accent-hover);
+  --accent-fill-hover: var(--dk-accent-deep-hover);
   --accent-soft: var(--dk-accent-soft);
   --accent-line: var(--dk-accent-border);
-  --on-accent: #ffffff;
-  --danger: #c62f2f;
-  --danger-fill: #c62f2f;
-  --danger-soft: #fdeded;
-  --ok: #1d7a3d;
-  --ok-soft: #e7f5ec;
-  --warn: #9a5b12;
-  --warn-soft: #fcf2e2;
-  /* The room hero band: the accent's own two stops, deep end first.
-     White is 6.64:1 on the lightest stop; hero-muted (dakit's accent-soft,
-     #edf5ff) is 6.04:1 on it. */
-  --hero-bg: linear-gradient(135deg, var(--dk-accent-default), var(--dk-blue-700));
-  --hero-text: #ffffff;
+  --on-accent: var(--dk-text-on-deep);
+  --on-danger: var(--dk-text-on-accent);
+  --danger: var(--dk-danger-text);
+  --danger-fill: var(--dk-danger-text);
+  --danger-soft: var(--dk-danger-bg);
+  --ok: var(--dk-success-text);
+  --ok-soft: var(--dk-success-bg);
+  --warn: var(--dk-warning-text);
+  --warn-soft: var(--dk-warning-bg);
+  --shadow-sm: var(--dk-shadow-card);
+  --shadow-md: var(--dk-shadow-overlay);
+
+  /* The room hero band: dakit's accent as a field. The deep steps exist so
+     white ink clears AA on every stop of the gradient, in both themes. */
+  --hero-bg: linear-gradient(135deg, var(--dk-accent-deep), var(--dk-accent-deeper));
+  --hero-text: var(--dk-text-on-deep);
   --hero-muted: var(--dk-accent-soft);
   --hero-chip: rgba(255, 255, 255, .14);
   --hero-line: rgba(255, 255, 255, .45);
   /* The inverted pill that carries a toast. */
-  --toast-bg: var(--text);
-  --toast-text: var(--bg);
+  --toast-bg: var(--dk-text-primary);
+  --toast-text: var(--dk-bg-page);
   --toast-line: transparent;
-  /* The QR is drawn in the page's own ink on the page's own background, like
-     any other mark: a light page is already paper. Dark maps this pair
-     differently — see the note there. */
-  --qr-ink: var(--text);
+  /* The QR is drawn in the page's own ink on the page's own paper, like any
+     other mark: a light page is already paper. A dark page is not — see the
+     dark mapping, where the plate is the hero band. */
+  --qr-ink: var(--dk-text-primary);
   --qr-paper: transparent;
-  /* Stripe-style elevation: a hairline border does the outlining, so the
-     shadows stay layered and low-opacity. Tinted with dakit's near-black
-     (gray-950), like dakit's own shadows. */
-  --shadow-sm: 0 1px 1px rgba(15, 23, 42, .04), 0 1px 3px rgba(15, 23, 42, .06);
-  --shadow-md: 0 2px 5px -1px rgba(15, 23, 42, .08), 0 8px 20px -6px rgba(15, 23, 42, .1);
 }
 
-/* Semantic mapping: dark. Opt-in only — light is what a link opens in, so
-   `prefers-color-scheme` no longer selects this; the toggle does. */
-html.theme-dark {
+/* Dark: dakit remaps every --dk-* role under :root[data-theme="dark"], so
+   only the product's own roles need a word here. The hero band is the same
+   gradient — the deep accent steps darken on their own — and the QR plate,
+   which borrows it, moves with it for free. */
+:root[data-theme="dark"] {
   color-scheme: dark;
-  --bg: var(--navy-950);
-  /* Surface needs no override any more: it is a dakit reference and dakit's
-     dark remap darkens it with everything else. Raised keeps its own
-     declaration because it stays a step above the surface — 9.9 L* — on a
-     page too dark for a shadow to add anything on top of it. */
-  --surface-2: var(--navy-850);
-  --raised: var(--dk-bg-hover);
-  --sunken: var(--navy-950);
-  /* A field darker than the surface it sits on reads as a hole. Light has
-     field and surface both white; dark keeps the same relationship. */
-  --field: var(--navy-850);
-  --border: var(--navy-700);
-  --text: var(--navy-50);
-  --muted: var(--navy-300);
-  /* Text, strokes, links and the soft/line pair need no overrides at all:
-     they are var(--dk-accent-*) references, and dakit's dark remap turns
-     them into #58a6ff and its tint — 7.49:1 on the page, 5.45:1 on the soft
-     where it sits over a card. Fills are declared here because they hold
-     the line at the ramp's deep end: white on #58a6ff is 2.53:1, and every
-     filled control shares one ink, so the fill goes to dakit's dark-blue
-     stop (11.18:1 under white) where light uses the accent itself. */
-  --accent-fill: var(--dk-blue-700);
-  /* Hover goes brighter in dark, where light goes deeper. */
-  --accent-fill-hover: var(--dk-blue-600);
-  --danger: #ff8a8a;
-  --danger-fill: #c62f2f;
-  /* Pastels inverted badly: at L* 16-17 with full chroma these were lighter
-     and louder than every surface, and outshone the brand itself. Brought to
-     roughly surface lightness with half the chroma. */
-  --danger-soft: #2e1f2a;
-  --ok: #63d58e;
-  --ok-soft: #16281f;
-  --warn: #f0b366;
-  --warn-soft: #2a2318;
-  /* The band is the brand, in both themes: the same blue ramp, held at the
-     deep stop dakit keeps for dark and faded to the page toward its lower
-     edge — 20.0 L* off the page at the stop that shows, so the composer
-     still has something to climb into. The fade also keeps every stop dark
-     enough for the QR plate, which borrows this gradient: white ink is
-     11.18:1 on the lightest stop, hero-muted (dakit's dark accent hover,
-     #79b8ff) is 5.38:1 there and 9.11:1 at the deep one. */
-  --hero-bg: linear-gradient(135deg, var(--dk-blue-700), var(--dk-bg-page));
-  --hero-text: #ffffff;
+  --accent-fill: var(--dk-accent-deep);
   --hero-muted: var(--dk-accent-hover);
-  --hero-chip: rgba(255, 255, 255, .14);
   --hero-line: rgba(255, 255, 255, .35);
   --toast-bg: var(--dk-bg-hover);
-  --toast-text: var(--text);
+  --toast-text: var(--dk-text-primary);
   --toast-line: rgba(255, 255, 255, .16);
-  /* A dark page is not paper, so here the code gets its own: the brand band.
-     A white plate glared at a darkened room, a grey one matched nothing, and
-     bare white modules on the surface had no edges and no object to be — so
-     the plate borrows the hero gradient, which is already how this product
-     paints the one thing it wants everyone to look at. White modules are
-     11.3:1 on the gradient's lightest stop. That keeps the dark code
-     reversed — the trade-off §4 of docs/design-system.md walks through. */
-  --qr-ink: #ffffff;
+  --qr-ink: var(--dk-text-on-deep);
   --qr-paper: var(--hero-bg);
-  /* Black on near-black is worth 2.6 L*. Elevation here comes from the
-     surface being lighter, so the small shadow is honestly nothing; the
-     large one stays for things that genuinely float. */
-  --shadow-sm: none;
-  --shadow-md: 0 12px 32px -12px rgba(0, 0, 0, .8);
 }
 
 /* ---------------------------------------------------------------- base */
@@ -415,7 +375,11 @@ button.small, .btn.small { padding: var(--space-1) var(--space-3); font-size: va
   border-color: var(--accent-line);
 }
 
-button.danger { background: var(--danger-fill); color: var(--on-accent); }
+/* The solid danger button is the one fill whose ink follows dakit's pairing
+   rather than the deep-white one: dakit has no deep red to hold white ink in
+   dark, so its ink flips with --dk-text-on-accent (white in light,
+   near-black on bright red in dark, verified in dakit's own pair list). */
+button.danger { background: var(--danger-fill); color: var(--on-danger); }
 button.danger:not(:disabled):hover { background: var(--danger); filter: brightness(.92); }
 /* Armed: the "are you sure" state of a destructive two-tap. */
 button.arm, .arm { background: var(--danger-soft); color: var(--danger); border-color: var(--danger); }

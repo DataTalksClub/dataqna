@@ -19,6 +19,9 @@ ASSETS = {
     "admin.js",
     "present.js",
     "qna.js",
+    "fonts/inter-var.woff2",
+    "fonts/ibm-plex-mono-400.woff2",
+    "fonts/ibm-plex-mono-500.woff2",
 }
 
 

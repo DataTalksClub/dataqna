@@ -19,6 +19,7 @@ CONTENT_TYPES = {
     ".js": "text/javascript; charset=utf-8",
     ".html": "text/html; charset=utf-8",
     ".svg": "image/svg+xml",
+    ".woff2": "font/woff2",
 }
 
 # A speech bubble with the upvote chevron inside it — the whole product in one
@@ -33,7 +34,7 @@ FAVICON = (
     " stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"
 )
 
-THEME_META = '<meta name="theme-color" content="#f6f8fa">'
+THEME_META = '<meta name="theme-color" content="#ffffff">'
 
 # The class does nothing until app.css lands; color-scheme is what the UA reads
 # in the meantime, and light is what it should read.
