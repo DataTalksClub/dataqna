@@ -78,6 +78,29 @@ def first_stop(gradient):
 THEMES = {"light": LIGHT, "dark": DARK}
 
 
+def test_components_touch_only_the_semantic_layer():
+    """Dakit's layer rule, enforced where the app lives: below the token
+    blocks nothing may name a color — no hex, no rgb(). A component that
+    reaches past the semantic roles looks right in light and breaks in dark,
+    and the numbers belong in the token blocks and the comments anyway."""
+    body = re.sub(r"^:root \{.*?^\}", "", CSS, flags=re.S | re.M)
+    body = re.sub(r'^:root\[data-theme="dark"\] \{.*?^\}', "", body, flags=re.S | re.M)
+    body = re.sub(r"/\*.*?\*/", "", body, flags=re.S)
+    assert not re.search(r"#[0-9a-fA-F]{3,8}\b", body), "raw hex below the token blocks"
+    assert not re.search(r"\brgba?\(", body), "raw rgb() below the token blocks"
+
+
+def test_every_variable_reference_resolves():
+    """A renamed token leaves its old users pointing at nothing, and var()
+    fails silent — the property just stops being set, which is how the solid
+    danger button lost its fill once already. Every reference in the app
+    sheet must be defined by the app's blocks or the vendored dakit sheet."""
+    defined = set(DK_ROOT) | set(DK_DARK) | set(tokens(LIGHT)) | set(tokens(DARK))
+    used = set(re.findall(r"var\(--([a-z0-9-]+)\)", CSS))
+    missing = used - defined
+    assert not missing, f"references with no definition: {sorted(missing)}"
+
+
 def test_light_is_what_a_link_opens_in():
     """Dark is opt-in, for everyone, whatever their device prefers. A room link
     goes to people who did not choose to be here; it opens the same for all of
