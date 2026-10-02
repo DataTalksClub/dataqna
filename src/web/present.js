@@ -21,8 +21,10 @@
   var MAX_ROWS = 6;
 
   function svg(paths, size) {
+    /* The family's stroke weight; this surface draws in a 24-box and the
+       projector scales the glyphs up, so sizes stay contextual. */
     return '<svg width="' + (size || 20) + '" height="' + (size || 20) + '" viewBox="0 0 24 24" ' +
-      'fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" ' +
+      'fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" ' +
       'stroke-linejoin="round" aria-hidden="true">' + paths + "</svg>";
   }
 
