@@ -56,9 +56,7 @@ THEME_SCRIPT = (
 
 BRAND = (
     '<a class="brand" href="/">'
-    '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor"'
-    ' stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'
-    '<path d="M6 14l6-7 6 7"/></svg>DataQnA</a>'
+    '<span class="brand-mark" aria-hidden="true">Q</span>DataQnA</a>'
 )
 
 # The family's list-row affordance, shared with the console's panels.
@@ -194,17 +192,20 @@ def cohost_page(room, error=None, name=""):
     action = f"/r/{html.escape(room.get('slug') or '')}/cohost/{html.escape(name)}"
     inner = f"""<div class="row" style="margin-bottom:22px">
 <span class="grow">{BRAND}</span>{THEME_TOGGLE}</div>
-<h1 style="font-size:1.5rem;letter-spacing:-.01em">Co-host access</h1>
-<p class="muted">Enter the passcode the host gave you. It lets you run
+<header class="page-head"><div><h1>Co-host access</h1>
+<p class="page-desc">Enter the passcode the host gave you. It lets you run
 {html.escape(room.get("title") or "this session")} — its questions, settings,
-and presentation mode. No account needed.</p>
-<form method="POST" action="{action}" class="card stack">
+and presentation mode. No account needed.</p></div></header>
+<form method="POST" action="{action}" class="panel"><div class="panel-body stack">
   {message}
-  <input type="text" name="passcode" autocomplete="off" autocapitalize="characters"
-         autofocus spellcheck="false" maxlength="40" placeholder="XXXX-XXXX-XXXX"
-         aria-label="Passcode" class="mono">
-  <button type="submit">Continue</button>
-</form>"""
+  <div class="field">
+    <label class="field-label" for="passcode">Passcode</label>
+    <input type="text" name="passcode" id="passcode" autocomplete="off" autocapitalize="characters"
+           autofocus spellcheck="false" maxlength="40" placeholder="XXXX-XXXX-XXXX"
+           aria-label="Passcode" class="mono">
+  </div>
+  <div><button type="submit">Continue</button></div>
+</div></form>"""
     return _shell("Co-host access", inner, status=200 if not error else 403)
 
 
@@ -249,6 +250,16 @@ def directory_page(live, recent, *, signed_in=None):
     else:
         parts.append('<a class="btn ghost small" href="/auth/login">Sign in</a>')
     parts.append("</div>")
+
+    description = (
+        "What is live right now. Create and run sessions from the console."
+        if signed_in
+        else "Open the session you were given a link or QR code for, and ask away."
+    )
+    parts.append(
+        '<header class="page-head"><div><h1>Q&amp;A sessions</h1>'
+        f'<p class="page-desc">{description}</p></div></header>'
+    )
 
     if signed_in:
         parts.append(

@@ -717,6 +717,9 @@ details.panel[open] > summary::after { transform: translateY(2px) rotate(225deg)
   .sidebar-menu-toggle { display: inline-flex; }
   .toolbar-who { display: none; }
 
+  /* The family's mobile header scale. */
+  .page-head h1 { font-size: var(--dk-text-xl); }
+
   html.js .app-sidebar {
     position: fixed;
     inset: 0 auto 0 0;
