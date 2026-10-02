@@ -13,6 +13,8 @@ logging.getLogger().setLevel(logging.INFO)
 
 ASSETS = {
     "dakit-tokens.css",
+    "dakit-base.css",
+    "dakit-components.css",
     "app.css",
     "theme.js",
     "room.js",
