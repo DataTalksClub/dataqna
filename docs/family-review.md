@@ -121,14 +121,15 @@ sprite in dakit's showcase) are recorded below.
 
 ## Not migrated, and why
 
-- **`.dk-*` component classes are vendored but not loaded.** `ca177f9` vendors
-  dakit's base and component layers; the redesign that followed settled on the
-  spec's other sanctioned path — tokens only, with app-local structure classes
-  dressed in `--dk-*` roles (the dataops approach, family.md "An app may
-  instead vendor dist/tokens.css only…"). Loading `dakit-components.css`
-  today would ship dead CSS: no markup uses `.dk-*`. Either adopt the classes
-  in a follow-up or drop the file from the sync; carrying it unloaded is the
-  one loose end of this round.
+- **`.dk-*` component classes are vendored and loaded.** `ca177f9` vendored
+  dakit's base and component layers; this round's follow-up (`06ca672`)
+  switched the include from tokens-only to the full stack — tokens, base,
+  components, then the app sheet, in dakit's own cascade order — and deleted
+  the app's hand mirror of the base layer, so the select chevron, the
+  color-scheme pin, the element defaults and the `.dk-*` classes all come
+  from dakit itself. Markup keeps the app-local vocabulary dressed in
+  `--dk-*` roles, the same choice dataops makes; the classes are the shared
+  vocabulary available to the markup going forward.
 - **Participant surfaces stay 16px** (`--dk-text-lg` body) while the console
   runs dakit's 14px — the phone-first exception the spec grants the room;
   directory/cohost/notice inherit it deliberately (participants are on
