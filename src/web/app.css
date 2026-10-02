@@ -764,15 +764,6 @@ details.panel[open] > summary::after { transform: translateY(2px) rotate(225deg)
 }
 .brand svg { color: var(--dk-accent-default); }
 
-.group-heading {
-  font-size: var(--dk-text-xs);
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.07em;
-  color: var(--dk-text-muted);
-  margin: var(--dk-space-5) 0 var(--dk-space-2);
-}
-
 /* ----------------------------------------------------------- room hero
 
    The participant page opens on a full-bleed brand band: room name, what it
@@ -1072,10 +1063,8 @@ textarea:focus-visible, input:focus-visible, select:focus-visible {
 }
 .banner.warn { background: var(--dk-warning-bg); color: var(--dk-warning-text); border-color: transparent; }
 
-.room-card { position: relative; }
-.room-card .room-link { font-weight: 600; text-decoration: none; font-size: var(--dk-text-lg); }
-.room-card .room-note { margin-top: var(--dk-space-1); font-size: var(--dk-text-body); }
-.room-card .stretched::after { content: ""; position: absolute; inset: 0; }
+/* A stretched link makes its whole row the hit target. */
+.stretched::after { content: ""; position: absolute; inset: 0; }
 
 table { width: 100%; border-collapse: collapse; font-size: var(--dk-text-body); }
 th, td { text-align: left; padding: var(--dk-space-2) var(--dk-space-2); border-bottom: 1px solid var(--dk-border-default); }

@@ -61,6 +61,13 @@ BRAND = (
     '<path d="M6 14l6-7 6 7"/></svg>DataQnA</a>'
 )
 
+# The family's list-row affordance, shared with the console's panels.
+ROW_CHEVRON = (
+    '<svg class="row-chev" width="16" height="16" viewBox="0 0 16 16" fill="none"'
+    ' stroke="currentColor" stroke-width="1.5" stroke-linecap="round"'
+    ' stroke-linejoin="round" aria-hidden="true"><path d="M6 3l5 5-5 5"/></svg>'
+)
+
 # theme.js fills the glyph in. Every page that can be someone's first — the
 # front page most of all — needs somewhere to change their mind about the
 # theme, not just the ones with a bundle of their own.
@@ -201,20 +208,33 @@ and presentation mode. No account needed.</p>
     return _shell("Co-host access", inner, status=200 if not error else 403)
 
 
-def _room_card(room, *, note):
-    title = html.escape(room.get("title") or "Q&A")
-    slug = html.escape(room.get("slug") or "")
-    return (
-        f'<div class="card room-card">'
-        f'<a class="stretched room-link" href="/r/{slug}">{title}</a>'
-        f'<div class="muted room-note">{html.escape(note)}</div>'
-        f"</div>"
-    )
-
-
 def _counts_note(room):
     total = int(room.get("q_total") or 0)
     return f"{total} question{'' if total == 1 else 's'}"
+
+
+def _room_panel(heading, rooms, *, note):
+    """One family panel: banded header, divided rows, a chevron affordance.
+
+    The front page speaks the console's language — the same panel a host
+    sees in the admin list — so a session reads as the same object on both.
+    """
+    parts = [
+        '<section class="panel"><div class="panel-header">',
+        f"<h2>{heading}</h2>",
+        f'<span class="muted panel-hint">{len(rooms)}</span></div>',
+    ]
+    for room in rooms:
+        title = html.escape(room.get("title") or "Q&A")
+        slug = html.escape(room.get("slug") or "")
+        parts.append(
+            '<div class="panel-row"><div class="row-main">'
+            f'<a class="row-link stretched" href="/r/{slug}">{title}</a>'
+            f'<span class="row-meta">{_counts_note(room)} · {note(room)}</span>'
+            f"</div>{ROW_CHEVRON}</div>"
+        )
+    parts.append("</section>")
+    return "".join(parts)
 
 
 def directory_page(live, recent, *, signed_in=None):
@@ -232,27 +252,21 @@ def directory_page(live, recent, *, signed_in=None):
 
     if signed_in:
         parts.append(
-            '<div class="card stack">'
-            f'<strong>Signed in as {html.escape(signed_in)}</strong>'
+            '<div class="panel"><div class="panel-body stack">'
+            f"<strong>Signed in as {html.escape(signed_in)}</strong>"
             '<p class="muted" style="margin:0">Create a session, share its QR code, '
             'and run presentation mode from the console.</p>'
             '<div class="row wrapping">'
             '<a class="btn" href="/admin">New session</a>'
             '<a class="btn ghost" href="/auth/logout">Sign out</a>'
-            "</div></div>"
+            "</div></div></div>"
         )
 
     if live:
-        parts.append('<div class="group-heading">Live now</div>')
-        parts.extend(
-            _room_card(room, note=f"{_counts_note(room)} · open") for room in live
-        )
+        parts.append(_room_panel("Live now", live, note=lambda room: "open"))
 
     if recent:
-        parts.append('<div class="group-heading">Recently finished</div>')
-        parts.extend(
-            _room_card(room, note=f"{_counts_note(room)} · closed") for room in recent
-        )
+        parts.append(_room_panel("Recently finished", recent, note=lambda room: "closed"))
 
     if not live and not recent:
         parts.append(
