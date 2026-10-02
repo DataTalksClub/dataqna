@@ -1,0 +1,133 @@
+/* Dakit components: the small shared vocabulary (buttons, fields, cards,
+   chips, tables). Class prefix is dk-. Rules:
+   - semantic tokens only, never primitive ramps or raw colors
+   - sizes come from --dk-size-*, spacing from --dk-space-*, text from --dk-text-*
+   - keep this file small: app-specific layout belongs in the app */
+
+/* --- buttons --------------------------------------------------------------- */
+
+.dk-button {
+  height: var(--dk-size-control-md);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--dk-space-2);
+  border: 1px solid transparent;
+  border-radius: var(--dk-radius-md);
+  padding: 0 var(--dk-space-4);
+  font-size: var(--dk-text-md);
+  font-weight: var(--dk-weight-medium);
+  white-space: nowrap;
+  text-decoration: none;
+}
+
+.dk-button--sm { height: var(--dk-size-control-sm); padding: 0 var(--dk-space-3); font-size: var(--dk-text-sm); }
+.dk-button--lg { height: var(--dk-size-control-lg); padding: 0 var(--dk-space-5); font-size: var(--dk-text-body); }
+
+.dk-button--primary { background: var(--dk-accent-default); color: var(--dk-text-on-accent); }
+.dk-button--primary:hover { background: var(--dk-accent-hover); }
+
+/* Secondary = muted surface + neutral border + primary text (the family
+   recipe); quiet controls gain --dk-border-control-hover on hover. */
+.dk-button--secondary { border-color: var(--dk-border-default); background: var(--dk-bg-muted); color: var(--dk-text-primary); }
+.dk-button--secondary:hover { border-color: var(--dk-border-control-hover); background: var(--dk-bg-hover); }
+
+.dk-button--danger { border-color: var(--dk-danger-border); background: transparent; color: var(--dk-danger-text); }
+.dk-button--danger:hover { background: var(--dk-danger-bg); }
+
+.dk-button:disabled { opacity: 0.55; cursor: not-allowed; }
+.dk-button:disabled:hover { background: var(--dk-accent-default); }
+.dk-button--secondary:disabled:hover { background: var(--dk-bg-muted); }
+.dk-button--danger:disabled:hover { background: transparent; }
+
+/* --- fields ----------------------------------------------------------------- */
+
+.dk-label { display: block; margin-bottom: var(--dk-space-1); color: var(--dk-text-heading); font-size: var(--dk-text-sm); font-weight: var(--dk-weight-semibold); }
+.dk-hint { margin-top: var(--dk-space-1); color: var(--dk-text-muted); font-size: var(--dk-text-sm); }
+
+.dk-input, .dk-select, .dk-textarea {
+  width: 100%;
+  border: 1px solid var(--dk-border-default);
+  border-radius: var(--dk-radius-md);
+  background: var(--dk-bg-page);
+  color: var(--dk-text-primary);
+  padding: 0 var(--dk-space-3);
+  height: var(--dk-size-control-md);
+  font-size: var(--dk-text-md);
+}
+.dk-textarea { height: auto; min-height: 76px; padding: var(--dk-space-2) var(--dk-space-3); resize: vertical; }
+/* Keep the class's own clearance for the base layer's chevron rather than
+   inheriting it from the element rule's higher specificity. */
+.dk-select { padding-right: calc(2 * var(--dk-space-3) + 10px); }
+.dk-input::placeholder, .dk-textarea::placeholder { color: var(--dk-text-faint); }
+.dk-input:hover, .dk-select:hover, .dk-textarea:hover { border-color: var(--dk-border-strong); }
+.dk-input:focus-visible, .dk-select:focus-visible, .dk-textarea:focus-visible { outline: 2px solid var(--dk-focus-ring); outline-offset: 0; border-color: var(--dk-accent-default); }
+
+/* --- cards & surfaces ------------------------------------------------------- */
+
+.dk-card {
+  border: 1px solid var(--dk-border-default);
+  border-radius: var(--dk-radius-md);
+  background: var(--dk-bg-surface);
+  padding: var(--dk-space-4);
+}
+.dk-card--muted { background: var(--dk-bg-muted); }
+
+/* --- chips & status ---------------------------------------------------------- */
+
+.dk-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--dk-space-1);
+  padding: 1px var(--dk-space-2);
+  border: 1px solid var(--dk-border-strong);
+  border-radius: var(--dk-radius-full);
+  background: var(--dk-bg-muted);
+  color: var(--dk-text-muted);
+  font-size: var(--dk-text-xs);
+  line-height: 1.6;
+  white-space: nowrap;
+}
+
+.dk-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--dk-space-1);
+  padding: 1px var(--dk-space-2);
+  border: 1px solid var(--dk-border-default);
+  border-radius: var(--dk-radius-sm);
+  font-size: var(--dk-text-xs);
+  font-weight: var(--dk-weight-medium);
+  white-space: nowrap;
+}
+.dk-badge--success { color: var(--dk-success-text); background: var(--dk-success-bg); border-color: var(--dk-success-border); }
+.dk-badge--warning { color: var(--dk-warning-text); background: var(--dk-warning-bg); border-color: var(--dk-warning-border); }
+.dk-badge--danger { color: var(--dk-danger-text); background: var(--dk-danger-bg); border-color: var(--dk-danger-border); }
+.dk-badge--info { color: var(--dk-info-text); background: var(--dk-info-bg); border-color: var(--dk-info-border); }
+
+.dk-dot { width: 8px; height: 8px; border-radius: var(--dk-radius-full); display: inline-block; flex: none; }
+.dk-dot--success { background: var(--dk-success-text); }
+.dk-dot--warning { background: var(--dk-warning-text); }
+.dk-dot--danger { background: var(--dk-danger-text); }
+.dk-dot--info { background: var(--dk-info-text); }
+.dk-dot--neutral { background: var(--dk-text-faint); }
+
+/* --- tables ------------------------------------------------------------------- */
+
+.dk-table { width: 100%; border-collapse: collapse; font-size: var(--dk-text-md); }
+.dk-table th {
+  text-align: left;
+  color: var(--dk-text-muted);
+  font-size: var(--dk-text-xs);
+  font-weight: var(--dk-weight-semibold);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: var(--dk-space-2) var(--dk-space-3);
+  border-bottom: 1px solid var(--dk-border-default);
+}
+.dk-table td { padding: var(--dk-space-2) var(--dk-space-3); border-bottom: 1px solid var(--dk-border-default); vertical-align: top; }
+.dk-table tbody tr:hover td { background: var(--dk-bg-hover); }
+
+/* --- misc ---------------------------------------------------------------------- */
+
+.dk-divider { border: 0; border-top: 1px solid var(--dk-border-default); margin: var(--dk-space-4) 0; }
