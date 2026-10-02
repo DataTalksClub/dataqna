@@ -286,7 +286,6 @@ button, .btn {
   justify-content: center;
   gap: var(--dk-space-2);
   touch-action: manipulation;
-  box-shadow: var(--dk-shadow-card);
 }
 button:disabled { opacity: .5; cursor: default; }
 button:not(:disabled):hover, .btn:hover { background: var(--accent-fill-hover); }
@@ -365,7 +364,6 @@ textarea, input[type=text], input[type=email], input[type=number], select {
   background: var(--dk-bg-surface);
   border: 1px solid var(--dk-border-default);
   border-radius: var(--dk-radius-lg);
-  box-shadow: var(--dk-shadow-card);
   outline: none;
 }
 
@@ -473,7 +471,6 @@ textarea:focus-visible, input:focus-visible, select:focus-visible {
   background: var(--dk-bg-surface);
   border: 1px solid var(--dk-border-default);
   border-radius: var(--dk-radius-lg);
-  box-shadow: var(--dk-shadow-card);
   padding: var(--dk-space-4);
   margin-bottom: var(--dk-space-3);
 }
@@ -630,7 +627,6 @@ input[type=checkbox] { width: 18px; height: 18px; accent-color: var(--accent-fil
 .tabs button[aria-pressed=true]:not(:disabled):hover {
   background: var(--dk-bg-raised);
   color: var(--dk-text-primary);
-  box-shadow: var(--dk-shadow-card);
 }
 /* ----------------------------------------------------- question list
 
@@ -648,7 +644,6 @@ li.q {
   background: var(--dk-bg-surface);
   border: 1px solid var(--dk-border-default);
   border-radius: var(--dk-radius-lg);
-  box-shadow: var(--dk-shadow-card);
   padding: var(--dk-space-3) var(--dk-space-4);
   margin-bottom: var(--dk-space-2);
 }
@@ -894,7 +889,6 @@ ol.present-list {
   background: var(--dk-bg-surface);
   border: 1px solid var(--dk-border-default);
   border-radius: var(--dk-radius-lg);
-  box-shadow: var(--dk-shadow-card);
   padding: var(--dk-space-4) var(--dk-space-5);
 }
 .present-list li.selected {
