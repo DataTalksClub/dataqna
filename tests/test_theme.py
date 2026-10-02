@@ -104,9 +104,9 @@ def test_ink_is_legible_on_every_filled_control():
 
 def test_body_and_muted_text_are_legible_on_the_page():
     for name, block in THEMES.items():
-        for token, floor in (("text", 7.0), ("muted", 4.5)):
-            ratio = contrast(resolve(block, token), resolve(block, "bg"))
-            assert ratio >= floor, f"{name}: {token} on bg is {ratio:.2f}:1"
+        for token, floor in (("dk-text-primary", 7.0), ("dk-text-muted", 4.5)):
+            ratio = contrast(resolve(block, token), resolve(block, "dk-bg-page"))
+            assert ratio >= floor, f"{name}: {token} on the page is {ratio:.2f}:1"
 
 
 def test_the_hero_reads_as_a_band_against_the_page():
@@ -117,7 +117,7 @@ def test_the_hero_reads_as_a_band_against_the_page():
     """
     for name, block in THEMES.items():
         band = first_stop(resolve(block, "hero-bg"))
-        step = abs(lightness(band) - lightness(resolve(block, "bg")))
+        step = abs(lightness(band) - lightness(resolve(block, "dk-bg-page")))
         assert step >= 15, f"{name}: hero is only {step:.1f} L* from the page"
 
 
@@ -186,7 +186,7 @@ def test_the_light_qr_is_ink_on_the_page():
     that every decoder reads. The floor is well past AA because a camera is
     less forgiving than an eye."""
     assert resolve(LIGHT, "qr-paper") == "transparent", "light: QR grew a plate"
-    for surface in ("bg", "surface"):
+    for surface in ("dk-bg-page", "dk-bg-surface"):
         ratio = contrast(resolve(LIGHT, "qr-ink"), resolve(LIGHT, surface))
         assert ratio >= 10, f"light: QR on {surface} is only {ratio:.2f}:1"
 
