@@ -1,8 +1,9 @@
 # DataQnA — Design System
 
-Version 0.3 (2026-10-02) — the console took up the family shell; version
-0.2 adopted dakit's tokens, and version 0.1 (2026-08-06) was the pre-dakit
-local system.
+Version 0.4 (2026-10-02) — the icons, focus ring, scrim and shadows took up
+dakit's converged family recipes; version 0.3 gave the console the family
+shell; version 0.2 adopted dakit's tokens, and version 0.1 (2026-08-06) was
+the pre-dakit local system.
 
 ## 1. Purpose
 
@@ -49,7 +50,7 @@ without its readers is how a button loses its fill and nothing errors.
 
 The app's roles in `app.css`: `--accent-fill` / `--accent-fill-hover` /
 `--on-accent` / `--on-danger`, the `--hero-*` band, the `--qr-*` pair, the
-`--toast-*` pill, the drawer's `--scrim-bg`, plus motion (`--ease-out`,
+`--toast-*` pill, plus motion (`--ease-out`,
 `--duration-*`), the snug leading and tracking roles, and one spacing step
 (`--space-9`, 48px, under the hero). Everything else a component needs is a
 `--dk-*` token. One dakit token the spec's recipes name but the vendored cut
@@ -197,14 +198,28 @@ feedback, not decoration — so this app vendors tokens only and keeps its own
 base, which is dakit's sanctioned integration for apps with their own
 component styles.
 
-## 6. Elevation
+## 6. Elevation and focus
 
-A **hairline border does the outlining**, so shadows stay layered and low-opacity
-rather than doing both jobs at once: dakit's `--dk-shadow-card` for resting cards,
-`--dk-shadow-overlay` for raised surfaces. Never both a heavy shadow and a strong
-border. The dark theme gets dakit's dark shadows; a dark page is too dark for a
-small shadow to add anything, and elevation there comes from the surface being
-lighter.
+**A hairline border does the outlining, and shadow belongs to overlays.** The
+family rule: static containers and controls (`.panel`, the composer, a
+selected list row) carry `--dk-border-default` and no shadow at
+`--dk-radius-md`; overlay surfaces — modal and lightbox panels, popovers, and
+the toast-style feedback that floats over the page — carry
+`--dk-shadow-overlay` at `--dk-radius-lg`. Full-height edge pieces (the
+mobile drawer) keep no radius; the shadow carries them. Never both a heavy
+shadow and a strong border. The dark theme gets dakit's dark shadows; a dark
+page is too dark for a small shadow to add anything, and elevation there
+comes from the surface being lighter.
+
+Backdrops use dakit's `--dk-bg-backdrop` directly — the drawer's scrim over
+the page is that token, not an app-side rgba pair to keep in step with it.
+
+**The keyboard indicator is the family's, and it is never dimmed:**
+`outline: 3px solid var(--dk-focus-ring)` with a 2px offset on
+`:focus-visible`, full-bleed rows insetting it with a negative offset so it
+stays inside the row. Text controls swap the outline for the accent border
+plus the ring's halo (`0 0 0 3px var(--dk-focus-ring)`) on `:focus` — the
+indicator a typing field shows is that pair.
 
 ## 7. Components
 
@@ -229,14 +244,18 @@ Notes that are not obvious from the code:
   queue is the view's dominant panel with the filter tabs in its header band.
   Session states speak in badges on dakit's triplet roles: `open` success,
   `archived` danger, draft and closed neutral.
-- **Icons are one language**: inline SVG, 16×16 box, `stroke="currentColor"`,
-  stroke-width 1.5, round caps and joins, no fills — nav rows, the toolbar, the
-  theme toggle, the moderation squares, and every presentation-mode glyph all
-  draw it, so a host's two surfaces render one action with one drawing.
-  Display sizes stay contextual (the projector scales a glyph, not the
-  drawing). The upvote chevron is the exception on purpose: it is the
-  product's brand glyph (it is in the favicon too), as is the room's 48px
-  empty-state bubble — an illustration, not a control glyph.
+- **Icons are one language**: inline SVG, 24×24 viewBox paths rendered at 20px,
+  `stroke="currentColor"`, stroke-width 1.8, round caps and joins, no fills —
+  the geometry dakit's `showcase.html` pins and every sibling ships; nav rows,
+  the toolbar, the theme toggle, the moderation squares, and every
+  presentation-mode glyph all draw it, so a host's two surfaces render one
+  action with one drawing. Shapes in dakit's canonical set (check, x,
+  chevrons) are copied from there; the rest are redrawn on the same grid from
+  the same drawing tradition so stroke weight stays identical. Display sizes
+  stay contextual (the projector scales a glyph, not the drawing). The
+  upvote chevron is the exception on purpose: it is the product's brand glyph
+  (it is in the favicon too), as is the room's 48px empty-state bubble — an
+  illustration, not a control glyph.
 - **Touch targets are 44px minimum** (dakit's `--dk-size-touch`, applied as a
   floor rather than a control height — dakit's 34px control is a desktop
   measure). `.btn.small` trims padding and type, never the target. `.icon-btn`
