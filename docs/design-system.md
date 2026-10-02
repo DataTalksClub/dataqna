@@ -1,6 +1,7 @@
 # DataQnA — Design System
 
-Version 0.1 (2026-08-06)
+Version 0.2 (2026-10-02) — adopted dakit; version 0.1 (2026-08-06) was the
+pre-dakit local system.
 
 ## 1. Purpose
 
@@ -9,105 +10,119 @@ presentation view, the admin console, and the pages `render.py` builds in Python
 This document is what that stylesheet means, so a change lands in the system rather
 than beside it.
 
-The reference is **Stripe** — slate neutrals, a blurple accent, hairline borders
-under layered shadows, tight tracking on headings. Behaviour and information
-architecture follow Slido (see [specification.md](specification.md)); the look does
-not.
+The system itself is **dakit** (`~/git/dakit`), the design system shared with
+dapier, dataops and relay — its `docs/principles.md` is the philosophy and its
+`docs/adoption.md` maps each tool onto it. DataQnA is a *remap* adoption: the
+accent changed hue (blurple → dakit blue), the dark surfaces went from navy to
+dakit's neutral dark, and the type, spacing and radius scales are dakit's. What
+remains local is product, not style: the room hero band, the QR plate, toasts,
+and one deliberate accent divergence (§4).
 
 **Constraint that shapes everything:** there is no build step and no bundler.
-`render.py` reads the CSS off disk and serves it. So the system is hand-written
-custom properties, not a framework, and it costs one request.
+`render.py` reads the CSS off disk and serves it. So dakit ships vendored —
+`src/web/dakit-tokens.css` plus the self-hosted fonts, refreshed by
+`scripts/sync_dakit.sh` from a sibling dakit checkout after running its build —
+and it costs two requests.
 
-## 2. The two layers
+## 2. The layers
 
-Raw ramps feed semantic tokens. **Components only ever touch the semantic layer.**
+Dakit has the layers and owns the direction of dependency: primitives (raw
+ramps, this repo never touches them) → semantic roles (`--dk-*`, both themes,
+contrast-checked at dakit's build) → components. This app adds a third, local
+row to the semantic layer and components touch only that:
 
 ```text
---slate-900 ─┐
---navy-50  ──┼──►  --text  ──►  body, h1, .card …
---blurple-600 ┘    --accent
+dakit semantic (--dk-bg-page, --dk-accent-deep, --dk-danger-text …)
+        │
+DataQnA roles (--accent-fill, --hero-bg, --qr-paper, --toast-text …)
+        │
+body, .card, .vote, .hero …
 ```
 
-A component that reaches past `--text` to `--slate-900` looks correct in light mode
-and breaks in dark, because a theme is nothing more than an alternative mapping of
-the semantic layer. That is the one rule worth enforcing.
+`tests/test_theme.py` enforces the two rules that make this safe: no component
+rule names a color (hex or rgb) below the token blocks, and every `var()` in
+the sheet resolves to a definition. `var()` fails silent — a token renamed
+without its readers is how a button loses its fill and nothing errors.
 
-### Ramps
-
-| Ramp | Range | Used for |
-|---|---|---|
-| `--slate-50…900` | `#f6f8fb` → `#1a1f36` | neutrals, light-theme surfaces and text |
-| `--navy-950…50` | `#0d1220` → `#e9edf6` | dark-theme surfaces — desaturated navy, never pure black |
-| `--blurple-100…850` | `#edeefd` → `#232a4d` | brand and accent |
-
-### Semantic tokens
-
-`--bg` `--surface` `--surface-2` `--field` `--border` `--text` `--muted` `--brand`
-`--accent` `--accent-hover` `--accent-fill` `--accent-fill-hover` `--accent-soft`
-`--accent-line` `--on-accent` `--danger` `--danger-fill` `--ok` `--warn` (each with
-a `-soft` background pair) `--shadow-sm` `--shadow-md`.
-
-`--accent` is the brand as text and stroke on a page background; `--accent-fill` is
-the brand as a mass that has to carry ink. Light maps both to `--blurple-600`, so a
-fill written as `var(--accent)` looks correct until dark maps them apart. Nothing
-that takes `--on-accent` may paint itself with `--accent`.
+The app's roles in `app.css`: `--accent-fill` / `--accent-fill-hover` /
+`--on-accent` / `--on-danger`, the `--hero-*` band, the `--qr-*` pair, the
+`--toast-*` pill, plus motion (`--ease-out`, `--duration-*`), the snug leading
+and tracking roles, and one spacing step (`--space-9`, 48px, under the hero).
+Everything else a component needs is a `--dk-*` token.
 
 ## 3. Themes
 
 **Light is the default, for everyone, whatever their device prefers.** A room link
 is handed to a hall full of people who did not choose to be here, and it should
 open the same way for all of them — the same way it looked on the slide it was
-scanned from. `prefers-color-scheme` is not consulted anywhere. Dark is opt-in,
-mapped once under `html.theme-dark`, and it is the only value ever written to
-`localStorage` under `dq_theme` (`dq_present_theme` for presentation mode, which is
-its own surface with its own default). Switching back to light clears the key
-rather than storing "light".
+scanned from. `prefers-color-scheme` is not consulted anywhere; this is a
+deliberate turn from dakit's README boot script, whose fallback is the OS
+preference — right for a console you open yourself, wrong for a page an audience
+is handed. Dark is opt-in, pinned with dakit's `data-theme="dark"` attribute on
+`<html>` (the attribute is the whole contract — no classes), and `dq_theme` is
+the only value ever written to `localStorage` (`dq_present_theme` for
+presentation mode, which is its own surface with its own default). Switching
+back to light writes `"light"` rather than clearing the key, and every reader
+treats anything but `"dark"` as light.
 
 **Every page carries a toggle** — a `[data-theme-toggle]` button — and the logic
 behind it lives once, in `theme.js`. It used to live in `room.js` and `admin.js` as
 the same thirty lines twice, which is exactly why the front page, the co-host gate
 and the notices had none: adding one meant a third copy. A page opts in with the
-button and a `<script src="/assets/theme.js" defer>`. `<html>` may carry
-`data-theme-dark` / `data-theme-light` to say what the address bar should match;
-the room sets them to its hero band, everything else defaults to the page
-background.
+button and a `<script src="/assets/theme.js" defer>`.
 
 Three things have to happen before first paint, and a deferred asset is far too
 late for any of them, so each `<head>` carries them inline: `color-scheme`, so the
 UA paints the right canvas *before the stylesheet exists* — without it a pinned
-dark load on a cold cache flashes full-screen white; the `theme-dark` class; and
-the `theme-color` meta. The static templates carry their own copy; `render.py`
+dark load on a cold cache flashes full-screen white; the `data-theme` attribute;
+and the `theme-color` meta. The static templates carry their own copy; `render.py`
 injects `THEME_CANVAS` and `THEME_SCRIPT` into `_shell`.
 
 Presentation mode pins **light**, deliberately: a projector renders white as "screen
 off", and dark slides wash out in a lit room. That is a different decision rather
 than a variation on this one, so it keeps its own script and its own storage key.
 
-The dark mapping lives in exactly one place, `html.theme-dark`. It used to be
-duplicated under `@media (prefers-color-scheme: dark)` as well, with a standing
-instruction to keep the two identical; making light the default removed the media
-query and the hazard with it. `tests/test_theme.py` fails if a second mapping
-appears.
+The app's dark mapping lives in exactly one place, the `:root[data-theme="dark"]`
+block of `app.css` — and it is small, because dakit remaps every `--dk-*` role in
+the same block of the vendored sheet. Only the app's own roles need a word there:
+the accent fill's dark value, the hero's muted tone and hairline, the toast's
+inverted pair, the QR plate. `tests/test_theme.py` fails if a second mapping
+appears in the app sheet.
 
 ## 4. Colour and contrast
 
-Every text-on-background pair is checked against **WCAG AA**. The tightest are
-accent-on-soft at 4.84:1 (light) and 5.59:1 (dark).
+Dakit owns the palette: one blue accent, neutral surfaces, status hues that report
+state and do nothing else. Every `--dk-*` pair dakit's consumers can co-occur is
+measured at dakit's build; the app's own pairs are measured in
+`tests/test_theme.py`, both themes, hero band and QR plate included. The tightest:
+accent-on-soft 6.03:1 (light) and 5.45:1 over a card (dark, dakit's translucent
+soft composited); hero-muted on the band's lightest stop 7.94:1 (light) / 5.37:1
+(dark).
 
-Two results are load-bearing and easy to undo by accident:
+One divergence from dakit's own dark buttons, carried deliberately:
 
-- **`--blurple-500` (`#635BFF`) is 4.70:1 on white.** Stripe's signature hue passes,
-  but reads thin at body size. It stays decorative as `--brand`; interactive fills
-  and text use `--blurple-600` (5.57:1).
-- **White on `--blurple-400` is 2.49:1** — far below AA, which is why the dark
-  theme's *text* accent is that value and its *fill* is `--blurple-600`, white on it
-  at 5.57:1 in both themes. The earlier answer — keep one accent and give it dark
-  ink — cleared AA and produced a pale chip with black ink on a black page. Passing
-  contrast was never the question the button was failing.
-- **The dark hero band was 1.21:1 against the page.** No text sat on it, so every
-  ratio passed and the band was still not visible. `tests/test_theme.py` checks
-  figure/ground separation in L\* alongside the text ratios, for both themes, and
-  that the band keeps the brand hue rather than going neutral.
+- **Accent fills keep white ink on the deep end of the ramp.** Dakit's dark theme
+  pairs its bright accent (#58a6ff) with near-black ink — fine on a console,
+  strange on a phone in a dark hall, and this app's audience is the phone. So the
+  fill goes to `--dk-accent-deep` in dark (#1c3d5e) and the ink stays
+  `--dk-text-on-deep`: white on the fill is 11.16:1. In light the fill is the
+  accent itself (#315f8f, 6.64:1 under white) and the hover is `accent-deep-hover`
+  (#244d78) — the same value deeper in light and brighter in dark, because blue-600
+  lies between each theme's fill and its accent. Text, strokes and links follow
+  dakit's bright dark accent (7.49:1 on the page); dakit's `accent-deep/deeper/
+  deep-hover/text-on-deep` roles were added for this pairing, so it is verified at
+  dakit's build rather than asserted here.
+- **The solid danger button is the exception to the exception.** Dakit has no deep
+  red that could hold white ink in dark — its dark danger (#f85149) is built to be
+  a text color, and white on it is 3.35:1. So the danger fill stays
+  `--dk-danger-text` and its ink is `--on-danger`: dakit's own pairing,
+  `--dk-text-on-accent`, which is white in light (5.35:1 on #cf222e) and near-black
+  in dark (5.64:1 on #f85149). The hover is dakit's `--dk-danger-hover`, no filter.
+- **The dark hero band keeps the brand.** It is the same gradient in both themes —
+  `accent-deep → accent-deeper` — darkened by the role remap, 20.5 L* off the dark
+  page at the stop that shows. A navy panel once cleared every text check on it
+  and was still invisible at 1.21:1 against the page; the L* floor in
+  `test_theme.py` exists because of that.
 
 The QR is one pair of tokens, `--qr-ink` / `--qr-paper`, and the theme decides
 what paper is. In light the page itself is paper: no plate, the code is drawn in
@@ -140,7 +155,7 @@ The reversal is in the QR spec, and the decoders people actually point at a scre
 — phone camera apps, Lens, WeChat — handle it. OpenCV's built-in detector is an
 older, weaker algorithm and does not. So this is a real but narrow risk, carried
 deliberately, and mitigated by giving the code everything else it wants: pure
-white ink at 11.3:1 on the gradient's lightest stop, and generous quiet zone.
+white ink at 11.2:1 on the gradient's lightest stop, and generous quiet zone.
 Rendered screenshots of all three placements were decoded rather than assumed:
 the WeChat decoder reads the dark code at every size down to the full-screen
 overlay scaled to 12%, and the light code decodes with both decoders.
@@ -152,26 +167,46 @@ If a reversed code ever does prove to be a problem in the field, `--qr-ink` and
 
 ## 5. Type, space, shape, motion
 
+Type, space, radius and the fonts are dakit's; consult its `docs/tokens.md` for
+the scales. What this app adds to the record:
+
 | Scale | Values |
 |---|---|
-| Type | `--text-xs .75rem` · `sm .875` · `base 1` · `lg 1.125` · `xl 1.375` · `2xl 1.75` |
-| Leading | `--leading-tight 1.2` (headings) · `snug 1.35` · `body 1.55` |
-| Tracking | `--tracking-tight -.02em` (headings) · `snug -.01em` · `wide .08em` (labels) |
-| Space | `--space-1…10`, a 4px base: 4 8 12 16 20 24 32 40 48 64 |
-| Radius | `--radius-sm 6px` · `md 8px` · `lg 12px` · `full` — pills are for tags and badges only |
-| Motion | `--duration-1 120ms` · `2 180ms` · `3 260ms`, one `--ease-out` curve |
+| Type | dakit's steps; the body stays **16px** (`--dk-text-lg`) and so do fields |
+| Leading | dakit tight 1.2 (headings) · app snug 1.35 · dakit normal 1.5 (body) |
+| Tracking | `-.02em` headings · `-.01em` controls · `.08em` labels — app roles |
+| Space | dakit's 4px grid (`--dk-space-1…8`) + one app step, `--space-9` 48px |
+| Radius | dakit's: controls and cards both at the 10px step, pills for tags/badges |
+| Motion | `--duration-1/2/3` 120/180/260ms, one `--ease-out` curve — app roles |
 
-The font is the system stack. No webfont: an external request would cost more than
-it buys, and the CSP forbids it anyway.
+The 16px body is the one break with dakit's type scale, and it is load-bearing:
+this text is read on phones one-handed, and iOS Safari zooms any focused field
+set below 16px, which would turn every ask into a viewport jolt. Dakit's ops
+tools run a 14px body on desktop consoles; this app's readers hold it at arm's
+length.
 
-All motion sits behind `prefers-reduced-motion: no-preference`.
+The fonts are dakit's faces, self-hosted next to the sheet (SIL OFL,
+`fonts/LICENSE.md`): Inter for prose, IBM Plex Mono for passcodes and IDs —
+data reads as data. v0.1 used the system stack on the reasoning that a webfont
+was an external request the CSP forbade; self-hosted same-origin fonts are not
+that, and one shared voice across the internal tools is worth two cached
+`woff2` files. `font-display: swap`, so text never waits on them.
+
+All motion sits behind `prefers-reduced-motion: no-preference`. Note the
+deliberate scope: dakit's own base sheet kills *every* animation under
+`prefers-reduced-motion`, which would still the composer's in-flight ring —
+feedback, not decoration — so this app vendors tokens only and keeps its own
+base, which is dakit's sanctioned integration for apps with their own
+component styles.
 
 ## 6. Elevation
 
-Stripe's move, and the one that makes the difference: a **hairline border does the
-outlining**, so shadows stay layered and low-opacity rather than doing both jobs at
-once. `--shadow-sm` for resting cards, `--shadow-md` for raised surfaces. Never
-both a heavy shadow and a strong border.
+A **hairline border does the outlining**, so shadows stay layered and low-opacity
+rather than doing both jobs at once: dakit's `--dk-shadow-card` for resting cards,
+`--dk-shadow-overlay` for raised surfaces. Never both a heavy shadow and a strong
+border. The dark theme gets dakit's dark shadows; a dark page is too dark for a
+small shadow to add anything, and elevation there comes from the surface being
+lighter.
 
 ## 7. Components
 
@@ -180,19 +215,21 @@ banners, tabs, question list, empty state and toast, presentation mode.
 
 Notes that are not obvious from the code:
 
-- **Touch targets are 44px minimum.** `.btn.small` trims padding and type, never
-  the target. `.icon-btn` is the square icon-only variant and always carries an
-  `aria-label`. The admin queue's per-question actions use it deliberately, with
-  presentation mode's glyphs: moderation happens a dozen times a session, so it
-  must not outweigh the question text — the console's one filled control is
-  Presentation mode. Only the armed "Really delete?" state speaks in words.
+- **Touch targets are 44px minimum** (dakit's `--dk-size-touch`, applied as a
+  floor rather than a control height — dakit's 34px control is a desktop
+  measure). `.btn.small` trims padding and type, never the target. `.icon-btn`
+  is the square icon-only variant and always carries an `aria-label`. The admin
+  queue's per-question actions use it deliberately, with presentation mode's
+  glyphs: moderation happens a dozen times a session, so it must not outweigh
+  the question text — the console's one filled control is Presentation mode.
+  Only the armed "Really delete?" state speaks in words.
 - **`.vote`** is the one thing a participant taps in a dark room, one-handed: a
   pill on the card's foot line — chevron and count side by side — 44px tall,
   secondary to the question text but primary to the thumb. The question card
   follows Slido's anatomy: text leads, author and time sit under it.
 - **The room hero** (`.hero`) is the participant page's header band. It uses the
-  `--hero-*` tokens; hero-muted is 4.81:1 on the gradient's lightest stop, so do
-  not lighten the gradient without re-measuring.
+  `--hero-*` tokens; the floors are in `test_theme.py`, so do not lighten the
+  gradient without re-measuring.
 - **Pinned is a badge on the room, a tint on the projector.** The room shows a
   `Pinned` tag; presentation mode tints the card. The pin is exclusive, so the
   one tinted card reads as the question the host is holding up — no outline, no
@@ -227,8 +264,14 @@ The layout rules are in [specification.md](specification.md) §7. What belongs h
 
 ## 9. Changing it
 
-1. Add or adjust a **semantic token** before adding a component rule. Most "this
-   needs a new colour" turns out to be an existing token used correctly.
-2. Check contrast in **both** themes, not just the one you have open.
-3. If you touch the dark mapping, touch **both** copies (§3).
-4. `make test` — two tests guard fixes that already regressed once (§4, §7).
+1. **Color, type, space or radius?** Change it in dakit first (`tokens/*.json`,
+   both themes, contrast pair, `node build.mjs`), commit there, then
+   `scripts/sync_dakit.sh` and adapt. A token dakit doesn't have is a token to
+   propose, not a hex to inline — the layer-rule test will refuse the inline.
+2. Add or adjust an **app role** in `app.css`'s token blocks before adding a
+   component rule. Most "this needs a new colour" turns out to be an existing
+   token used correctly.
+3. Check contrast in **both** themes, not just the one you have open —
+   `tests/test_theme.py` is where the numbers live; add the new pair to it.
+4. `make test` — two tests guard fixes that already regressed once (§4, §7),
+   and two more guard the layer rule and the token graph (§2).
