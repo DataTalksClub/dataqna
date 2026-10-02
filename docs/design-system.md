@@ -1,7 +1,8 @@
 # DataQnA — Design System
 
-Version 0.2 (2026-10-02) — adopted dakit; version 0.1 (2026-08-06) was the
-pre-dakit local system.
+Version 0.3 (2026-10-02) — the console took up the family shell; version
+0.2 adopted dakit's tokens, and version 0.1 (2026-08-06) was the pre-dakit
+local system.
 
 ## 1. Purpose
 
@@ -12,11 +13,13 @@ than beside it.
 
 The system itself is **dakit** (`~/git/dakit`), the design system shared with
 dapier, dataops and relay — its `docs/principles.md` is the philosophy and its
-`docs/adoption.md` maps each tool onto it. DataQnA is a *remap* adoption: the
-accent changed hue (blurple → dakit blue), the dark surfaces went from navy to
+`docs/adoption.md` maps each tool onto it, and its `docs/family.md` is the shell
+and page-anatomy spec every tool's console copies. DataQnA is a *remap* adoption:
+the accent changed hue (blurple → dakit blue), the dark surfaces went from navy to
 dakit's neutral dark, and the type, spacing and radius scales are dakit's. What
-remains local is product, not style: the room hero band, the QR plate, toasts,
-and one deliberate accent divergence (§4).
+remains local is product, not style: the room hero band, the QR plate, toasts, and
+one deliberate accent divergence (§4). The admin console is not local: it wears
+the family shell (§7), the same way dataops and relay do.
 
 **Constraint that shapes everything:** there is no build step and no bundler.
 `render.py` reads the CSS off disk and serves it. So dakit ships vendored —
@@ -46,9 +49,12 @@ without its readers is how a button loses its fill and nothing errors.
 
 The app's roles in `app.css`: `--accent-fill` / `--accent-fill-hover` /
 `--on-accent` / `--on-danger`, the `--hero-*` band, the `--qr-*` pair, the
-`--toast-*` pill, plus motion (`--ease-out`, `--duration-*`), the snug leading
-and tracking roles, and one spacing step (`--space-9`, 48px, under the hero).
-Everything else a component needs is a `--dk-*` token.
+`--toast-*` pill, the drawer's `--scrim-bg`, plus motion (`--ease-out`,
+`--duration-*`), the snug leading and tracking roles, and one spacing step
+(`--space-9`, 48px, under the hero). Everything else a component needs is a
+`--dk-*` token. One dakit token the spec's recipes name but the vendored cut
+does not ship is `--dk-border-muted`; hairline row dividers therefore use
+`--dk-border-default` — the token to propose upstream, not a hex to inline.
 
 ## 3. Themes
 
@@ -164,11 +170,11 @@ the scales. What this app adds to the record:
 
 | Scale | Values |
 |---|---|
-| Type | dakit's steps; the body stays **16px** (`--dk-text-lg`) and so do fields |
+| Type | dakit's steps; the body stays **16px** (`--dk-text-lg`) on participant surfaces, and the console runs dakit's 14px (`--dk-text-body`) like the sibling tools |
 | Leading | dakit tight 1.2 (headings) · app snug 1.35 · dakit normal 1.5 (body) |
-| Tracking | `-.02em` headings · `-.01em` controls · `.08em` labels — app roles |
+| Tracking | `-.02em` headings · `-.01em` controls · `.07em` labels — app roles |
 | Space | dakit's 4px grid (`--dk-space-1…8`) + one app step, `--space-9` 48px |
-| Radius | dakit's: controls and cards both at the 10px step, pills for tags/badges |
+| Radius | dakit's: controls and containers at the family 6px step (`--dk-radius-md`), overlays at 10px, pills for votes, tabs and toasts |
 | Motion | `--duration-1/2/3` 120/180/260ms, one `--ease-out` curve — app roles |
 
 The 16px body is the one break with dakit's type scale, and it is load-bearing:
@@ -207,10 +213,33 @@ banners, tabs, question list, empty state and toast, presentation mode.
 
 Notes that are not obvious from the code:
 
+- **The console wears the family shell** (dakit `docs/family.md`): a persistent
+  268px sidebar on the muted surface — product mark, icon-plus-text nav rows,
+  selection is the filled row alone — and a slim right-aligned toolbar over the
+  canvas. Console controls sit on dakit's desktop control scale (34px,
+  radius-md, 14px text); on a phone the touch floor returns and the nav becomes
+  a modal drawer with a scrim, Escape, and focus restoration. The desktop
+  sidebar collapses to an icon rail; the preference persists in
+  `dq.sidebar.collapsed`.
+- **Content is panels and rows, not cards.** A `.panel` is one bordered
+  container whose header and footer bands sit on `--dk-bg-muted`; `.panel-row`
+  is a hairline-divided row carrying one primary label, one metadata line, and
+  at most one affordance (the chevron). The room view's numbers are a segmented
+  stats strip (`QUESTIONS / ANSWERED / STATE / CLOSES`), not a card grid; the
+  queue is the view's dominant panel with the filter tabs in its header band.
+  Session states speak in badges on dakit's triplet roles: `open` success,
+  `archived` danger, draft and closed neutral.
+- **Icons are one language**: inline SVG, 16×16 box, `stroke="currentColor"`,
+  stroke-width 1.5, round caps and joins, no fills — nav rows, the toolbar, the
+  theme toggle, and the moderation squares all draw it. The upvote chevron is
+  the exception on purpose: it is the product's brand glyph (it is in the
+  favicon too). Presentation mode keeps its 24-box shapes because the
+  projector scales them, but at the family stroke.
 - **Touch targets are 44px minimum** (dakit's `--dk-size-touch`, applied as a
   floor rather than a control height — dakit's 34px control is a desktop
   measure). `.btn.small` trims padding and type, never the target. `.icon-btn`
-  is the square icon-only variant and always carries an `aria-label`. The admin
+  is the square icon-only variant and always carries an `aria-label`; the
+  shell's 28px `.icon-button` is chrome, not touch. The admin
   queue's per-question actions use it deliberately, with presentation mode's
   glyphs: moderation happens a dozen times a session, so it must not outweigh
   the question text — the console's one filled control is Presentation mode.
@@ -228,10 +257,10 @@ Notes that are not obvious from the code:
   inset left edge, which would say it with noise instead.
 - **`.btn.arm`** is the "are you sure" state of a destructive two-tap, not a
   separate button.
-- **Setup panels** (`details.card`) hold the admin console's done-once tasks —
-  share, settings, people — as collapsed 48px summary rows below the queue, so
-  the queue owns the first screenful. The chevron is drawn in CSS and flips
-  when open; open/closed is a shape change, never color alone.
+- **Setup panels** (`details.panel`) hold the admin console's done-once tasks —
+  share, settings, people — as collapsed 44px rows below the queue, so the
+  queue owns the first screenful. The chevron is drawn in CSS and flips when
+  open; open/closed is a shape change, never color alone.
 - **`[hidden] { display: none !important; }`** is required, not defensive. Author
   styles on `button` beat the UA stylesheet, so without it every hidden button
   renders. Also covered by a test.
