@@ -286,3 +286,20 @@ its tabs to a second line (contract-acceptable); the mono count hint could
 shorten to free header space. Tests: 155 passed, including the new
 `test_the_room_is_a_family_page`, which pins the anatomy and bans the
 tells.
+
+**DQ-JUDGE-R5: PASS — SHIP, no required fixes.** A post-hoc fully
+independent judge (separate agent, fresh context, no handoff from the
+redesign lane) re-ran the round-4 acceptance over the recorded surfaces:
+15/15 `tmp/ar-shots/after/` renders read with zero Read failures, all four
+`before/` room shots read for comparison. Every claim re-verified by pixel
+sampling, not transcript trust: the old gradient band samples `(35,76,118)`
+in the before and is gone in the after (flat page white / `(13,17,23)`,
+one 1px bar hairline); the composer shadow ramp is gone (1px border, flat
+page below); queue hairline `(208,215,222)`; panel header band identical
+across room/admin/directory — light `(246,248,250)`, dark `(33,38,45)`; the
+dark plate re-measures exactly 11.18:1, solid `(28,61,94)` = `--dk-accent-deep`.
+Two clarifications recorded: the QR plate lives on the projector surface
+(present), not on the room page itself; and the composer's accent border at
+1440 vs quiet border at 390 is the contract's autofocus recipe
+(`room.js:467`, viewports ≥720px), not an inconsistency. Verdict
+unchanged from R4, now on independent evidence.
