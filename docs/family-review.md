@@ -241,3 +241,48 @@ chevrons pointing down and one consistent round-cap family weight on every
 surface, with genuinely dark darks and no icon-bump layout regressions.
 Two optional mobile density notes recorded (admin API-keys table wrapping
 at 390px, console top-bar title ellipsis). Tests: 157 passed.
+
+## Round 4 — the participant room joins the family (2026-10-03, `cd9d579`)
+
+The room was the last surface wearing the pre-family design, and the one
+users actually see: a 135° gradient hero band, an uppercase eyebrow kicker
+with pulsing dot, the question count in a translucent chip, the composer
+floating on an overlay shadow dug into the band, and one bordered card per
+question. Round 2 had scored this F2 9/10 under a brief that sanctioned the
+room as an exception surface; the adversarial pass
+(`docs/design-contract.md`, committed before a line of CSS) named those
+tells as claims and revoked the sanction: **the room is a family page.**
+
+What changed — bar, page head, panel queue: a quiet sticky bar (live dot +
+"Live Q&A" left; theme toggle and staff links as borderless-until-hover 44px
+chrome right), the console's own `.page-head` classes in ink on paper, the
+composer as a plain bordered container (no shadow; `:focus-within` keeps the
+family halo), and the questions in one `.panel.queue-panel` — banded header
+with "Questions", the count as a mono hint, the filter tabs — and
+hairline-divided rows, the admin queue's exact anatomy. The dark QR plate
+moved from the hero gradient to solid `--dk-accent-deep` (11.18:1 for the
+reversed code, re-measured), and the address bar now pins the page
+background like every other surface. Deleted, not restyled: the `--hero-*`
+roles, the negative-margin overlap, the `--space-9` hero step.
+
+Kept on the participant surfaces, still sanctioned: the 16px body (iOS zoom
+floor), the 44px touch scale, the vote pill as the product's brand glyph,
+the pill filter tabs (the console's own control), light-as-default.
+
+**DQ-JUDGE-R4: PASS — SHIP, no required fixes.** An independent agent judge
+over 14 re-rendered surfaces (room/admin/present/directory/cohost/notice ×
+both themes × 1440/390, `tmp/ar-shots/`), with pixel sampling for every
+disputed claim: top-of-page samples confirm no saturated band survives
+(page white, then dakit dark ramp `(13,17,23)`); the old overlay shadow's
+13-step ramp is gone (crisp 1px border, then flat page); queue hairlines and
+the muted header band measure where the contract says; the dark plate
+samples `(28,61,94)` at six margins, solid. Regression surfaces read as
+pass-round-3 renders. One surface initially unverified — the empty queue
+state renders client-side only and the first capture was a mislabeled
+duplicate (the judge caught it by ImageChops diff); re-captured honestly
+(`tmp/ar-shots/after/room-390-empty.png`) and it sits correctly inside the
+panel. Optional polish recorded, unactioned: the phone queue header wraps
+its tabs to a second line (contract-acceptable); the mono count hint could
+shorten to free header space. Tests: 155 passed, including the new
+`test_the_room_is_a_family_page`, which pins the anatomy and bans the
+tells.

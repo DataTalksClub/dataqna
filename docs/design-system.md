@@ -1,8 +1,9 @@
 # DataQnA — Design System
 
-Version 0.3 (2026-10-02) — the console took up the family shell; version
-0.2 adopted dakit's tokens, and version 0.1 (2026-08-06) was the pre-dakit
-local system.
+Version 0.4 (2026-10-03) — the participant room joined the family anatomy
+(docs/design-contract.md is the adversarial record); version 0.3 (2026-10-02)
+put the console in the family shell; version 0.2 adopted dakit's tokens, and
+version 0.1 (2026-08-06) was the pre-dakit local system.
 
 ## 1. Purpose
 
@@ -17,8 +18,9 @@ dapier, dataops and relay — its `docs/principles.md` is the philosophy and its
 and page-anatomy spec every tool's console copies. DataQnA is a *remap* adoption:
 the accent changed hue (blurple → dakit blue), the dark surfaces went from navy to
 dakit's neutral dark, and the type, spacing and radius scales are dakit's. What
-remains local is product, not style: the room hero band, the QR plate, toasts, and
-one deliberate accent divergence (§4). The admin console is not local: it wears
+remains local is product, not style: the room bar, the QR plate, and toasts
+(docs/design-contract.md is the standing contract for the participant room —
+its banned list binds every surface). The admin console is not local: it wears
 the family shell (§7), the same way dataops and relay do.
 
 **Constraint that shapes everything:** there is no build step and no bundler.
@@ -37,9 +39,9 @@ row to the semantic layer and components touch only that:
 ```text
 dakit semantic (--dk-bg-page, --dk-accent-deep, --dk-danger-text …)
         │
-DataQnA roles (--accent-fill, --hero-bg, --qr-paper, --toast-text …)
+DataQnA roles (--accent-fill, --qr-paper, --toast-text …)
         │
-body, .card, .vote, .hero …
+body, .card, .vote, .room-bar …
 ```
 
 `tests/test_theme.py` enforces the two rules that make this safe: no component
@@ -48,13 +50,14 @@ the sheet resolves to a definition. `var()` fails silent — a token renamed
 without its readers is how a button loses its fill and nothing errors.
 
 The app's roles in `app.css`: `--accent-fill` / `--accent-fill-hover` /
-`--on-accent` / `--on-danger`, the `--hero-*` band, the `--qr-*` pair, the
-`--toast-*` pill, the drawer's `--scrim-bg`, plus motion (`--ease-out`,
-`--duration-*`), the snug leading and tracking roles, and one spacing step
-(`--space-9`, 48px, under the hero). Everything else a component needs is a
-`--dk-*` token. One dakit token the spec's recipes name but the vendored cut
-does not ship is `--dk-border-muted`; hairline row dividers therefore use
-`--dk-border-default` — the token to propose upstream, not a hex to inline.
+`--on-accent` / `--on-danger`, the `--qr-*` pair, the `--toast-*` pill, the
+drawer's `--scrim-bg`, plus motion (`--ease-out`, `--duration-*`), the snug
+leading and tracking roles. Everything else a component needs is a `--dk-*`
+token — the room bar and page head name no app role at all, which is the
+point: the room is a family page. One dakit token the spec's recipes name but
+the vendored cut does not ship is `--dk-border-muted`; hairline row dividers
+therefore use `--dk-border-default` — the token to propose upstream, not a hex
+to inline.
 
 ## 3. Themes
 
@@ -91,7 +94,7 @@ than a variation on this one, so it keeps its own script and its own storage key
 The app's dark mapping lives in exactly one place, the `:root[data-theme="dark"]`
 block of `app.css` — and it is small, because dakit remaps every `--dk-*` role in
 the same block of the vendored sheet. Only the app's own roles need a word there:
-the accent fill's dark value, the hero's muted tone and hairline, the toast's
+the accent fill's dark value, the toast's
 inverted pair, the QR plate. `tests/test_theme.py` fails if a second mapping
 appears in the app sheet.
 
@@ -100,10 +103,9 @@ appears in the app sheet.
 Dakit owns the palette: one blue accent, neutral surfaces, status hues that report
 state and do nothing else. Every `--dk-*` pair dakit's consumers can co-occur is
 measured at dakit's build; the app's own pairs are measured in
-`tests/test_theme.py`, both themes, hero band and QR plate included. The tightest:
+`tests/test_theme.py`, both themes, QR plate included. The tightest:
 accent-on-soft 6.03:1 (light) and 5.45:1 over a card (dark, dakit's translucent
-soft composited); hero-muted on the band's lightest stop 7.94:1 (light) / 5.37:1
-(dark).
+soft composited).
 
 Filled controls follow dakit's own pairing in both themes — the accent under
 its `--dk-text-on-accent` ink, `accent-hover` on hover — the same buttons
@@ -116,29 +118,31 @@ so the fill is `--dk-danger-text` and the ink is the same `--dk-text-on-accent`:
 white in light (5.35:1 on #cf222e) and near-black in dark (5.64:1 on #f85149).
 The hover is dakit's `--dk-danger-hover`, no filter.
 
-The dark hero band keeps the brand. It is the same gradient in both themes —
-`accent-deep → accent-deeper` — darkened by the role remap, 20.5 L* off the dark
-page at the stop that shows. A navy panel once cleared every text check on it
-and was still invisible at 1.21:1 against the page; the L* floor in
-`test_theme.py` exists because of that.
+The dark QR plate keeps the brand. It is the deep accent — solid, in both
+themes' terms a dakit ramp step, not an app-local color, sitting well off the
+dark page so the plate reads as an object. A navy panel once cleared every text
+check on it and was still invisible at 1.21:1 against the page; the plate is a
+ramp role precisely so it cannot happen again.
 
 The QR is one pair of tokens, `--qr-ink` / `--qr-paper`, and the theme decides
 what paper is. In light the page itself is paper: no plate, the code is drawn in
 the page's ink like any other mark, and stays a normal dark-on-light code that
 everything decodes. A dark page is not paper, so there the code brings its own —
-`--qr-paper` maps to `--hero-bg`, and white modules sit on the brand gradient.
+`--qr-paper` maps to `--dk-accent-deep`, and white modules sit on the brand's
+deep step.
 `qr.py` emits `currentColor` on a transparent ground for exactly this.
 
 Three dark treatments were tried and rejected before this one: dark-on-white,
 which projects a glaring white slab at a darkened room; dark ink on a dimmed
 grey plate, which reads as a slab that matches nothing on the page; and bare
 white modules on the surface, which have high contrast and no object to be —
-an unframed spray with no quiet zone and no relationship to the cards around
-it. The hero band is the one plate that answers all three at once: it gives
-the code edges, a radius, and a colour the page already speaks — it is how
-this product paints the thing it wants everyone to look at, and the join code
-*is* that thing. The container's padding is quiet zone on top of segno's four
-modules, and it keeps the modules off the plate's rounded corners.
+an unframed spray with no quiet zone and no relationship to the page around
+them. The brand's deep accent is the one plate that answers all three at once:
+it gives the code edges, a radius, and a colour the page already speaks — it
+is how this product paints the thing it wants everyone to look at, and the
+join code *is* that thing. The container's padding is quiet zone on top of
+segno's four modules, and it keeps the modules off the plate's rounded
+corners.
 
 That keeps the dark code **reversed**, which is worth being precise about,
 because decoders differ and the first version of this decision got it wrong by
@@ -153,12 +157,12 @@ The reversal is in the QR spec, and the decoders people actually point at a scre
 — phone camera apps, Lens, WeChat — handle it. OpenCV's built-in detector is an
 older, weaker algorithm and does not. So this is a real but narrow risk, carried
 deliberately, and mitigated by giving the code everything else it wants: pure
-white ink at 11.2:1 on the gradient's lightest stop, and generous quiet zone.
+white ink at 11.18:1 on the plate, and generous quiet zone.
 Rendered screenshots of all three placements were decoded rather than assumed:
 the WeChat decoder reads the dark code at every size down to the full-screen
 overlay scaled to 12%, and the light code decodes with both decoders.
-`tests/test_theme.py` holds the contrast floor on every gradient stop and fails
-if the plate stops being the hero's.
+`tests/test_theme.py` holds the contrast floor on the plate and fails if it
+stops being the brand's deep accent.
 
 If a reversed code ever does prove to be a problem in the field, `--qr-ink` and
 `--qr-paper` are the two values to change and nothing else moves.
@@ -173,7 +177,7 @@ the scales. What this app adds to the record:
 | Type | dakit's steps; the body stays **16px** (`--dk-text-lg`) on participant surfaces, and the console runs dakit's 14px (`--dk-text-body`) like the sibling tools |
 | Leading | dakit tight 1.2 (headings) · app snug 1.35 · dakit normal 1.5 (body) |
 | Tracking | `-.02em` headings · `-.01em` controls · `.07em` labels — app roles |
-| Space | dakit's 4px grid (`--dk-space-1…8`) + one app step, `--space-9` 48px |
+| Space | dakit's 4px grid (`--dk-space-1…8`) |
 | Radius | dakit's: controls and containers at the family 6px step (`--dk-radius-md`), overlays at 10px, pills for votes, tabs and toasts |
 | Motion | `--duration-1/2/3` 120/180/260ms, one `--ease-out` curve — app roles |
 
@@ -247,12 +251,21 @@ Notes that are not obvious from the code:
   the question text — the console's one filled control is Presentation mode.
   Only the armed "Really delete?" state speaks in words.
 - **`.vote`** is the one thing a participant taps in a dark room, one-handed: a
-  pill on the card's foot line — chevron and count side by side — 44px tall,
-  secondary to the question text but primary to the thumb. The question card
+  pill on the row's foot line — chevron and count side by side — 44px tall,
+  secondary to the question text but primary to the thumb. The question row
   follows Slido's anatomy: text leads, author and time sit under it.
-- **The room hero** (`.hero`) is the participant page's header band. It uses the
-  `--hero-*` tokens; the floors are in `test_theme.py`, so do not lighten the
-  gradient without re-measuring.
+- **The room is a family page** (docs/design-contract.md): a quiet sticky bar —
+  the live dot and "Live Q&A" left, the theme toggle and staff links right, all
+  borderless chrome until hover — then the console's own `.page-head` anatomy in
+  ink on paper, the composer as a plain bordered container (its `:focus-within`
+  halo is the family input recipe; on desktop `room.js` focuses the textarea, so
+  the halo there is expected), and the questions in one `.panel.queue-panel` —
+  banded header ("Questions", the count as a mono hint, the filter tabs),
+  hairline-divided rows inside. The dark page's QR plate is solid
+  `--dk-accent-deep` (§4); the address bar pins the page background on every
+  surface. The gradient band, eyebrow kicker, count chip and per-question cards
+  this section once described are on the contract's banned list — do not
+  reintroduce them.
 - **Pinned is a badge on the room, a tint on the projector.** The room shows a
   `Pinned` tag; presentation mode tints the card. The pin is exclusive, so the
   one tinted card reads as the question the host is holding up — no outline, no
