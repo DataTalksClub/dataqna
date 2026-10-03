@@ -19,8 +19,8 @@
 
   var root = document.documentElement;
 
-  /* The address bar matches the top of the page, which is the hero band in a
-     room and the page background everywhere else. */
+  /* The address bar matches the top of the page: the page background, on
+     every surface that offers the toggle. */
   var DARK = root.getAttribute("data-theme-dark") || "#0d1117";
   var LIGHT = root.getAttribute("data-theme-light") || "#ffffff";
 

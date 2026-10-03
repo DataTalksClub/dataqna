@@ -63,18 +63,6 @@ def contrast(foreground, background):
     return (high + 0.05) / (low + 0.05)
 
 
-def lightness(color):
-    """CIE L*, which is where a difference the eye can see shows up as a number."""
-    relative = luminance(color)
-    if relative > 216 / 24389:
-        return 116 * relative ** (1 / 3) - 16
-    return relative * 24389 / 27
-
-
-def first_stop(gradient):
-    return re.search(r"(#[0-9a-fA-F]{6})", gradient).group(1)
-
-
 THEMES = {"light": LIGHT, "dark": DARK}
 
 
@@ -140,32 +128,19 @@ def test_body_and_muted_text_are_legible_on_the_page():
             assert ratio >= floor, f"{name}: {token} on the page is {ratio:.2f}:1"
 
 
-def test_the_hero_reads_as_a_band_against_the_page():
-    """It is the room page's whole composition — the composer climbs into it.
+def test_the_room_is_a_family_page():
+    """The room once opened on a gradient hero band with an eyebrow kicker, a
+    count chip and a stack of per-question cards — the landing-page tells the
+    design contract (docs/design-contract.md) bans. The participant page wears
+    the family anatomy now: a quiet bar, an ink-on-paper page head, one queue
+    panel with divided rows. This test holds the door shut.
 
-    A dark navy panel cleared every text check on it and still was not a band,
-    because it was 8.8 L* off the page it sat on.
-    """
-    for name, block in THEMES.items():
-        band = first_stop(resolve(block, "hero-bg"))
-        step = abs(lightness(band) - lightness(resolve(block, "dk-bg-page")))
-        assert step >= 15, f"{name}: hero is only {step:.1f} L* from the page"
-
-
-def test_the_hero_keeps_the_brand_in_both_themes():
-    """Dark does not get a greyer product; it gets the same hue, lower."""
-    for name, block in THEMES.items():
-        band = first_stop(resolve(block, "hero-bg")).lstrip("#")
-        red, green, blue = (int(band[i:i + 2], 16) for i in (0, 2, 4))
-        assert blue > red and blue - min(red, green) >= 40, f"{name}: hero is not the brand"
-
-
-def test_hero_text_is_legible_on_the_band():
-    for name, block in THEMES.items():
-        band = first_stop(resolve(block, "hero-bg"))
-        for token, floor in (("hero-text", 4.5), ("hero-muted", 4.5)):
-            ratio = contrast(resolve(block, token), band)
-            assert ratio >= floor, f"{name}: {token} on the hero is {ratio:.2f}:1"
+    It must be updated only by a contract change, never by a regression."""
+    room = render.asset_bytes("room.html").decode()
+    for marker in ('class="page-head"', "queue-panel", "panel-header", "room-bar"):
+        assert marker in room, f"room.html lost the family anatomy: no {marker}"
+    for tell in ("hero", "linear-gradient", "rgba(255, 255, 255, .14)"):
+        assert tell not in CSS, f"the app sheet still carries the band's {tell}"
 
 
 def test_every_page_with_a_toggle_loads_the_script_that_works_it():
@@ -203,12 +178,16 @@ def test_pages_declare_a_canvas_colour_before_the_stylesheet():
         assert "color-scheme" in head, "no color-scheme before the stylesheet"
 
 
-def test_the_room_address_bar_matches_the_band_it_sits_under():
-    """The meta is a hand-written copy of a token, so it drifts silently."""
+def test_the_room_address_bar_matches_the_page():
+    """The meta is a hand-written copy of a token, so it drifts silently. The
+    room has no band to paint it with anymore — it pins the page background,
+    the same value every other surface uses."""
     room = render.asset_bytes("room.html").decode()
-    band = first_stop(resolve(DARK, "hero-bg"))
-    assert f'setAttribute("content", "{band}")' in room
-    assert f'data-theme-dark="{band}"' in room
+    page_dark = resolve(DARK, "dk-bg-page")
+    page_light = resolve(LIGHT, "dk-bg-page")
+    assert f'setAttribute("content", "{page_dark}")' in room
+    assert f'data-theme-dark="{page_dark}"' in room
+    assert f'data-theme-light="{page_light}"' in room
 
 
 def test_the_light_qr_is_ink_on_the_page():
@@ -222,16 +201,16 @@ def test_the_light_qr_is_ink_on_the_page():
         assert ratio >= 10, f"light: QR on {surface} is only {ratio:.2f}:1"
 
 
-def test_the_dark_qr_is_printed_on_the_brand_band():
-    """A dark page is not paper, so the code brings its own: the hero
-    gradient, the one plate that is neither a white slab glaring at a dark
-    room nor a grey one that matches nothing. The plate must stay the hero's
-    — a hand-copied gradient would drift when the band moves — and the ink
-    must clear a reversed code's contrast floor on every stop, because the
-    modules land on all of them."""
-    assert resolve(DARK, "qr-paper") == resolve(DARK, "hero-bg"), "dark: the QR plate is not the hero band"
-    stops = re.findall(r"#[0-9a-fA-F]{6}", resolve(DARK, "hero-bg"))
-    assert len(stops) >= 2, "dark: the hero band lost its gradient"
-    for stop in stops:
-        ratio = contrast(resolve(DARK, "qr-ink"), stop)
-        assert ratio >= 10, f"dark: QR ink on hero stop {stop} is only {ratio:.2f}:1"
+def test_the_dark_qr_is_printed_on_the_brand_plate():
+    """A dark page is not paper, so the code brings its own: the deep accent,
+    solid — the one plate that is neither a white slab glaring at a dark room
+    nor a grey one that matches nothing. The plate must stay pinned to the
+    brand's deep step — a hand-copied hex would drift when dakit moves — and
+    the ink must clear a reversed code's contrast floor on it."""
+    assert resolve(DARK, "qr-paper") == resolve(DARK, "dk-accent-deep"), \
+        "dark: the QR plate is not the brand's deep accent"
+    paper = resolve(DARK, "qr-paper").lstrip("#")
+    red, green, blue = (int(paper[i:i + 2], 16) for i in (0, 2, 4))
+    assert blue > red and blue - min(red, green) >= 40, "dark: the QR plate is not the brand"
+    ratio = contrast(resolve(DARK, "qr-ink"), paper)
+    assert ratio >= 10, f"dark: QR ink on the plate is only {ratio:.2f}:1"

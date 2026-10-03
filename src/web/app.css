@@ -5,10 +5,10 @@
    scripts/sync_dakit.sh) — tokens, base layer, .dk-* components — define
    every --dk-* semantic role in both themes, the element defaults, and the
    shared component classes; this file defines only the roles the product
-   adds on top — the room hero band, the QR plate, toasts, the deep accent
-   fills — and dresses every component with those roles. Components never
-   touch a --dk-* ramp and never a raw hex: a theme is an alternative
-   mapping of the semantic layer, and nothing else.
+   adds on top — the room bar, the QR plate, toasts — and dresses every
+   component with those roles. Components never touch a --dk-* ramp and
+   never a raw hex: a theme is an alternative mapping of the semantic
+   layer, and nothing else.
 
    Light is the default for everybody, whatever their device prefers — a
    link handed to a room full of people who did not choose to be here should
@@ -19,19 +19,17 @@
    prefers-reduced-motion.
 
    Every text/background pair is checked numerically for WCAG AA in
-   tests/test_theme.py — both themes, hero band and QR plate included. The
-   tightest: accent-on-soft 6.03:1 (light) and 5.45:1 over a card (dark;
-   dakit's translucent soft, composited), hero-muted on the band's lightest
-   stop 7.94:1 (light) / 5.37:1 (dark), white on the band 8.73:1 / 11.16:1.
+   tests/test_theme.py — both themes, QR plate included. The tightest:
+   accent-on-soft 6.03:1 (light) and 5.45:1 over a card (dark; dakit's
+   translucent soft, composited).
 
    Filled controls follow dakit's own pairing in both themes — accent under
    its on-accent ink, accent.hover on hover — the same buttons dataops
    ships: in dark that is the bright accent (#58a6ff) with near-black ink
-   at 7.49:1. Text, strokes and links follow dakit's accent too. The hero
-   band and the dark QR plate still sit on the deep end of the ramp; their
-   numbers are above. The solid danger button also follows dakit: dakit has
-   no deep red, so its ink is --dk-text-on-accent, near-black on bright
-   red at 5.64:1. */
+   at 7.49:1. Text, strokes and links follow dakit's accent too. The dark
+   QR plate sits on the deep end of the ramp. The solid danger button also
+   follows dakit: dakit has no deep red, so its ink is --dk-text-on-accent,
+   near-black on bright red at 5.64:1. */
 
 /* Dakit's faces, self-hosted (SIL OFL, see fonts/LICENSE.md) and the same
    files every internal tool ships, arrive with dakit-base.css — prose reads
@@ -66,23 +64,13 @@
   --tracking-snug: -.01em;
   --tracking-wide: .08em;
 
-  /* Space: dakit's 4px grid. 48px stays as an app step under the hero. */
-  --space-9: 48px;
-
-  /* The room hero band: dakit's accent as a field. The deep steps exist so
-     white ink clears AA on every stop of the gradient, in both themes. */
-  --hero-bg: linear-gradient(135deg, var(--dk-accent-deep), var(--dk-accent-deeper));
-  --hero-text: var(--dk-text-on-deep);
-  --hero-muted: var(--dk-accent-soft);
-  --hero-chip: rgba(255, 255, 255, .14);
-  --hero-line: rgba(255, 255, 255, .45);
   /* The inverted pill that carries a toast. */
   --toast-bg: var(--dk-text-primary);
   --toast-text: var(--dk-bg-page);
   --toast-line: transparent;
   /* The QR is drawn in the page's own ink on the page's own paper, like any
      other mark: a light page is already paper. A dark page is not — see the
-     dark mapping, where the plate is the hero band. */
+     dark mapping, where the plate is the brand's deep accent. */
   --qr-ink: var(--dk-text-primary);
   --qr-paper: transparent;
 
@@ -92,18 +80,16 @@
 }
 
 /* Dark: dakit remaps every --dk-* role under :root[data-theme="dark"], so
-   only the product's own roles need a word here. The hero band is the same
-   gradient — the deep accent steps darken on their own — and the QR plate,
-   which borrows it, moves with it for free. */
+   only the product's own roles need a word here. The QR plate is the deep
+   accent — the brand, solid: the room has no band for it to borrow, and a
+   solid plate keeps the reversed code's numbers on one color. */
 :root[data-theme="dark"] {
   color-scheme: dark;
-  --hero-muted: var(--dk-accent-hover);
-  --hero-line: rgba(255, 255, 255, .35);
   --toast-bg: var(--dk-bg-hover);
   --toast-text: var(--dk-text-primary);
   --toast-line: rgba(255, 255, 255, .16);
   --qr-ink: var(--dk-text-on-deep);
-  --qr-paper: var(--hero-bg);
+  --qr-paper: var(--dk-accent-deep);
   --scrim-bg: rgba(1, 4, 9, .6);
 }
 
@@ -665,23 +651,14 @@ svg { flex: 0 0 auto; }
 .table-wrap tr:last-child td { border-bottom: 0; }
 .table-wrap tbody tr:hover td { background: var(--dk-bg-muted); }
 
-/* The queue is the room view's dominant content: one panel, divided rows.
-   The generic .question card stays for the participant room; inside the
-   console panel the same anatomy reads as rows. */
+/* The queue is the view's dominant content: one panel, divided rows — the
+   room's list and the console's are the same anatomy now. The panel only
+   has to keep its header band's tabs from carrying the standalone margins. */
 .queue-panel .tabs { margin: 0; }
 
-.queue-panel ul.questions { padding: 0; }
-
-.queue-panel li.q {
-  border: 0;
-  border-bottom: 1px solid var(--dk-border-default);
-  border-radius: 0;
-  margin: 0;
-  background: transparent;
-}
-
-.queue-panel li.q:last-child { border-bottom: 0; }
-.queue-panel li.q:hover { background: var(--dk-bg-hover); }
+/* The participant empty state lives inside the queue panel; its padding is
+   the panel's, not the page's. */
+.queue-panel .empty { padding: var(--dk-space-6) var(--dk-space-4); }
 
 /* Collapsible setup panels: collapsed 44px rows that open into a banded
    header, the family's done-once furniture. */
@@ -812,89 +789,66 @@ details.panel[open] > summary .chevron { transform: rotate(180deg); }
 }
 .brand svg { color: var(--dk-accent-default); }
 
-/* ----------------------------------------------------------- room hero
+/* ----------------------------------------------------------- room bar
 
-   The participant page opens on a full-bleed brand band: room name, what it
-   is, and the theme toggle. The composer card overlaps its lower edge, so
-   the first screenful reads ask-first. */
+   The participant page opens the way every family page opens: a quiet bar
+   over the page — the live mark left, chrome right — then the page head in
+   ink on paper. No band, no gradient: this is a page of the app, not a
+   landing page (docs/design-contract.md). */
 
-.hero {
-  background: var(--hero-bg);
-  color: var(--hero-text);
-  padding: calc(var(--dk-space-4) + env(safe-area-inset-top)) 0 var(--space-9);
+.room-bar {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  padding: var(--dk-space-2) 0;
+  padding-top: calc(var(--dk-space-2) + env(safe-area-inset-top));
+  border-bottom: 1px solid var(--dk-border-default);
+  background: var(--dk-bg-page);
 }
-.hero-inner { max-width: 720px; margin: 0 auto; padding: 0 var(--dk-space-4); }
-.hero-top {
+
+.room-bar-inner {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 0 var(--dk-space-4);
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: var(--dk-space-2);
-  margin-bottom: var(--dk-space-5);
+  min-height: 40px;
 }
-.hero-kicker {
-  flex: 1;
+
+.room-live {
   display: inline-flex;
   align-items: center;
   gap: var(--dk-space-2);
-  font-size: var(--dk-text-sm);
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: var(--tracking-wide);
+  color: var(--dk-text-muted);
+  font-size: var(--dk-text-body);
+  font-weight: 500;
 }
-.hero-kicker .dot {
+
+.room-live .dot {
+  flex: 0 0 auto;
   width: 8px;
   height: 8px;
   border-radius: var(--dk-radius-full);
-  background: currentColor;
+  background: var(--dk-accent-default);
 }
-.hero h1 {
-  margin: 0;
-  /* The base layer's h1 rule carries --dk-text-heading; on the hero band
-     the band's own ink must win, or light theme sets near-black type on
-     the deep accent. */
-  color: var(--hero-text);
-  font-size: var(--dk-text-page);
-  font-weight: 700;
-  letter-spacing: var(--tracking-tight);
-  line-height: var(--dk-leading-tight);
-  overflow-wrap: anywhere;
-}
-.hero .desc {
-  margin: var(--dk-space-2) 0 0;
-  color: var(--hero-muted);
-  font-size: var(--dk-text-lg);
-  line-height: var(--leading-snug);
-  max-width: 60ch;
-}
-.hero .live-count {
-  display: inline-flex;
-  align-items: center;
-  margin-top: var(--dk-space-4);
-  padding: var(--dk-space-1) var(--dk-space-3);
-  background: var(--hero-chip);
-  border-radius: var(--dk-radius-full);
-  font-size: var(--dk-text-body);
-  font-weight: 600;
-}
-.hero .icon-btn {
-  color: var(--hero-text);
-  border-color: var(--hero-line);
-  background: transparent;
-}
-.hero .icon-btn:not(:disabled):hover { background: var(--hero-chip); }
+
 @media (prefers-reduced-motion: no-preference) {
-  .hero-kicker .dot { animation: live-pulse 2.4s var(--ease-out) infinite; }
+  .room-live .dot { animation: live-pulse 2.4s var(--ease-out) infinite; }
 }
 @keyframes live-pulse {
   0%, 100% { opacity: 1; }
   50% { opacity: .35; }
 }
 
-/* The content column under the hero; the composer climbs into the band. */
-.room-wrap { padding-top: 0; }
-.room-wrap > .composer:first-child,
-.room-wrap > .composer[style] { margin-top: calc(-1 * var(--dk-space-7)); }
-.room-wrap > .banner:first-child,
-.room-wrap > .tabs:first-child { margin-top: var(--dk-space-4); }
+/* Chrome in the bar is quiet — the family's .icon-button manners on the
+   44px touch target: no border until hover. */
+.room-bar .icon-btn { border-color: transparent; }
+.room-bar .icon-btn:not(:disabled):hover { border-color: var(--dk-border-default); }
+
+/* The content column under the bar. */
+.room-wrap { padding-top: var(--dk-space-6); }
 
 /* ------------------------------------------------------------ buttons */
 
@@ -971,7 +925,7 @@ button.small, .btn.small { padding: var(--dk-space-1) var(--dk-space-3); font-si
 
 /* Icon toggles (pin, answered, hidden): the on state is a soft accent fill.
    Accent-on-soft is 6.04:1 light / 5.45:1 dark (dakit's translucent soft,
-   composited over a card). Toggled buttons never sit on the hero band, where
+   composited over a card). Toggled buttons never sit on the room bar, where
    that composite would thin out — they live in the console and the
    presentation toolbar. */
 .icon-btn[aria-pressed=true],
@@ -1091,13 +1045,12 @@ input:focus, select:focus, textarea:focus {
 .limit-ring.warn .left { color: var(--dk-warning-text); }
 .limit-ring.over .left { color: var(--dk-danger-text); }
 
-/* The ask composer: the card is the field. One border does the outlining,
-   so the textarea inside goes naked. */
+/* The ask composer: the card is the field, and the card is a family
+   container — one border, no shadow. Inside it the textarea goes naked. */
 .composer {
   background: var(--dk-bg-surface);
   border: 1px solid var(--dk-border-default);
   border-radius: var(--dk-radius-md);
-  box-shadow: var(--dk-shadow-overlay);
   padding: var(--dk-space-4);
   margin-bottom: var(--dk-space-3);
 }
@@ -1113,7 +1066,7 @@ input:focus, select:focus, textarea:focus {
 .composer textarea:focus-visible { box-shadow: none; }
 .composer:focus-within {
   border-color: var(--dk-accent-default);
-  box-shadow: 0 0 0 3px var(--dk-focus-ring), var(--dk-shadow-overlay);
+  box-shadow: 0 0 0 3px var(--dk-focus-ring);
 }
 .composer .composer-foot { display: flex; gap: var(--dk-space-2); align-items: center; }
 .composer .composer-foot input { flex: 1; min-width: 0; }
@@ -1187,7 +1140,7 @@ input[type=checkbox] { width: 18px; height: 18px; accent-color: var(--accent-fil
 
 .share { display: flex; gap: var(--dk-space-4); align-items: flex-start; flex-wrap: wrap; }
 /* The code is ink on paper, and the theme decides what paper is: in light the
-   page itself, in dark the hero gradient — a plate, but the brand's, not a
+   page itself, in dark the deep accent — a plate, but the brand's, not a
    white rectangle glaring at a darkened room. The padding is quiet zone on
    top of segno's four modules, and in dark it is what keeps the modules off
    the plate's rounded corners. The dark code is reversed, deliberately —
@@ -1248,10 +1201,11 @@ input[type=checkbox] { width: 18px; height: 18px; accent-color: var(--accent-fil
 }
 /* ----------------------------------------------------- question list
 
-   Slido's participant anatomy in Stripe's clothes: the question text leads
-   the card, author and time sit under it, and the vote control is a compact
-   pill on the card's foot line — secondary to the text, primary to the
-   thumb. */
+   The family's list anatomy on a participant surface: one container, rows
+   divided by hairlines — the same reading as the console queue and the
+   projector list. The question text leads the row, author and time sit
+   under it, and the vote control is a compact pill on the foot line —
+   secondary to the text, primary to the thumb. */
 
 ul.questions { list-style: none; margin: 0; padding: 0; }
 
@@ -1259,12 +1213,11 @@ li.q {
   display: flex;
   flex-direction: column;
   gap: var(--dk-space-2);
-  background: var(--dk-bg-surface);
-  border: 1px solid var(--dk-border-default);
-  border-radius: var(--dk-radius-md);
   padding: var(--dk-space-3) var(--dk-space-4);
-  margin-bottom: var(--dk-space-2);
+  border-bottom: 1px solid var(--dk-border-default);
 }
+ul.questions li.q:last-child { border-bottom: 0; }
+li.q:hover { background: var(--dk-bg-hover); }
 li.q.answered .vote { opacity: .6; }
 li.q .text {
   white-space: pre-wrap;
@@ -1344,14 +1297,14 @@ li.q .tag.answered { background: var(--dk-success-bg); color: var(--dk-success-t
   .vote { transition: transform var(--duration-1) var(--ease-out), background var(--duration-2) var(--ease-out), border-color var(--duration-2) var(--ease-out), color var(--duration-2) var(--ease-out); }
   .vote:active { transform: scale(.92); }
   .vote .count.pop { animation: vote-pop .28s var(--ease-out); }
-  li.q { transition: box-shadow var(--duration-2) var(--ease-out); }
+  li.q { transition: background var(--duration-2) var(--ease-out); }
   li.q.flash { animation: card-flash 1.2s var(--ease-out); }
 }
 
 @keyframes vote-pop { 50% { transform: scale(1.18); } }
 @keyframes card-flash {
   0% { background: var(--dk-accent-soft); }
-  100% { background: var(--dk-bg-surface); }
+  100% { background: transparent; }
 }
 
 /* ------------------------------------------------- empty state, toast */
