@@ -2,9 +2,11 @@
 
    This lived in room.js and admin.js as the same thirty lines twice, which is
    how the front page ended up with no toggle at all: adding one meant a third
-   copy. A page opts in by carrying a [data-theme-toggle] button; the pin
-   itself is applied before paint by the inline script in each head, because a
-   deferred asset is far too late to decide what colour the page is.
+   copy. A page opts in with a [data-theme-toggle] icon button (room, present,
+   public pages) or a [data-appearance-toggle] track switch (the admin Account
+   popover — the only theme control on that surface). The pin itself is applied
+   before paint by the inline script in each head, because a deferred asset is
+   far too late to decide what colour the page is.
 
    Light is the default for everyone regardless of what their device prefers,
    so dark is the only thing that is ever stored. prefers-color-scheme is not
@@ -40,10 +42,18 @@
 
   function paint() {
     var dark = effective() === "dark";
+    var label = dark ? "Switch to light theme" : "Switch to dark theme";
     var buttons = document.querySelectorAll("[data-theme-toggle]");
     Array.prototype.forEach.call(buttons, function (button) {
       button.innerHTML = dark ? SUN : MOON;
-      button.setAttribute("aria-label", dark ? "Switch to light theme" : "Switch to dark theme");
+      button.setAttribute("aria-label", label);
+    });
+    var switches = document.querySelectorAll("[data-appearance-toggle]");
+    Array.prototype.forEach.call(switches, function (button) {
+      button.setAttribute("aria-pressed", dark ? "true" : "false");
+      button.setAttribute("aria-label", label);
+      var text = button.querySelector("[data-appearance-label]");
+      if (text) text.textContent = dark ? "Light mode" : "Dark mode";
     });
   }
 
@@ -67,7 +77,7 @@
   }
 
   document.addEventListener("click", function (event) {
-    var button = event.target.closest && event.target.closest("[data-theme-toggle]");
+    var button = event.target.closest && event.target.closest("[data-theme-toggle], [data-appearance-toggle]");
     if (button) toggle();
   });
 

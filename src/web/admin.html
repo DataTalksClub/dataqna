@@ -65,12 +65,11 @@
       </button>
       <span class="toolbar-title" aria-hidden="true"></span>
       <nav class="toolbar-nav" aria-label="Account">
-        <span class="muted toolbar-who" id="who"></span>
-        <button type="button" data-theme-toggle class="icon-button" aria-label="Switch to dark theme"></button>
-        <a class="toolbar-link" href="/auth/logout">
-          <svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 3.75H5.25a1.5 1.5 0 00-1.5 1.5v13.5a1.5 1.5 0 001.5 1.5H9"/><path d="m15 7.5 4.5 4.5-4.5 4.5"/><path d="M19.5 12H9"/></svg>
-          <span>Sign out</span>
-        </a>
+        <button type="button" class="account-button" data-account-menu-trigger title="Account" aria-label="Account" aria-haspopup="dialog" aria-expanded="false" aria-controls="account-menu">
+          <span class="account-avatar" data-account-menu-avatar aria-hidden="true">{{ACCOUNT_INITIAL}}</span>
+          <span class="account-button-name" data-account-menu-name>{{ACCOUNT_NAME}}</span>
+          <svg class="account-chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+        </button>
       </nav>
     </header>
     <main class="app-main">
@@ -238,6 +237,38 @@
   </div>
 </div>
 
+<div id="account-menu" class="account-menu" hidden role="dialog" aria-labelledby="account-menu-title" data-account-menu>
+  <header class="account-menu-header">
+    <strong id="account-menu-title">Account</strong>
+    <button type="button" class="icon-button account-menu-close" data-account-menu-close aria-label="Close account menu">
+      <svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+    </button>
+  </header>
+  <div class="account-menu-body">
+    <section class="account-identity" aria-live="polite">
+      <span class="account-avatar account-avatar-large" data-account-actor-avatar aria-hidden="true">{{ACCOUNT_INITIAL}}</span>
+      <span class="account-identity-copy">
+        <small>Signed in as</small>
+        <strong data-account-actor-name>{{ACCOUNT_NAME}}</strong>
+        <span data-account-meta>{{ACCOUNT_EMAIL}}</span>
+      </span>
+    </section>
+    <p class="account-section-label">Appearance</p>
+    <button type="button" class="account-menu-item account-theme-toggle" data-appearance-toggle aria-pressed="false" aria-label="Switch to dark theme">
+      <span class="account-menu-icon" aria-hidden="true">
+        <svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19.8 14.4A8.25 8.25 0 119.6 4.2a6.45 6.45 0 0010.2 10.2Z"/></svg>
+      </span>
+      <span class="account-theme-label" data-appearance-label>Dark mode</span>
+      <span class="account-toggle-track" aria-hidden="true"><span></span></span>
+    </button>
+    <a class="account-menu-item account-sign-out" href="/auth/logout" {{ACCOUNT_SIGN_OUT_HIDDEN}}>
+      <span class="account-menu-icon" aria-hidden="true">
+        <svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3.75H5.25a1.5 1.5 0 00-1.5 1.5v13.5a1.5 1.5 0 001.5 1.5H9"/><path d="m15 7.5 4.5 4.5-4.5 4.5"/><path d="M19.5 12H9"/></svg>
+      </span>
+      <span><strong>Sign out</strong><small>End this browser session.</small></span>
+    </a>
+  </div>
+</div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 <script>
 /* The family shell behavior: on the desktop the sidebar collapses to an icon
@@ -282,6 +313,7 @@
       menuToggle.setAttribute("aria-label", open ? "Close navigation" : "Open navigation");
     }
     if (open) {
+      closeAccount();
       lastFocus = document.activeElement;
       var first = sidebar.querySelector("a, button");
       if (first) first.focus();
@@ -335,6 +367,51 @@
   sidebar.addEventListener("click", function (event) {
     if (event.target.closest("a") && shell.classList.contains("sidebar-open")) setDrawer(false);
   });
+
+  /* Family account popover: identity, appearance, sign-out. Escape restores
+     the trigger; a click outside dismisses. Appearance is painted by theme.js. */
+  var accountTrigger = document.querySelector("[data-account-menu-trigger]");
+  var accountMenu = document.querySelector("[data-account-menu]");
+  var accountClose = document.querySelector("[data-account-menu-close]");
+  var accountOpener = null;
+  function accountOpen() {
+    return accountMenu && !accountMenu.hidden;
+  }
+  function closeAccount() {
+    if (!accountOpen()) return;
+    accountMenu.hidden = true;
+    if (accountTrigger) accountTrigger.setAttribute("aria-expanded", "false");
+    if (accountOpener && accountOpener.focus) accountOpener.focus();
+    accountOpener = null;
+  }
+  function openAccount() {
+    if (!accountMenu || !accountTrigger) return;
+    if (shell.classList.contains("sidebar-open")) setDrawer(false);
+    accountOpener = document.activeElement;
+    accountMenu.hidden = false;
+    accountTrigger.setAttribute("aria-expanded", "true");
+    if (window.dqTheme && window.dqTheme.paint) window.dqTheme.paint();
+    if (accountClose) accountClose.focus();
+  }
+  if (accountTrigger && accountMenu) {
+    accountTrigger.addEventListener("click", function (event) {
+      event.stopPropagation();
+      if (accountOpen()) closeAccount();
+      else openAccount();
+    });
+    if (accountClose) accountClose.addEventListener("click", closeAccount);
+    document.addEventListener("click", function (event) {
+      if (!accountOpen()) return;
+      if (accountMenu.contains(event.target) || accountTrigger.contains(event.target)) return;
+      closeAccount();
+    });
+    document.addEventListener("keydown", function (event) {
+      if (event.key === "Escape" && accountOpen()) {
+        event.preventDefault();
+        closeAccount();
+      }
+    });
+  }
 })();
 </script>
 <script src="/assets/qna.js"></script>

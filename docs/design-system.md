@@ -74,11 +74,13 @@ presentation mode, which is its own surface with its own default). Switching
 back to light writes `"light"` rather than clearing the key, and every reader
 treats anything but `"dark"` as light.
 
-**Every page carries a toggle** — a `[data-theme-toggle]` button — and the logic
-behind it lives once, in `theme.js`. It used to live in `room.js` and `admin.js` as
-the same thirty lines twice, which is exactly why the front page, the co-host gate
-and the notices had none: adding one meant a third copy. A page opts in with the
-button and a `<script src="/assets/theme.js" defer>`.
+**Theme logic lives once, in `theme.js`.** Single-purpose views (the room, the
+projector, the directory, the co-host gate, notices) carry a compact
+`[data-theme-toggle]` icon in their own top bar. Admin, the operator app with a
+sidebar, follows the family account recipe: appearance is a labeled Dark
+mode / Light mode track switch inside the Account popover, and that is the
+only theme control on the console. A page opts in with one of those two
+hooks and a `<script src="/assets/theme.js" defer>`.
 
 Three things have to happen before first paint, and a deferred asset is far too
 late for any of them, so each `<head>` carries them inline: `color-scheme`, so the

@@ -134,6 +134,41 @@ def asset_response(name):
     )
 
 
+def account_chrome(email=None, cohost_name=None):
+    """Identity copy for the operator Account popover.
+
+    A signed-in session is named from the email's local part — the pool does
+    not store a display name. A co-host is named from their invite. Sign out
+    is omitted only when there is no session (or co-host cookie) to end.
+    """
+    if email:
+        local = str(email).split("@")[0]
+        parts = [part for part in re.split(r"[._-]+", local) if part]
+        name = " ".join(part.capitalize() for part in parts) or "Account"
+        initials = "".join(part[0] for part in name.split()[:2]).upper() or "?"
+        return {
+            "ACCOUNT_NAME": html.escape(name),
+            "ACCOUNT_EMAIL": html.escape(email),
+            "ACCOUNT_INITIAL": html.escape(initials),
+            "ACCOUNT_SIGN_OUT_HIDDEN": "",
+        }
+    if cohost_name:
+        name = str(cohost_name)
+        initials = name[0].upper() if name else "?"
+        return {
+            "ACCOUNT_NAME": html.escape(name),
+            "ACCOUNT_EMAIL": "Co-host",
+            "ACCOUNT_INITIAL": html.escape(initials),
+            "ACCOUNT_SIGN_OUT_HIDDEN": "",
+        }
+    return {
+        "ACCOUNT_NAME": "Account",
+        "ACCOUNT_EMAIL": "",
+        "ACCOUNT_INITIAL": "?",
+        "ACCOUNT_SIGN_OUT_HIDDEN": "hidden",
+    }
+
+
 def page(template, replacements):
     body = asset_bytes(template).decode("utf-8")
     values = dict(replacements)

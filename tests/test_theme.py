@@ -144,10 +144,12 @@ def test_the_room_is_a_family_page():
 
 
 def test_every_page_with_a_toggle_loads_the_script_that_works_it():
-    """The toggle is markup on four surfaces and logic in one file.
+    """Theme logic lives once, in theme.js; each surface opts in.
 
-    It used to be logic in two files, which is why the front page had no
-    toggle at all: adding one meant a third copy of the same thirty lines.
+    Room, directory, notices and the co-host gate carry a compact
+    [data-theme-toggle] icon. Admin, the operator app with a sidebar, puts
+    the same pin behind the Account popover's appearance switch — the family
+    recipe, and the only theme control on that chrome.
     """
     pages = {name: render.asset_bytes(name).decode()
              for name in ("room.html", "admin.html")}
@@ -158,8 +160,12 @@ def test_every_page_with_a_toggle_loads_the_script_that_works_it():
     )["body"]
 
     for name, body in pages.items():
-        assert "data-theme-toggle" in body, f"{name} has no theme toggle"
         assert "/assets/theme.js" in body, f"{name} never loads theme.js"
+        if name == "admin.html":
+            assert "data-appearance-toggle" in body, "admin lost the Account appearance switch"
+            assert "data-theme-toggle" not in body, "admin still has a lone theme icon"
+        else:
+            assert "data-theme-toggle" in body, f"{name} has no theme toggle"
 
 
 def test_the_toggle_script_is_actually_servable():

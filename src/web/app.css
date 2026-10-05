@@ -155,7 +155,7 @@ svg { flex: 0 0 auto; }
   font-size: var(--dk-text-body);
 }
 
-.app-shell button:where(:not(.icon-btn):not(.icon-button)),
+.app-shell button:where(:not(.icon-btn):not(.icon-button):not(.account-button):not(.account-menu-item)),
 .app-shell .btn:where(:not(.icon-btn)) {
   min-height: var(--dk-size-control-md);
   padding: 0 var(--dk-space-4);
@@ -368,7 +368,8 @@ svg { flex: 0 0 auto; }
 
 /* --- canvas toolbar -------------------------------------------------------
    Global actions above the canvas only, right-aligned like the sibling
-   consoles. The toolbar is quiet: links and icon buttons, no fills. */
+   consoles. The toolbar is quiet: the Account control (avatar, name,
+   chevron) owns identity, appearance, and sign-out. */
 
 .app-toolbar {
   position: sticky;
@@ -389,26 +390,234 @@ svg { flex: 0 0 auto; }
   gap: var(--dk-space-1);
 }
 
-.toolbar-who {
-  padding-right: var(--dk-space-2);
+button.account-button {
+  display: inline-flex;
+  min-height: var(--dk-size-control-md);
+  align-items: center;
+  justify-content: center;
+  gap: var(--dk-space-2);
+  border: 0;
+  border-radius: var(--dk-radius-md);
+  background: transparent;
+  color: var(--dk-text-primary);
+  padding: 4px 8px;
+  font-size: var(--dk-text-md);
+  font-weight: 600;
+}
+button.account-button:not(:disabled):hover {
+  background: var(--dk-bg-hover);
+  color: var(--dk-text-primary);
+}
+
+.account-avatar {
+  display: inline-grid;
+  flex: 0 0 26px;
+  width: 26px;
+  height: 26px;
+  place-items: center;
+  border-radius: var(--dk-radius-full);
+  background: var(--dk-accent-default);
+  color: var(--dk-text-on-accent);
+  font-size: var(--dk-text-xs);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  line-height: 1;
+}
+
+.account-button-name {
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.account-chevron {
+  width: 20px;
+  height: 20px;
+  color: var(--dk-text-muted);
+}
+
+.account-menu {
+  position: fixed;
+  top: 52px;
+  right: var(--dk-space-4);
+  z-index: 40;
+  width: min(380px, calc(100vw - 32px));
+  max-height: calc(100vh - 80px);
+  overflow: auto;
+  border: 1px solid var(--dk-border-default);
+  border-radius: var(--dk-radius-lg);
+  background: var(--dk-bg-surface);
+  box-shadow: var(--dk-shadow-overlay);
+}
+
+.account-menu-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--dk-space-3);
+  border-bottom: 1px solid var(--dk-border-default);
+  background: var(--dk-bg-muted);
+  min-height: 54px;
+  padding: var(--dk-space-2) 10px var(--dk-space-2) var(--dk-space-4);
+}
+
+.account-menu-header strong {
+  color: var(--dk-text-heading);
+  font-size: var(--dk-text-lg);
+}
+
+button.account-menu-close:not(:disabled):hover {
+  background: var(--dk-bg-hover);
+  color: var(--dk-text-primary);
+}
+
+.account-menu-body { display: grid; }
+
+.account-section-label {
+  margin: 0;
+  border-bottom: 1px solid var(--dk-border-default);
+  background: var(--dk-bg-muted);
+  color: var(--dk-text-muted);
+  padding: var(--dk-space-2) var(--dk-space-4);
+  font-size: var(--dk-text-sm);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.account-identity {
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr);
+  align-items: center;
+  gap: var(--dk-space-3);
+  border-bottom: 1px solid var(--dk-border-default);
+  background: var(--dk-bg-surface);
+  padding: 14px var(--dk-space-4);
+}
+
+.account-avatar-large {
+  width: 40px;
+  height: 40px;
+  flex-basis: 40px;
+  font-size: var(--dk-text-body);
+}
+
+.account-identity-copy {
+  display: grid;
+  min-width: 0;
+}
+
+.account-identity-copy small,
+.account-identity-copy > span {
+  color: var(--dk-text-muted);
   font-size: var(--dk-text-sm);
 }
 
-.toolbar-link {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--dk-space-2);
-  height: 32px;
-  padding: 0 var(--dk-space-3);
-  border-radius: var(--dk-radius-md);
-  color: var(--dk-text-muted);
-  font-size: var(--dk-text-md);
-  font-weight: 500;
+.account-identity-copy > span:empty { display: none; }
+
+.account-identity-copy strong,
+.account-identity-copy > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
-.toolbar-link:hover {
+
+.account-identity-copy strong {
+  color: var(--dk-text-heading);
+  font-size: var(--dk-text-body);
+}
+
+button.account-menu-item,
+a.account-menu-item {
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 54px;
+  margin: 0;
+  padding: 10px var(--dk-space-4);
+  border: 0;
+  border-bottom: 1px solid var(--dk-border-default);
+  border-radius: 0;
+  background: var(--dk-bg-surface);
   color: var(--dk-text-primary);
-  background: var(--dk-bg-hover);
+  font-size: var(--dk-text-body);
+  font-weight: 500;
+  text-align: left;
   text-decoration: none;
+  justify-content: stretch;
+}
+button.account-menu-item:not(:disabled):hover,
+a.account-menu-item:hover {
+  background: var(--dk-bg-hover);
+  color: var(--dk-text-primary);
+  text-decoration: none;
+}
+
+.account-menu-item > span:nth-child(2) {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.account-menu-item strong {
+  color: var(--dk-text-heading);
+  font-size: var(--dk-text-body);
+}
+
+.account-menu-item small {
+  display: block;
+  color: var(--dk-text-muted);
+  font-size: var(--dk-text-sm);
+  font-weight: 400;
+}
+
+.account-menu-icon {
+  display: grid;
+  place-items: center;
+  color: var(--dk-text-muted);
+}
+
+.account-theme-label {
+  color: var(--dk-text-heading);
+  font-weight: 600;
+}
+
+.account-toggle-track {
+  display: flex;
+  width: 36px;
+  height: 20px;
+  align-items: center;
+  border-radius: var(--dk-radius-full);
+  background: var(--dk-border-strong);
+  padding: 2px;
+}
+
+.account-toggle-track span {
+  width: 16px;
+  height: 16px;
+  border-radius: var(--dk-radius-full);
+  background: var(--dk-text-on-deep);
+}
+
+.account-theme-toggle[aria-pressed="true"] .account-toggle-track {
+  background: var(--dk-accent-default);
+}
+
+.account-theme-toggle[aria-pressed="true"] .account-toggle-track span {
+  transform: translateX(16px);
+}
+
+.account-sign-out,
+.account-sign-out strong,
+.account-sign-out .account-menu-icon {
+  color: var(--dk-danger-text);
+}
+a.account-sign-out:hover,
+a.account-sign-out:hover strong {
+  color: var(--dk-danger-text);
 }
 
 .app-main {
@@ -715,7 +924,44 @@ details.panel[open] > summary .chevron { transform: rotate(180deg); }
   }
 
   .sidebar-menu-toggle { display: inline-flex; }
-  .toolbar-who { display: none; }
+  .account-button-name,
+  .account-chevron { display: none; }
+  .app-toolbar .account-button {
+    min-width: var(--dk-size-touch);
+    min-height: var(--dk-size-touch);
+    width: var(--dk-size-touch);
+    padding: 0;
+  }
+  .account-menu {
+    inset: 0;
+    top: 0;
+    right: 0;
+    z-index: 40;
+    width: 100%;
+    max-height: none;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+  }
+  .account-menu-header {
+    display: grid;
+    grid-template-columns: var(--dk-size-touch) minmax(0, 1fr) var(--dk-size-touch);
+    min-height: 64px;
+    padding: 0 var(--dk-space-2);
+  }
+  .account-menu-header strong {
+    grid-column: 2;
+    grid-row: 1;
+    text-align: center;
+  }
+  .account-menu-close {
+    grid-column: 1;
+    grid-row: 1;
+    width: var(--dk-size-touch);
+    min-width: var(--dk-size-touch);
+    min-height: var(--dk-size-touch);
+    height: var(--dk-size-touch);
+  }
   .toolbar-title {
     display: block;
     flex: 1;
@@ -751,7 +997,7 @@ details.panel[open] > summary .chevron { transform: rotate(180deg); }
   /* The room's touch scale is for hands, not pointers — the console keeps
      it on a phone, where the pointer is a finger again. The selectors
      mirror the desktop scope's specificity so the re-raise wins. */
-  .app-shell button:where(:not(.icon-button):not(.icon-btn)),
+  .app-shell button:where(:not(.icon-button):not(.icon-btn):not(.account-button):not(.account-menu-item)),
   .app-shell .btn:where(:not(.icon-btn)) {
     min-height: var(--dk-size-touch);
     padding: 0 var(--dk-space-4);

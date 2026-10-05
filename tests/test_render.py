@@ -71,6 +71,71 @@ def test_fonts_travel_as_binary_not_decoded_text():
     assert response["headers"]["content-type"] == "font/woff2"
 
 
+def test_admin_markup_is_the_family_account_popover():
+    """Operator admin owns identity, appearance and sign-out in one Account
+    control — avatar, name, chevron — not a lone theme icon or a toolbar
+    sign-out link."""
+    body = render.asset_bytes("admin.html").decode()
+    assert 'aria-label="Account"' in body
+    assert "account-button" in body
+    assert 'id="account-menu"' in body
+    assert "data-appearance-toggle" in body
+    assert "Signed in as" in body
+    assert "Sign out" in body
+    assert "data-theme-toggle" not in body
+    assert "toolbar-who" not in body
+
+
+def test_account_chrome_names_the_operator_from_their_email():
+    chrome = render.account_chrome(email="alexey.grigorev@datatalks.club")
+    assert chrome["ACCOUNT_NAME"] == "Alexey Grigorev"
+    assert chrome["ACCOUNT_INITIAL"] == "AG"
+    assert chrome["ACCOUNT_EMAIL"] == "alexey.grigorev@datatalks.club"
+    assert chrome["ACCOUNT_SIGN_OUT_HIDDEN"] == ""
+
+
+def test_account_chrome_hides_sign_out_without_a_session():
+    chrome = render.account_chrome()
+    assert chrome["ACCOUNT_SIGN_OUT_HIDDEN"] == "hidden"
+    assert chrome["ACCOUNT_INITIAL"] == "?"
+
+
+def test_account_chrome_names_a_cohost_from_the_invite():
+    chrome = render.account_chrome(cohost_name="ivan")
+    assert chrome["ACCOUNT_NAME"] == "ivan"
+    assert chrome["ACCOUNT_INITIAL"] == "I"
+    assert chrome["ACCOUNT_EMAIL"] == "Co-host"
+    assert chrome["ACCOUNT_SIGN_OUT_HIDDEN"] == ""
+
+
+def test_admin_page_fills_account_chrome():
+    body = render.page("admin.html", render.account_chrome(email="host@datatalks.club"))
+    assert "Host" in body
+    assert "host@datatalks.club" in body
+    assert "{{ACCOUNT_NAME}}" not in body
+    assert "data-appearance-toggle" in body
+
+
+def test_the_admin_console_renders_the_signed_in_operator():
+    import admin_handler
+    from dataqna import config, security
+
+    token = security.new_session_token("alexey@datatalks.club")
+    event = {
+        "rawPath": "/admin",
+        "requestContext": {"http": {"method": "GET", "sourceIp": "203.0.113.7"}},
+        "headers": {},
+        "cookies": [f"{config.SESSION_COOKIE}={token}"],
+        "queryStringParameters": {},
+    }
+    response = admin_handler.lambda_handler(event, None)
+    assert response["statusCode"] == 200
+    assert "Alexey" in response["body"]
+    assert "alexey@datatalks.club" in response["body"]
+    assert "account-button" in response["body"]
+    assert "data-theme-toggle" not in response["body"]
+
+
 def test_dakit_layers_ship_in_cascade_order():
     """app.css resolves its colors through the vendored dakit sheets, so the
     cascade needs them in dakit's own order — tokens, then the base layer

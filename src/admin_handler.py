@@ -18,12 +18,16 @@ def _signed_in(event):
     return security.session_email(http.cookie(event, config.SESSION_COOKIE))
 
 
-def _cohost_of(event, room_id):
-    """The room this browser holds a valid, unrevoked co-host code for."""
+def _cohost_invite(event, room_id):
+    """The invite this browser holds a valid, unrevoked co-host code for."""
     claim = security.cohost_claim(http.cookie(event, config.COHOST_COOKIE))
     if not claim or claim.get("room_id") != room_id:
-        return False
-    return bool(store.get_cohost_invite(room_id, claim.get("invite_id")))
+        return None
+    return store.get_cohost_invite(room_id, claim.get("invite_id"))
+
+
+def _cohost_of(event, room_id):
+    return bool(_cohost_invite(event, room_id))
 
 
 def _login(event):
@@ -112,14 +116,18 @@ def lambda_handler(event, _context):
             room_id = path[len("/admin/rooms/"):].split("/")[0]
 
         # A co-host has no session, but does hold a code for exactly one room.
-        if not email and not (room_id and _cohost_of(event, room_id)):
+        invite = _cohost_invite(event, room_id) if (not email and room_id) else None
+        if not email and not invite:
             return http.redirect(f"/auth/login?next={urllib.parse.quote(path)}")
 
         if path.startswith("/admin/rooms/") and path.endswith("/present"):
             return _present(event, room_id, email)
 
         if path == "/admin" or path.startswith("/admin/"):
-            return http.html_response(200, render.page("admin.html", {}))
+            chrome = render.account_chrome(
+                email=email, cohost_name=(invite or {}).get("name")
+            )
+            return http.html_response(200, render.page("admin.html", chrome))
 
         return render.notice("Not found", "Nothing lives at this address.", status=404)
 
