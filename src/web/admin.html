@@ -56,6 +56,13 @@
         </a>
       </div>
     </nav>
+    <footer class="sidebar-foot">
+      <button type="button" class="account-button" data-account-menu-trigger title="Account" aria-label="Account" aria-haspopup="dialog" aria-expanded="false" aria-controls="account-menu">
+        <span class="account-avatar" data-account-menu-avatar aria-hidden="true">{{ACCOUNT_INITIAL}}</span>
+        <span class="account-button-name" data-account-menu-name>{{ACCOUNT_NAME}}</span>
+        <svg class="account-chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+      </button>
+    </footer>
   </aside>
   <div class="sidebar-scrim" data-sidebar-scrim hidden></div>
   <div class="app-column">
@@ -64,13 +71,6 @@
         <svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
       </button>
       <span class="toolbar-title" aria-hidden="true"></span>
-      <nav class="toolbar-nav" aria-label="Account">
-        <button type="button" class="account-button" data-account-menu-trigger title="Account" aria-label="Account" aria-haspopup="dialog" aria-expanded="false" aria-controls="account-menu">
-          <span class="account-avatar" data-account-menu-avatar aria-hidden="true">{{ACCOUNT_INITIAL}}</span>
-          <span class="account-button-name" data-account-menu-name>{{ACCOUNT_NAME}}</span>
-          <svg class="account-chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
-        </button>
-      </nav>
     </header>
     <main class="app-main">
       <div id="view-list" hidden>

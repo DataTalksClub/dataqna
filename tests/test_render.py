@@ -73,8 +73,8 @@ def test_fonts_travel_as_binary_not_decoded_text():
 
 def test_admin_markup_is_the_family_account_popover():
     """Operator admin owns identity, appearance and sign-out in one Account
-    control — avatar, name, chevron — not a lone theme icon or a toolbar
-    sign-out link."""
+    control — avatar, name, chevron — triggered from the sidebar footer, not
+    a lone theme icon or a top-bar sign-out link."""
     body = render.asset_bytes("admin.html").decode()
     assert 'aria-label="Account"' in body
     assert "account-button" in body
@@ -84,6 +84,10 @@ def test_admin_markup_is_the_family_account_popover():
     assert "Sign out" in body
     assert "data-theme-toggle" not in body
     assert "toolbar-who" not in body
+    foot = body.split('class="sidebar-foot">', 1)[1].split("</footer>", 1)[0]
+    assert "data-account-menu-trigger" in foot
+    toolbar = body.split('<header class="app-toolbar">', 1)[1].split("</header>", 1)[0]
+    assert "data-account-menu-trigger" not in toolbar
 
 
 def test_account_chrome_names_the_operator_from_their_email():

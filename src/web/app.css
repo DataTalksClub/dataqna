@@ -366,10 +366,48 @@ svg { flex: 0 0 auto; }
 
 .sidebar-scrim { display: none; }
 
+/* Sidebar footer: the shell's only global strip. The Account trigger (avatar,
+   name, chevron) owns identity, appearance, and sign-out; the popover opens
+   above it. No desktop top bar — the toolbar returns only as the mobile
+   64px bar with the menu control and page title. */
+.has-sidebar .app-toolbar {
+  display: none;
+}
+
+.sidebar-foot {
+  margin-top: auto;
+  border-top: 1px solid var(--dk-border-default);
+  padding-top: var(--dk-space-3);
+}
+
+.sidebar-foot .account-button {
+  width: 100%;
+  justify-content: flex-start;
+  padding: var(--dk-space-1) var(--dk-space-2);
+}
+
+.sidebar-foot .account-button-name {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: left;
+}
+
+.sidebar-collapsed .sidebar-foot .account-button-name,
+.sidebar-collapsed .sidebar-foot .account-chevron {
+  display: none;
+}
+
+.sidebar-collapsed .sidebar-foot .account-button {
+  justify-content: center;
+  padding: 0;
+}
+
 /* --- canvas toolbar -------------------------------------------------------
-   Global actions above the canvas only, right-aligned like the sibling
-   consoles. The toolbar is quiet: the Account control (avatar, name,
-   chevron) owns identity, appearance, and sign-out. */
+   Mobile-only for the operator shell (menu + page title); the Account
+   control lives in the sidebar footer. */
 
 .app-toolbar {
   position: sticky;
@@ -382,12 +420,6 @@ svg { flex: 0 0 auto; }
   padding: 0 var(--dk-space-6);
   border-bottom: 1px solid var(--dk-border-default);
   background: var(--dk-bg-page);
-}
-
-.toolbar-nav {
-  display: flex;
-  align-items: center;
-  gap: var(--dk-space-1);
 }
 
 button.account-button {
@@ -439,11 +471,11 @@ button.account-button:not(:disabled):hover {
 
 .account-menu {
   position: fixed;
-  top: 52px;
-  right: var(--dk-space-4);
+  left: var(--dk-space-3);
+  bottom: 84px;
   z-index: 40;
   width: min(380px, calc(100vw - 32px));
-  max-height: calc(100vh - 80px);
+  max-height: calc(100vh - 104px);
   overflow: auto;
   border: 1px solid var(--dk-border-default);
   border-radius: var(--dk-radius-lg);
@@ -917,6 +949,12 @@ details.panel[open] > summary .chevron { transform: rotate(180deg); }
     grid-template-columns: minmax(0, 1fr);
   }
 
+  /* The toolbar returns as the 64px top bar: menu control and page title;
+     account lives in the drawer's pinned footer row. */
+  .has-sidebar .app-toolbar {
+    display: flex;
+  }
+
   .app-toolbar {
     justify-content: space-between;
     min-height: 64px;
@@ -924,13 +962,15 @@ details.panel[open] > summary .chevron { transform: rotate(180deg); }
   }
 
   .sidebar-menu-toggle { display: inline-flex; }
-  .account-button-name,
-  .account-chevron { display: none; }
-  .app-toolbar .account-button {
-    min-width: var(--dk-size-touch);
+  .sidebar-foot .account-button {
     min-height: var(--dk-size-touch);
-    width: var(--dk-size-touch);
-    padding: 0;
+  }
+  .sidebar-foot {
+    position: sticky;
+    bottom: 0;
+    z-index: 1;
+    margin-top: auto;
+    background: var(--dk-bg-muted);
   }
   .account-menu {
     inset: 0;
