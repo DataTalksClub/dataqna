@@ -140,6 +140,19 @@ def test_the_admin_console_renders_the_signed_in_operator():
     assert "data-theme-toggle" not in response["body"]
 
 
+def test_dialog_helper_is_loaded_on_every_page():
+    """Native <dialog class="dk-dialog"> dismisses on backdrop click only
+    when the vendored helper has registered once on the document."""
+    import public_handler
+
+    assert "dakit-dialogs.js" in public_handler.ASSETS
+    assert render.asset_response("dakit-dialogs.js")["statusCode"] == 200
+    bodies = [render.asset_bytes(name).decode() for name in ("room.html", "admin.html", "present.html")]
+    bodies.append(render.notice("Gone", "Nothing here.")["body"])
+    for body in bodies:
+        assert "/assets/dakit-dialogs.js" in body
+
+
 def test_dakit_layers_ship_in_cascade_order():
     """app.css resolves its colors through the vendored dakit sheets, so the
     cascade needs them in dakit's own order — tokens, then the base layer

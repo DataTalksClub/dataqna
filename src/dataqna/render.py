@@ -100,6 +100,7 @@ def version():
         digest = hashlib.sha256()
         for name in sorted((
             "dakit-tokens.css", "dakit-base.css", "dakit-components.css",
+            "dakit-dialogs.js",
             "app.css", "theme.js", "room.js", "admin.js",
             "present.js", "qna.js",
         )):
@@ -216,6 +217,7 @@ def _shell(title, inner, *, status=200):
 <link rel="stylesheet" href="/assets/dakit-components.css">
 <link rel="stylesheet" href="/assets/app.css"></head>
 <body><div class="wrap">{inner}</div>
+<script src="/assets/dakit-dialogs.js"></script>
 <script src="/assets/theme.js" defer></script></body></html>"""
     return http.html_response(status, _stamp(body))
 

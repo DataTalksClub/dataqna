@@ -74,7 +74,7 @@
   --dk-bg-hover: #eef1f4;
   --dk-bg-raised: #ffffff;
   --dk-bg-inset: rgba(36, 41, 47, 0.06);
-  --dk-bg-backdrop: rgba(15, 23, 42, 0.5);
+  --dk-bg-backdrop: rgba(15, 23, 42, 0.4);
   --dk-text-primary: #24292f;
   --dk-text-heading: #0f172a;
   --dk-text-muted: #57606a;
@@ -109,6 +109,11 @@
   --dk-info-bg: #edf5ff;
   --dk-info-border: rgba(49, 95, 143, 0.22);
   --dk-shadow-overlay: 0 8px 24px rgba(15, 23, 42, 0.16);
+  --dk-gap-control: 12px;
+  --dk-gap-block: 16px;
+  --dk-gap-section: 24px;
+  --dk-pad-cell: 8px 12px;
+  --dk-pad-panel: 16px;
 }
 :root[data-theme="dark"] {
   --dk-bg-page: #0d1117;
@@ -117,7 +122,7 @@
   --dk-bg-hover: #293038;
   --dk-bg-raised: #32383f;
   --dk-bg-inset: rgba(230, 237, 243, 0.07);
-  --dk-bg-backdrop: rgba(1, 4, 9, 0.7);
+  --dk-bg-backdrop: rgba(1, 4, 9, 0.5);
   --dk-text-primary: #e6edf3;
   --dk-text-heading: #f0f6fc;
   --dk-text-muted: #9198a1;

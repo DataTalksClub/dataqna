@@ -20,7 +20,9 @@
 @font-face {
   font-family: "IBM Plex Mono";
   font-style: normal;
-  font-weight: 500;
+  /* Mono maxes at 500: only 400/500 ship, so the 500 face also answers
+     600/700 requests instead of letting the browser smear a fake bold. */
+  font-weight: 500 700;
   font-display: swap;
   src: url("fonts/ibm-plex-mono-500.woff2") format("woff2");
 }
