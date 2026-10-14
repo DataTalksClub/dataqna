@@ -14,6 +14,9 @@
 # from /assets/fonts/ next to the stylesheet, so the prefix is rewritten to
 # "fonts/…". Nothing else in the layer is touched.
 #
+# scripts/check-borders.mjs is vendored too, so `make test` can fail on any
+# colored edge accent (dakit's "No colored edge accents" rule).
+#
 # Commit the vendored files together with whatever app change adapts to them.
 set -e
 here=$(cd "$(dirname "$0")" && pwd)
@@ -27,7 +30,8 @@ cp "$dakit/dist/tokens.css" "$web/dakit-tokens.css"
 sed 's|\.\./fonts/|fonts/|g' "$dakit/css/base.css" > "$web/dakit-base.css"
 cp "$dakit/css/components.css" "$web/dakit-components.css"
 cp "$dakit/dist/dialogs.js" "$web/dakit-dialogs.js"
+cp "$dakit/scripts/check-borders.mjs" "$here/check-borders.mjs"
 mkdir -p "$web/fonts"
 cp "$dakit/fonts/"*.woff2 "$dakit/fonts/LICENSE.md" "$web/fonts/"
 
-echo "synced dakit-tokens.css, dakit-base.css, dakit-components.css, dakit-dialogs.js and fonts/ from $dakit"
+echo "synced check-borders.mjs, dakit-tokens.css, dakit-base.css, dakit-components.css, dakit-dialogs.js and fonts/ from $dakit"

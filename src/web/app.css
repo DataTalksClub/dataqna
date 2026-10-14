@@ -854,20 +854,17 @@ a.account-sign-out:hover strong {
 .tag.pinned,
 .tag.you {
   color: var(--dk-accent-default);
-  border-color: var(--dk-accent-border);
   background: var(--dk-accent-soft);
 }
 
 .tag.answered,
 .tag.open {
   color: var(--dk-success-text);
-  border-color: var(--dk-success-border);
   background: var(--dk-success-bg);
 }
 
 .tag.archived {
   color: var(--dk-danger-text);
-  border-color: var(--dk-danger-border);
   background: var(--dk-danger-bg);
 }
 
@@ -1206,7 +1203,6 @@ button.small, .btn.small { padding: var(--dk-space-1) var(--dk-space-3); font-si
 .row-action[aria-pressed=true]:not(:disabled):hover {
   background: var(--dk-accent-soft);
   color: var(--dk-accent-default);
-  border-color: var(--dk-accent-border);
 }
 
 /* Icon toggles (pin, answered, hidden): the on state is a soft accent fill.
@@ -1218,7 +1214,6 @@ button.small, .btn.small { padding: var(--dk-space-1) var(--dk-space-3); font-si
 .icon-btn[aria-pressed=true]:not(:disabled):hover {
   background: var(--dk-accent-soft);
   color: var(--dk-accent-default);
-  border-color: var(--dk-accent-border);
 }
 
 /* The solid danger button is the one fill whose ink follows dakit's pairing
@@ -1228,7 +1223,7 @@ button.small, .btn.small { padding: var(--dk-space-1) var(--dk-space-3); font-si
 button.danger { background: var(--danger-fill); color: var(--on-danger); }
 button.danger:not(:disabled):hover { background: var(--dk-danger-hover); }
 /* Armed: the "are you sure" state of a destructive two-tap. */
-button.arm, .arm { background: var(--dk-danger-bg); color: var(--dk-danger-text); border-color: var(--dk-danger-text); }
+button.arm, .arm { background: var(--dk-danger-bg); color: var(--dk-danger-text); }
 button.arm:not(:disabled):hover { background: var(--dk-danger-bg); }
 
 /* In flight: the label yields to a ring. Feedback, not decoration, so the
@@ -1242,8 +1237,11 @@ button.busy::after {
   width: 14px;
   height: 14px;
   margin: -8px 0 0 -8px;
-  border: 2px solid var(--dk-text-muted);
-  border-top-color: transparent;
+  /* A ring cut from a conic fill by a mask: the spinner stays 2px thick
+     without leaning on a thick border. */
+  background: conic-gradient(transparent 0 25%, var(--dk-text-muted) 0);
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 2px), black calc(100% - 1.5px));
+  mask: radial-gradient(farthest-side, transparent calc(100% - 2px), black calc(100% - 1.5px));
   border-radius: var(--dk-radius-full);
 }
 @media (prefers-reduced-motion: no-preference) {
@@ -1273,7 +1271,7 @@ textarea { resize: vertical; min-height: 84px; }
    pre-redesign sheet haloed with — on the page background that wash read
    as nothing at all. */
 input:focus, select:focus, textarea:focus {
-  border-color: var(--dk-accent-default);
+  border-color: var(--dk-border-control-hover);
   outline: none;
   box-shadow: 0 0 0 3px var(--dk-focus-ring);
 }
@@ -1351,7 +1349,7 @@ input:focus, select:focus, textarea:focus {
 }
 .composer textarea:focus-visible { box-shadow: none; }
 .composer:focus-within {
-  border-color: var(--dk-accent-default);
+  border-color: var(--dk-border-control-hover);
   box-shadow: 0 0 0 3px var(--dk-focus-ring);
 }
 .composer .composer-foot { display: flex; gap: var(--dk-space-2); align-items: center; }
@@ -1558,7 +1556,7 @@ li.q .tag.answered { background: var(--dk-success-bg); color: var(--dk-success-t
   min-width: 68px;
   padding: 0 var(--dk-space-4) 0 var(--dk-space-3);
   background: var(--dk-bg-surface);
-  border: 1.5px solid var(--dk-accent-border);
+  border: 1px solid var(--dk-border-default);
   color: var(--dk-accent-default);
   border-radius: var(--dk-radius-full);
   font-weight: 700;
@@ -1568,10 +1566,9 @@ li.q .tag.answered { background: var(--dk-success-bg); color: var(--dk-success-t
 }
 .vote:not(:disabled):hover { background: var(--dk-accent-soft); }
 /* Voted reads like every family selection: the soft accent fill with
-   accent text and border — not a second solid fill in the view. */
+   accent text — not a second solid fill in the view. */
 .vote[aria-pressed=true] {
   background: var(--dk-accent-soft);
-  border-color: var(--dk-accent-border);
   color: var(--dk-accent-default);
 }
 .vote[aria-pressed=true]:not(:disabled):hover { background: var(--dk-accent-soft); }
@@ -1626,15 +1623,15 @@ li.q .tag.answered { background: var(--dk-success-bg); color: var(--dk-success-t
 .toast.show { opacity: 1; pointer-events: auto; }
 /* The undo that rides a toast: same inverted palette, real button. */
 .toast button {
-  background: transparent;
-  border: 1px solid var(--toast-text);
+  background: color-mix(in srgb, var(--toast-text) 18%, transparent);
+  border: 1px solid transparent;
   color: var(--toast-text);
   box-shadow: none;
   min-height: 44px;
   padding: var(--dk-space-1) var(--dk-space-3);
   font-size: var(--dk-text-body);
 }
-.toast button:not(:disabled):hover { background: transparent; opacity: .85; }
+.toast button:not(:disabled):hover { opacity: .85; }
 
 /* -------------------------------------------------- presentation mode
 
@@ -1754,11 +1751,10 @@ ol.present-list {
 }
 .present-list li + li { border-top: 1px solid var(--dk-border-default); }
 /* The row the host is holding up: the family selection — the soft accent
-   fill carried by an inset ring, legible from the back of the room over
+   fill, legible from the back of the room over
    both the plain and the pinned row. */
 .present-list li.selected {
   background: var(--dk-accent-soft);
-  box-shadow: inset 0 0 0 2px var(--dk-accent-default);
 }
 /* The pin is exclusive, so the one tinted row reads as the question the
    host pinned — legible from the back of the room, not only in the button
@@ -1939,15 +1935,15 @@ ol.present-list {
 }
 .present-cue.show { opacity: 1; pointer-events: auto; }
 .present-cue button {
-  background: transparent;
-  border: 1px solid var(--toast-text);
+  background: color-mix(in srgb, var(--toast-text) 18%, transparent);
+  border: 1px solid transparent;
   color: var(--toast-text);
   box-shadow: none;
   min-height: 36px;
   padding: var(--dk-space-1) var(--dk-space-3);
   font-size: var(--dk-text-body);
 }
-.present-cue button:not(:disabled):hover { background: transparent; opacity: .85; }
+.present-cue button:not(:disabled):hover { opacity: .85; }
 
 /* The join card, blown up. Shown automatically while the room is still
    empty — which is exactly when everyone is trying to get in. */
