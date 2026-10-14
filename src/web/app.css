@@ -1273,6 +1273,10 @@ textarea { resize: vertical; min-height: 84px; }
 input:focus, select:focus, textarea:focus {
   border-color: var(--dk-border-control-hover);
   outline: none;
+}
+/* A coloured ring is dakit's keyboard-focus indicator only, so the halo
+   rides :focus-visible (which every text field matches on any focus). */
+input:focus-visible, select:focus-visible, textarea:focus-visible {
   box-shadow: 0 0 0 3px var(--dk-focus-ring);
 }
 
@@ -1350,6 +1354,8 @@ input:focus, select:focus, textarea:focus {
 .composer textarea:focus-visible { box-shadow: none; }
 .composer:focus-within {
   border-color: var(--dk-border-control-hover);
+}
+.composer:has(:focus-visible) {
   box-shadow: 0 0 0 3px var(--dk-focus-ring);
 }
 .composer .composer-foot { display: flex; gap: var(--dk-space-2); align-items: center; }
