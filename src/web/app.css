@@ -188,7 +188,7 @@ svg { flex: 0 0 auto; }
    the room alone keeps its sanctioned phone-first touch scale at every
    width — participants never meet a pointer. */
 @media (min-width: 821px) {
-  .wrap button:where(:not(.icon-btn):not(.icon-button):not(.vote)),
+  .wrap button:where(:not(.icon-btn):not(.icon-button):not(.vote):not(.dk-tab)),
   .wrap .btn:where(:not(.icon-btn)) {
     min-height: var(--dk-size-control-md);
     padding: 0 var(--dk-space-4);
@@ -204,7 +204,7 @@ svg { flex: 0 0 auto; }
     padding: var(--dk-space-2) 10px;
     font-size: var(--dk-text-md);
   }
-  .room-wrap button:where(:not(.icon-btn):not(.icon-button):not(.vote)),
+  .room-wrap button:where(:not(.icon-btn):not(.icon-button):not(.vote):not(.dk-tab)),
   .room-wrap .btn:where(:not(.icon-btn)),
   .room-wrap input[type=text], .room-wrap textarea {
     min-height: var(--dk-size-touch);
