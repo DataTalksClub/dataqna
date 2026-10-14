@@ -276,21 +276,22 @@
       );
     }
     $("room-title").textContent = room.title;
-    // The description line carries provenance; the numbers below are the
-    // strip's job, so they are not repeated here.
-    $("room-sub").textContent = "/r/" + room.slug + " — hosted by " + room.owner;
-    $("room-owner").textContent = "Owner: " + room.owner;
+    // The description line carries provenance, state and close time. The
+    // question counts live on the filter tabs; no stat strip repeats them.
     var stateTag = STATE_TAGS[room.state] || ["", room.state];
-    $("stat-questions").textContent = room.counts.questions;
-    $("stat-answered").textContent = room.counts.answered;
-    $("stat-state").innerHTML = "";
+    var sub = $("room-sub");
+    sub.textContent = "";
     var badge = document.createElement("span");
     badge.className = "tag" + (stateTag[0] ? " " + stateTag[0] : "");
     badge.textContent = stateTag[1];
-    $("stat-state").appendChild(badge);
-    $("stat-closes").textContent = room.expires_at
-      ? new Date(room.expires_at).toLocaleString()
-      : "Never";
+    sub.append(
+      badge,
+      " /r/" + room.slug + " — hosted by " + room.owner + " · " +
+        (room.expires_at
+          ? "closes " + new Date(room.expires_at).toLocaleString()
+          : "never closes")
+    );
+    $("room-owner").textContent = "Owner: " + room.owner;
     $("public-link").href = room.url;
     $("public-link").textContent = room.url;
     $("present").href = "/admin/rooms/" + room.room_id + "/present";
