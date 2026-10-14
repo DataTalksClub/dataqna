@@ -178,10 +178,6 @@ svg { flex: 0 0 auto; }
   border-radius: var(--dk-radius-md);
 }
 .app-shell textarea { padding: var(--dk-space-2) 10px; font-size: var(--dk-text-md); }
-.app-shell .tabs button {
-  min-height: var(--dk-size-control-sm);
-  padding: var(--dk-space-1) var(--dk-space-3);
-}
 
 /* The public operator pages (directory, notices, co-host handoff) sit on
    the same desktop control scale once the viewport is a desk, not a hand;
@@ -889,11 +885,6 @@ a.account-sign-out:hover strong {
 .table-wrap tr:last-child td { border-bottom: 0; }
 .table-wrap tbody tr:hover td { background: var(--dk-bg-muted); }
 
-/* The queue is the view's dominant content: one panel, divided rows — the
-   room's list and the console's are the same anatomy now. The panel only
-   has to keep its header band's tabs from carrying the standalone margins. */
-.queue-panel .tabs { margin: 0; }
-
 /* The participant empty state lives inside the queue panel; its padding is
    the panel's, not the page's. */
 .queue-panel .empty { padding: var(--dk-space-6) var(--dk-space-4); }
@@ -1047,7 +1038,6 @@ details.panel[open] > summary .chevron { transform: rotate(180deg); }
     font-size: var(--dk-text-lg);
   }
   .app-shell textarea { padding: var(--dk-space-3); font-size: var(--dk-text-lg); }
-  .app-shell .tabs button { min-height: var(--dk-size-touch); padding: var(--dk-space-2) var(--dk-space-4); }
 }
 
 @media (prefers-reduced-motion: no-preference) {
@@ -1460,38 +1450,6 @@ input[type=checkbox] { width: 18px; height: 18px; accent-color: var(--accent-fil
   .share { flex-direction: column; }
 }
 
-/* --------------------------------------------------------------- tabs */
-
-.tabs {
-  display: flex;
-  gap: var(--dk-space-1);
-  margin: var(--dk-space-5) 0 var(--dk-space-3);
-  padding: var(--dk-space-1);
-  width: max-content;
-  max-width: 100%;
-  overflow-x: auto;
-  background: var(--dk-bg-muted);
-  border: 1px solid var(--dk-border-default);
-  border-radius: var(--dk-radius-full);
-}
-.tabs button {
-  flex: 0 0 auto;
-  background: transparent;
-  color: var(--dk-text-muted);
-  border: none;
-  box-shadow: none;
-  padding: var(--dk-space-1) var(--dk-space-4);
-  min-height: 44px;
-  border-radius: var(--dk-radius-full);
-  font-weight: 600;
-  font-size: var(--dk-text-body);
-}
-.tabs button:not(:disabled):hover { background: transparent; color: var(--dk-text-primary); }
-.tabs button[aria-pressed=true],
-.tabs button[aria-pressed=true]:not(:disabled):hover {
-  background: var(--dk-bg-raised);
-  color: var(--dk-text-primary);
-}
 /* ----------------------------------------------------- question list
 
    The family's list anatomy on a participant surface: one container, rows

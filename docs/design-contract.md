@@ -39,8 +39,7 @@ Verifiable claims about this codebase, not taste:
    pill on the toast, 14%-white chip on the band — everything rounded, nothing
    sharp; the page has no tension between chrome and content.
 
-Not tells, and kept deliberately: the pill filter tabs (the admin queue uses
-the same control), the vote pill (the product's brand glyph and the one thing
+Not tells, and kept deliberately: the vote pill (the product's brand glyph and the one thing
 a participant taps in the dark), the 16px participant body and 44px touch
 floor (the sanctioned phone-first exceptions), the dakit type/space/radius
 scales, the focus recipe, light-as-default.

@@ -230,3 +230,24 @@ def test_the_gate_asks_only_for_the_passcode_and_names_the_session():
     assert 'action="/r/tonight-live/cohost/ivan"' in body
     assert 'name="name"' not in body
     assert "Tonight" in body
+
+
+def test_question_filters_are_dakit_segmented_radiogroups():
+    """The room's Popular/Recent/Answered and the console's All/Unanswered/
+    Answered each narrow one list to a single choice: dakit's segmented
+    control as a radiogroup, with exactly one segment in the tab order. The
+    app sheet never draws a .dk-tab itself."""
+    import re
+
+    for name, group in (("room.html", "question-view"), ("admin.html", "question-filter")):
+        body = render.asset_bytes(name).decode()
+        track = re.search(r'<div class="dk-tabs" role="radiogroup" id="%s" aria-label="[^"]+">(.*?)</div>' % group, body, re.S)
+        assert track, name
+        segments = re.findall(r'<button [^>]*>', track.group(1))
+        assert segments and all('class="dk-tab" role="radio"' in s for s in segments)
+        assert sum('aria-checked="true" tabindex="0"' in s for s in segments) == 1
+        assert all('aria-checked="false" tabindex="-1"' in s for s in segments if 'aria-checked="true"' not in s)
+        assert 'class="tabs"' not in body
+    css = render.asset_bytes("app.css").decode()
+    assert not re.search(r"\.dk-tab\b[^,{]*\{", css)
+    assert ".tabs" not in css

@@ -175,10 +175,10 @@
         <section class="panel queue-panel">
           <div class="panel-header">
             <h2>Questions</h2>
-            <div class="tabs" role="group" aria-label="Filter questions">
-              <button type="button" id="f-all" aria-pressed="true">All</button>
-              <button type="button" id="f-unanswered" aria-pressed="false">Unanswered</button>
-              <button type="button" id="f-answered" aria-pressed="false">Answered</button>
+            <div class="dk-tabs" role="radiogroup" id="question-filter" aria-label="Filter questions">
+              <button type="button" class="dk-tab" role="radio" id="f-all" aria-checked="true" tabindex="0">All <span class="dk-count" id="f-all-count" hidden></span></button>
+              <button type="button" class="dk-tab" role="radio" id="f-unanswered" aria-checked="false" tabindex="-1">Unanswered <span class="dk-count" id="f-unanswered-count" hidden></span></button>
+              <button type="button" class="dk-tab" role="radio" id="f-answered" aria-checked="false" tabindex="-1">Answered <span class="dk-count" id="f-answered-count" hidden></span></button>
             </div>
           </div>
           <ul class="questions" id="qlist"></ul>

@@ -327,11 +327,19 @@
       "Mark a question answered and it moves to this tab."]
   };
 
+  function inFilter(name, item) {
+    if (name === "answered") return item.status === "answered";
+    if (name === "unanswered") return item.status === "visible";
+    return item.status === "visible" || item.status === "answered";
+  }
+
   function renderQuestions() {
-    var filtered = state.items.filter(function (item) {
-      if (state.filter === "answered") return item.status === "answered";
-      if (state.filter === "unanswered") return item.status === "visible";
-      return item.status === "visible" || item.status === "answered";
+    var filtered = state.items.filter(function (item) { return inFilter(state.filter, item); });
+    // Each segment carries its count, zero included, once the list has loaded.
+    TABS.forEach(function (key) {
+      var count = $("f-" + key + "-count");
+      count.textContent = state.items.filter(function (item) { return inFilter(key, item); }).length;
+      count.hidden = false;
     });
     if (state.filter === "all") {
       // The console's job is what to answer next: done items sink below the
@@ -497,10 +505,14 @@
     return button;
   }
 
+  /* A radiogroup: the checked segment is the only one in the tab order, and
+     the vendored dakit-tabs.js moves the choice with the arrow keys by
+     clicking the neighbour, which lands back here. */
   function selectFilter(name) {
     state.filter = name;
     TABS.forEach(function (key) {
-      $("f-" + key).setAttribute("aria-pressed", key === name ? "true" : "false");
+      $("f-" + key).setAttribute("aria-checked", key === name ? "true" : "false");
+      $("f-" + key).tabIndex = key === name ? 0 : -1;
     });
     renderQuestions();
   }

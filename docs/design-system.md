@@ -180,7 +180,7 @@ the scales. What this app adds to the record:
 | Leading | dakit tight 1.2 (headings) · app snug 1.35 · dakit normal 1.5 (body) |
 | Tracking | `-.02em` headings · `-.01em` controls · `.07em` labels — app roles |
 | Space | dakit's 4px grid (`--dk-space-1…8`) |
-| Radius | dakit's: controls and containers at the family 6px step (`--dk-radius-md`), overlays at 10px, pills for votes, tabs and toasts |
+| Radius | dakit's: controls and containers at the family 6px step (`--dk-radius-md`), overlays at 10px, pills for votes and toasts |
 | Motion | `--duration-1/2/3` 120/180/260ms, one `--ease-out` curve — app roles |
 
 The 16px body is the one break with dakit's type scale, and it is load-bearing:
@@ -232,7 +232,9 @@ Notes that are not obvious from the code:
   is a hairline-divided row carrying one primary label, one metadata line, and
   at most one affordance (the chevron). The room view's numbers are a segmented
   stats strip (`QUESTIONS / ANSWERED / STATE / CLOSES`), not a card grid; the
-  queue is the view's dominant panel with the filter tabs in its header band.
+  queue is the view's dominant panel with the filter tabs in its header band:
+  dakit's segmented control (`.dk-tabs` radiogroup, counts in `.dk-count`,
+  arrow keys from the vendored `dakit-tabs.js`), drawn by dakit alone.
   Session states speak in badges on dakit's triplet roles: `open` success,
   `archived` danger, draft and closed neutral.
 - **Icons are one language**: inline SVG, 16×16 box, `stroke="currentColor"`,
