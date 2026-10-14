@@ -339,6 +339,9 @@
         state.counts = body.counts || null;
         if (separateAnswered) {
           el.tabs.answered.hidden = !(body.counts && body.counts.answered > 0);
+          // A hidden segment cannot stay the checked one, or the group
+          // drops out of the tab order; fall back to the current sort.
+          if (el.tabs.answered.hidden && state.tab === "answered") markTab(state.sort);
         }
         render();
         state.loaded = true;
@@ -388,12 +391,20 @@
     card.classList.add("flash");
   }
 
-  function selectTab(name) {
+  /* The segments are a radiogroup: the checked one is the only one in the
+     tab order, and the vendored dakit-tabs.js moves the choice with the
+     arrow keys by clicking the neighbour, which lands back here. */
+  function markTab(name) {
     state.tab = name;
-    if (name !== "answered") state.sort = name;
     Object.keys(el.tabs).forEach(function (key) {
-      el.tabs[key].setAttribute("aria-pressed", key === name ? "true" : "false");
+      el.tabs[key].setAttribute("aria-checked", key === name ? "true" : "false");
+      el.tabs[key].tabIndex = key === name ? 0 : -1;
     });
+  }
+
+  function selectTab(name) {
+    if (name !== "answered") state.sort = name;
+    markTab(name);
     render();
     state.etag = null;
     refresh();

@@ -78,10 +78,10 @@
         <h2>Questions</h2>
         <span class="panel-hint mono" id="live-count" hidden></span>
       </div>
-      <div class="tabs" role="group" aria-label="Sort questions">
-        <button type="button" id="tab-popular" aria-pressed="true">Popular</button>
-        <button type="button" id="tab-recent" aria-pressed="false">Recent</button>
-        <button type="button" id="tab-answered" aria-pressed="false" hidden>Answered</button>
+      <div class="dk-tabs" role="radiogroup" id="question-view" aria-label="Show questions">
+        <button type="button" class="dk-tab" role="radio" id="tab-popular" aria-checked="true" tabindex="0">Popular</button>
+        <button type="button" class="dk-tab" role="radio" id="tab-recent" aria-checked="false" tabindex="-1">Recent</button>
+        <button type="button" class="dk-tab" role="radio" id="tab-answered" aria-checked="false" tabindex="-1" hidden>Answered</button>
       </div>
     </div>
     <ul class="questions" id="list"></ul>

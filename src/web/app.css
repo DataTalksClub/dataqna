@@ -155,7 +155,7 @@ svg { flex: 0 0 auto; }
   font-size: var(--dk-text-body);
 }
 
-.app-shell button:where(:not(.icon-btn):not(.icon-button):not(.account-button):not(.account-menu-item)),
+.app-shell button:where(:not(.icon-btn):not(.icon-button):not(.account-button):not(.account-menu-item):not(.dk-tab)),
 .app-shell .btn:where(:not(.icon-btn)) {
   min-height: var(--dk-size-control-md);
   padding: 0 var(--dk-space-4);
@@ -1034,7 +1034,7 @@ details.panel[open] > summary .chevron { transform: rotate(180deg); }
   /* The room's touch scale is for hands, not pointers — the console keeps
      it on a phone, where the pointer is a finger again. The selectors
      mirror the desktop scope's specificity so the re-raise wins. */
-  .app-shell button:where(:not(.icon-button):not(.icon-btn):not(.account-button):not(.account-menu-item)),
+  .app-shell button:where(:not(.icon-button):not(.icon-btn):not(.account-button):not(.account-menu-item):not(.dk-tab)),
   .app-shell .btn:where(:not(.icon-btn)) {
     min-height: var(--dk-size-touch);
     padding: 0 var(--dk-space-4);
@@ -1135,7 +1135,10 @@ details.panel[open] > summary .chevron { transform: rotate(180deg); }
 
 /* ------------------------------------------------------------ buttons */
 
-button, .btn {
+/* The app button skips .dk-tab: a segmented control's segments are dakit's
+   to draw, and this sheet's fill, padding and 44px floor would leak into
+   them through the bare element selector. */
+button:where(:not(.dk-tab)), .btn {
   font: 600 var(--dk-text-lg)/var(--leading-snug) var(--dk-font-sans);
   padding: var(--dk-space-2) var(--dk-space-4);
   min-height: 44px;
@@ -1152,7 +1155,7 @@ button, .btn {
   touch-action: manipulation;
 }
 button:disabled { opacity: .5; cursor: default; }
-button:not(:disabled):hover, .btn:hover { background: var(--accent-fill-hover); }
+button:not(:disabled, .dk-tab):hover, .btn:hover { background: var(--accent-fill-hover); }
 
 /* The family's secondary: muted surface, neutral border, primary text —
    dakit's own --secondary pairing. */
