@@ -16,6 +16,7 @@ ASSETS = {
     "dakit-base.css",
     "dakit-components.css",
     "dakit-dialogs.js",
+    "dakit-tabs.js",
     "app.css",
     "theme.js",
     "room.js",

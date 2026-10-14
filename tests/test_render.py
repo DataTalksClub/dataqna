@@ -153,6 +153,18 @@ def test_dialog_helper_is_loaded_on_every_page():
         assert "/assets/dakit-dialogs.js" in body
 
 
+def test_tabs_helper_is_loaded_where_a_segmented_control_lives():
+    """Arrow keys and the roving tabindex of a .dk-tabs radiogroup come from
+    the vendored dakit helper, so the asset route serves it and every page
+    that carries a segmented control loads it."""
+    import public_handler
+
+    assert "dakit-tabs.js" in public_handler.ASSETS
+    assert render.asset_response("dakit-tabs.js")["statusCode"] == 200
+    for name in ("room.html", "admin.html"):
+        assert "/assets/dakit-tabs.js" in render.asset_bytes(name).decode()
+
+
 def test_dakit_layers_ship_in_cascade_order():
     """app.css resolves its colors through the vendored dakit sheets, so the
     cascade needs them in dakit's own order — tokens, then the base layer
