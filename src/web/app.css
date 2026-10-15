@@ -1082,11 +1082,6 @@ body.present { overflow: hidden; background: var(--dk-bg-page); }
   line-height: var(--leading-snug);
   overflow-wrap: anywhere;
 }
-.present-join .join-count {
-  margin-top: var(--dk-space-1);
-  color: var(--dk-text-muted);
-  font-size: clamp(var(--dk-text-body), 1vw, var(--dk-text-lg));
-}
 
 .present-main {
   grid-row: 1;

@@ -381,3 +381,12 @@ def test_collection_helper_is_loaded_where_a_collection_create_lives():
     assert render.asset_response("dakit/collection.js")["statusCode"] == 200
     assert "/assets/dakit/collection.js" in render.asset_bytes("admin.html").decode()
     assert "dakitCollection.installShortcut" in render.asset_bytes("admin.js").decode()
+
+
+def test_presentation_mode_states_its_question_count_once():
+    """The footer progress carries the count (and "2 of 3" in spotlight); the
+    join panel beside the QR no longer repeats it (dakit shell §2.9)."""
+    page = render.asset_bytes("present.html").decode()
+    script = render.asset_bytes("present.js").decode()
+    assert 'id="progress"' in page
+    assert "join-count" not in page and "join-count" not in script

@@ -446,7 +446,6 @@
       renderList();
       $("progress").textContent = count ? count + (count === 1 ? " question" : " questions") : "No questions yet";
     }
-    $("join-count").textContent = count ? count + (count === 1 ? " question" : " questions") : "";
 
     if (count) state.overlayDismissed = false;
     $("overlay").classList.toggle("show", overlayShouldShow());

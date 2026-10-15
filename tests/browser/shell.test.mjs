@@ -208,3 +208,12 @@ test("counts, scores, times and dates in the console are set in mono and stay wh
     await context.close();
   }
 });
+
+test("the sessions list states its count once when every session is in one group", async () => {
+  const { page, context } = await open("/admin");
+  await page.waitForSelector(".panel-row");
+  assert.equal((await page.textContent("#sessions-count")).trim(), "1 session");
+  const groupHints = await page.$$eval("#rooms .panel-header .panel-hint", (els) => els.length);
+  assert.equal(groupHints, 0, "a lone group repeats the total");
+  await context.close();
+});

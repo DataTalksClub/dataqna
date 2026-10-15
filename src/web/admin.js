@@ -111,7 +111,8 @@
     host.textContent = "";
     var count = $("sessions-count");
     count.hidden = !items.length;
-    count.textContent = items.length + (items.length === 1 ? " session" : " sessions");
+    count.textContent = "";
+    count.append(datum(String(items.length)), items.length === 1 ? " session" : " sessions");
     if (!items.length) {
       /* The empty list repeats the create as a secondary; the header's
          + New session stays where it is, so the action never moves. */
@@ -122,6 +123,12 @@
       $("first-session").addEventListener("click", openNewSession);
       return;
     }
+    /* One count per view (dakit docs/shell.md §2.9): the list header says how
+       many sessions there are, so a group repeats a count only when there
+       are several groups and its number says something the total does not. */
+    var groupsShown = GROUPS.filter(function (group) {
+      return items.some(function (room) { return room.state === group[0]; });
+    }).length;
     GROUPS.forEach(function (group) {
       var inGroup = items.filter(function (room) { return room.state === group[0]; });
       if (!inGroup.length) return;
@@ -132,11 +139,13 @@
       header.className = "panel-header";
       var heading = document.createElement("h2");
       heading.textContent = group[1];
-      var count = document.createElement("span");
-      count.className = "muted panel-hint";
-      count.textContent = inGroup.length;
       header.appendChild(heading);
-      header.appendChild(count);
+      if (groupsShown > 1) {
+        var count = document.createElement("span");
+        count.className = "muted panel-hint datum";
+        count.textContent = inGroup.length;
+        header.appendChild(count);
+      }
       panel.appendChild(header);
 
       inGroup.forEach(function (room) {
