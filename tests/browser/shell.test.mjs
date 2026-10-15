@@ -196,11 +196,13 @@ test("counts, scores, times and dates in the console are set in mono and stay wh
       await page.waitForSelector(selector);
       const found = await page.$$eval(selector, (els) => els.map((el) => {
         const s = getComputedStyle(el);
-        return { family: s.fontFamily, wrap: s.whiteSpace, lines: el.getClientRects().length, text: el.textContent };
+        return { family: s.fontFamily, wrap: s.whiteSpace, lines: el.getClientRects().length, text: el.textContent,
+                 id: el.classList.contains("datum--id") };
       }));
       assert.ok(found.length, selector);
       for (const f of found) {
         assert.match(f.family, /IBM Plex Mono/, `${selector} "${f.text}" is ${f.family}`);
+        if (f.id) continue; // identifiers may wrap; see the long-slug test
         assert.equal(f.wrap, "nowrap", selector);
         assert.equal(f.lines, 1, `${selector} "${f.text}" breaks across lines`);
       }
@@ -243,4 +245,41 @@ test("the notice page's classes keep the sizes its inline styles used to set", a
   assert.equal(title, "22px");
   assert.equal(gap, "20px");
   await context.close();
+});
+
+test("a 48-character slug wraps inside a 390px screen instead of being clipped", async () => {
+  const slug = "dtc-zoomcamp-2026-cohort-office-hours-q-and-a-01";
+  assert.equal(slug.length, 48);
+  for (const path of ["/admin", "/admin/rooms/R1"]) {
+    const { page, context } = await open(path, { viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true });
+    const patch = async (route) => {
+      const response = await route.fetch();
+      const body = await response.json();
+      const fix = (room) => Object.assign(room, { slug, url: "https://qna.test/r/" + slug });
+      if (body.items) body.items.forEach(fix); else fix(body);
+      await route.fulfill({ response, json: body });
+    };
+    await page.route("**/api/v1/rooms", patch);
+    await page.route("**/api/v1/rooms/R1", patch);
+    await page.reload({ waitUntil: "networkidle" });
+    const selector = path === "/admin" ? ".row-meta .datum--id" : "#room-sub .datum--id";
+    await page.waitForSelector(selector);
+    const box = await page.$eval(selector, (el) => {
+      const rects = [...el.getClientRects()];
+      const scroller = el.closest(".panel, .dk-page-header");
+      return {
+        text: el.textContent,
+        right: Math.max(...rects.map((r) => r.right)),
+        lines: rects.length,
+        container: scroller.getBoundingClientRect().right,
+        overflow: scroller.scrollWidth - scroller.clientWidth,
+      };
+    });
+    assert.equal(box.text, "/r/" + slug);
+    assert.ok(box.right <= box.container + 0.5 && box.right <= 390, `${path}: slug ends at ${box.right}px, past ${box.container}px`);
+    assert.ok(box.lines > 1, `${path}: a 51-character slug should wrap at 390px`);
+    assert.ok(box.overflow <= 0, `${path}: container overflows by ${box.overflow}px`);
+    assert.equal(await page.evaluate(() => document.querySelector(".dk-main").scrollWidth <= 390), true);
+    await context.close();
+  }
 });

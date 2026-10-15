@@ -478,6 +478,11 @@ details.panel[open] > summary .chevron { transform: rotate(180deg); }
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
+/* Identifiers are the exception: a 48-character slug cannot fit a phone on
+   one line, so it may break at any character instead of being clipped. */
+.datum--id { white-space: normal; overflow-wrap: anywhere; }
+/* The session subtitle also carries the owner's email, which has no spaces. */
+#room-sub { overflow-wrap: anywhere; }
 
 .brand {
   display: inline-flex;

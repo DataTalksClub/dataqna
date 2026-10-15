@@ -75,9 +75,11 @@
   /* Data reads as data (dakit docs/shell.md §2): counts, times, dates, slugs
      and other identifiers are set in the mono face with tabular figures and
      never break mid-value; the words around them stay sans. */
-  function datum(value) {
+  function datum(value, id) {
     var span = document.createElement("span");
-    span.className = "datum";
+    // An identifier (a slug can be 48 characters) may break anywhere rather
+    // than run off a phone; dates, times and counts stay whole.
+    span.className = id ? "datum datum--id" : "datum";
     span.textContent = value;
     return span;
   }
@@ -161,7 +163,7 @@
         var meta = document.createElement("span");
         meta.className = "row-meta";
         meta.append(
-          datum("/r/" + room.slug), " · ",
+          datum("/r/" + room.slug, true), " · ",
           datum(String(room.counts.questions)), room.counts.questions === 1 ? " question, " : " questions, ",
           datum(String(room.counts.answered)), " answered"
         );
@@ -324,7 +326,7 @@
     var badge = document.createElement("span");
     badge.className = "tag" + (stateTag[0] ? " " + stateTag[0] : "");
     badge.textContent = stateTag[1];
-    sub.append(badge, " ", datum("/r/" + room.slug), " — hosted by " + room.owner + " · ");
+    sub.append(badge, " ", datum("/r/" + room.slug, true), " — hosted by " + room.owner + " · ");
     if (room.expires_at) sub.append("closes ", datum(new Date(room.expires_at).toLocaleString()));
     else sub.append("never closes");
     $("room-owner").textContent = "Owner: " + room.owner;
