@@ -75,6 +75,8 @@ class Handler(BaseHTTPRequestHandler):
             if rest.startswith("/rooms/R1/questions"):
                 return self._json({"items": QUESTIONS, "etag": "stub", "state": "open"})
             return self._json({"items": []})
+        if path == "/notice":
+            return self._send(200, render.notice("Room not found", "This link does not point at an active Q&A.")["body"])
         if path == "/admin" or path.startswith("/admin/rooms/"):
             return self._send(200, render.page("admin.html", render.account_chrome(email="host@datatalks.club")))
         return self._send(404, "not found", "text/plain")

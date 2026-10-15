@@ -235,3 +235,12 @@ test("status badges are fill-only: no visible perimeter in either theme", async 
     await context.close();
   }
 });
+
+test("the notice page's classes keep the sizes its inline styles used to set", async () => {
+  const { page, context } = await open("/notice");
+  const title = await page.$eval(".notice-title", (el) => getComputedStyle(el).fontSize);
+  const gap = await page.$eval(".notice-action", (el) => getComputedStyle(el).marginTop);
+  assert.equal(title, "22px");
+  assert.equal(gap, "20px");
+  await context.close();
+});

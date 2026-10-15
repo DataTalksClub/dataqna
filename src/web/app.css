@@ -124,15 +124,9 @@ svg { flex: 0 0 auto; }
    input is not a field anyone can type into. */
 .row.wrapping > .grow { min-width: 160px; }
 .right { margin-left: auto; }
-/* Layout helpers the templates used to write as inline style="" (which no
-   scale check can see): markup carries no style attributes at all now. */
-.flush { margin: 0; }
-.contents { display: contents; }
 /* The brand-and-theme bar that opens the public pages. */
 .public-bar { margin-bottom: var(--dk-space-5); }
-/* A notice page: its title and its one way onward. */
-.notice-title { font-size: var(--dk-text-xl); }
-.notice-action { margin-top: var(--dk-space-5); }
+
 .stack > * + * { margin-top: var(--dk-space-3); }
 
 /* ------------------------------------------------- console controls
@@ -995,6 +989,10 @@ li.q .tag.answered { background: var(--dk-success-bg); color: var(--dk-success-t
 .empty svg { color: var(--dk-text-muted); opacity: .7; }
 .empty h2 { font-size: var(--dk-text-lg); font-weight: 600; letter-spacing: var(--tracking-snug); color: var(--dk-text-primary); margin: var(--dk-space-3) 0 var(--dk-space-2); }
 .empty p { margin: 0; font-size: var(--dk-text-body); }
+/* A notice page's empty state: a larger title and room above its one way
+   onward (scoped under .empty so they outrank the two rules above). */
+.empty .notice-title { font-size: var(--dk-text-xl); }
+.empty .notice-action { margin-top: var(--dk-space-5); }
 
 /* A one-line empty note for a small section, not a full-page state. */
 .table-empty { font-size: var(--dk-text-body); color: var(--dk-text-muted); margin: 0; }
@@ -1405,3 +1403,12 @@ ol.present-list {
   .present-foot button span { display: none; }
   .present-cue { max-width: calc(100vw - 24px); white-space: normal; }
 }
+
+/* ------------------------------------------------- markup helpers
+
+   What the templates used to write as inline style="" (which no checker can
+   see): markup carries no style attributes now. Last in the file so, like
+   the attributes they replace, they win over the stack and panel-body
+   spacing rules of equal specificity. */
+.flush { margin: 0; }
+.contents { display: contents; }
