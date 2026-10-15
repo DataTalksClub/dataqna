@@ -14,10 +14,12 @@
 # from /assets/fonts/ next to the stylesheet, so the prefix is rewritten to
 # "fonts/…". Nothing else in the layer is touched.
 #
-# The two classic-script helpers ride along: dialogs.js (backdrop dismiss for
-# every <dialog class="dk-dialog">) on every page, and tabs.js (roving
+# The three classic-script helpers ride along: dialogs.js (backdrop dismiss
+# for every <dialog class="dk-dialog">) on every page, tabs.js (roving
 # tabindex and arrow keys for .dk-tabs radiogroups) on the pages that carry a
-# segmented control.
+# segmented control, and collection.js (the dk-collection-header builders and
+# the "c" shortcut for the page's one create button) on the pages that carry a
+# collection create action.
 #
 # scripts/check-borders.mjs is vendored too, so `make test` can fail on any
 # colored edge accent (dakit's "No colored edge accents" rule).
@@ -36,8 +38,9 @@ sed 's|\.\./fonts/|fonts/|g' "$dakit/css/base.css" > "$web/dakit-base.css"
 cp "$dakit/css/components.css" "$web/dakit-components.css"
 cp "$dakit/dist/dialogs.js" "$web/dakit-dialogs.js"
 cp "$dakit/dist/tabs.js" "$web/dakit-tabs.js"
+cp "$dakit/dist/collection.js" "$web/dakit-collection.js"
 cp "$dakit/scripts/check-borders.mjs" "$here/check-borders.mjs"
 mkdir -p "$web/fonts"
 cp "$dakit/fonts/"*.woff2 "$dakit/fonts/LICENSE.md" "$web/fonts/"
 
-echo "synced check-borders.mjs, dakit-tokens.css, dakit-base.css, dakit-components.css, dakit-dialogs.js, dakit-tabs.js and fonts/ from $dakit"
+echo "synced check-borders.mjs, dakit-tokens.css, dakit-base.css, dakit-components.css, dakit-dialogs.js, dakit-tabs.js, dakit-collection.js and fonts/ from $dakit"

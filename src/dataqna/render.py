@@ -100,7 +100,7 @@ def version():
         digest = hashlib.sha256()
         for name in sorted((
             "dakit-tokens.css", "dakit-base.css", "dakit-components.css",
-            "dakit-dialogs.js", "dakit-tabs.js",
+            "dakit-dialogs.js", "dakit-tabs.js", "dakit-collection.js",
             "app.css", "theme.js", "room.js", "admin.js",
             "present.js", "qna.js",
         )):
