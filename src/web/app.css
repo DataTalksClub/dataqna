@@ -341,14 +341,17 @@ svg { flex: 0 0 auto; }
 
 .row-chev { color: var(--dk-text-faint); }
 
-/* Status badges on the dakit triplet roles: text+border+background change
-   together, and a badge exists only where it changes what the host does. */
+/* Status badges, dakit's way: fill only — a tinted --dk-*-bg and its text
+   role, no perimeter (AGENTS.md, shell.md §9) — and a badge exists only
+   where it changes what the host does. The height comes from the line box
+   (20px, on the grid), not from a 1px padding and border. */
 .tag {
   display: inline-flex;
   align-items: center;
   gap: var(--dk-space-1);
-  padding: 1px var(--dk-space-2);
-  border: 1px solid var(--dk-border-default);
+  padding: 0 var(--dk-space-2);
+  line-height: 20px;
+  border: 0;
   border-radius: var(--dk-radius-sm);
   background: var(--dk-bg-muted);
   color: var(--dk-text-muted);
@@ -916,7 +919,8 @@ li.q .tag {
   display: inline-flex;
   align-items: center;
   gap: var(--dk-space-1);
-  padding: 2px var(--dk-space-2);
+  padding: 0 var(--dk-space-2);
+  line-height: 20px;
   border-radius: var(--dk-radius-full);
   background: var(--dk-bg-hover);
   font-size: var(--dk-text-sm);

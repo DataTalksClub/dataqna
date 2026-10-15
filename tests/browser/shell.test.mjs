@@ -217,3 +217,21 @@ test("the sessions list states its count once when every session is in one group
   assert.equal(groupHints, 0, "a lone group repeats the total");
   await context.close();
 });
+
+test("status badges are fill-only: no visible perimeter in either theme", async () => {
+  for (const theme of ["light", "dark"]) {
+    const { page, context } = await open("/admin/rooms/R1");
+    if (theme === "dark") await page.evaluate(() => { document.documentElement.dataset.theme = "dark"; });
+    await page.waitForSelector("li.q .tag");
+    const badges = await page.$$eval("#room-sub .tag, li.q .tag", (els) => els.map((el) => {
+      const s = getComputedStyle(el);
+      return { text: el.textContent, width: s.borderTopWidth, color: s.borderTopColor, bg: s.backgroundColor };
+    }));
+    assert.ok(badges.length >= 2);
+    for (const b of badges) {
+      assert.ok(b.width === "0px" || b.color === "rgba(0, 0, 0, 0)", `${theme} "${b.text}" has a ${b.width} ${b.color} border`);
+      assert.notEqual(b.bg, "rgba(0, 0, 0, 0)", `${theme} "${b.text}" has no fill`);
+    }
+    await context.close();
+  }
+});
