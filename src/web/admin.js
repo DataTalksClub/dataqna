@@ -614,6 +614,11 @@
     $("new-session-cancel").addEventListener("click", function () { $("new-session-dialog").close(); });
     // The header button is hand-written markup, so arm its c shortcut here.
     window.dakitCollection.installShortcut(document);
+    // The directory's "New session" link lands here with the form open.
+    if (location.hash === "#new-session") {
+      history.replaceState(null, "", location.pathname);
+      openNewSession();
+    }
     $("create-key").addEventListener("click", createKey);
   }
 })();

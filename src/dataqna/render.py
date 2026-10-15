@@ -310,7 +310,7 @@ def directory_page(live, recent, *, signed_in=None):
             '<p class="muted" style="margin:0">Create a session, share its QR code, '
             'and run presentation mode from the console.</p>'
             '<div class="row wrapping">'
-            '<a class="btn" href="/admin">New session</a>'
+            '<a class="btn" href="/admin#new-session">New session</a>'
             '<a class="btn ghost" href="/auth/logout">Sign out</a>'
             "</div></div></div>"
         )

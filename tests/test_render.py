@@ -328,6 +328,8 @@ def test_an_empty_session_list_repeats_the_create():
     assert "Create the first session" in script
     assert "dk-empty__actions" in script and "dk-button--secondary" in script
     assert "Create one above" not in script
+    # The directory's New session link opens the same dialog on arrival.
+    assert '"#new-session"' in script
 
 
 def test_the_session_page_keeps_only_its_own_actions_in_its_header():

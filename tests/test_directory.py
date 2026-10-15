@@ -86,6 +86,9 @@ def test_signed_in_admins_get_a_way_to_create_one(table):
     cookie = f"{config.SESSION_COOKIE}={security.new_session_token(OWNER)}"
     body = home(cookies=[cookie])["body"]
     assert "New session" in body
+    # It lands on the console with the New session dialog open, not on a list
+    # the admin then has to find the create on.
+    assert 'href="/admin#new-session">New session</a>' in body
     assert OWNER in body
     assert "/auth/login" not in body
 
