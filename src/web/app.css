@@ -74,9 +74,9 @@
   --qr-ink: var(--dk-text-primary);
   --qr-paper: transparent;
 
-  /* The drawer's scrim over the page. Lives in the token block because the
-     layer rule forbids raw color below it. */
-  --scrim-bg: rgba(15, 23, 42, .45);
+  /* The scrim over the page behind a sheet: dakit's backdrop role, which
+     already carries a dark-theme remap. */
+  --scrim-bg: var(--dk-bg-backdrop);
 }
 
 /* Dark: dakit remaps every --dk-* role under :root[data-theme="dark"], so
@@ -87,10 +87,9 @@
   color-scheme: dark;
   --toast-bg: var(--dk-bg-hover);
   --toast-text: var(--dk-text-primary);
-  --toast-line: rgba(255, 255, 255, .16);
+  --toast-line: var(--dk-border-default);
   --qr-ink: var(--dk-text-on-deep);
   --qr-paper: var(--dk-accent-deep);
-  --scrim-bg: rgba(1, 4, 9, .6);
 }
 
 /* ---------------------------------------------------------------- base */
