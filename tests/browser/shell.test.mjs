@@ -166,3 +166,22 @@ test("a click on the page background closes the menu and returns focus to the tr
   await page.waitForFunction(() => document.activeElement.matches(".dk-account-trigger"), null, { timeout: 3000 });
   await context.close();
 });
+
+for (const [label, viewport] of [["desktop", { width: 1440, height: 900 }], ["phone", { width: 390, height: 844 }]]) {
+  test(`selects keep dakit's chevron and its clearance on the ${label}`, async () => {
+    const { page, context } = await open("/admin/rooms/R1", { viewport, hasTouch: label === "phone", isMobile: label === "phone" });
+    await page.goto(BASE + "/admin", { waitUntil: "networkidle" });
+    await page.click("#new-session");
+    for (const id of ["new-state", "new-expiry"]) {
+      const style = await page.$eval(`#${id}`, (el) => {
+        const s = getComputedStyle(el);
+        return { appearance: s.appearance, image: s.backgroundImage, position: s.backgroundPositionX, right: s.paddingRight };
+      });
+      assert.equal(style.appearance, "none", id);
+      assert.match(style.image, /^url\("data:image\/svg\+xml/, `${id} lost its chevron`);
+      assert.match(style.position, /100%|right/, `${id} chevron is not at the right edge: ${style.position}`);
+      assert.equal(style.right, "34px", `${id} text does not clear the chevron`);
+    }
+    await context.close();
+  });
+}
