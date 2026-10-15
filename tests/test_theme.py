@@ -26,7 +26,7 @@ def tokens(block):
 # exactly as the cascade does. The ramps resolve into dakit's vendored sheet,
 # so its light values join the table — and for the dark block its dark remap
 # joins too, which is what `:root[data-theme="dark"]` does in the browser.
-DK = render.asset_bytes("dakit-tokens.css").decode()
+DK = render.asset_bytes("dakit/dakit.css").decode()
 DK_ROOT = tokens(re.search(r"^:root \{(.*?)^}", DK, re.S | re.M).group(1))
 DK_DARK = tokens(re.search(r'^:root\[data-theme="dark"\] \{(.*?)^}', DK, re.S | re.M).group(1))
 

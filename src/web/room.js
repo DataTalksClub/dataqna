@@ -392,7 +392,7 @@
   }
 
   /* The segments are a radiogroup: the checked one is the only one in the
-     tab order, and the vendored dakit-tabs.js moves the choice with the
+     tab order, and the vendored dakit/tabs.js moves the choice with the
      arrow keys by clicking the neighbour, which lands back here. */
   function markTab(name) {
     state.tab = name;

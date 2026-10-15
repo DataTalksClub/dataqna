@@ -524,7 +524,7 @@
   }
 
   /* A radiogroup: the checked segment is the only one in the tab order, and
-     the vendored dakit-tabs.js moves the choice with the arrow keys by
+     the vendored dakit/tabs.js moves the choice with the arrow keys by
      clicking the neighbour, which lands back here. */
   function selectFilter(name) {
     state.filter = name;

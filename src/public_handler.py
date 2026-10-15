@@ -12,21 +12,21 @@ from dataqna.http import HttpError
 logging.getLogger().setLevel(logging.INFO)
 
 ASSETS = {
-    "dakit-tokens.css",
-    "dakit-base.css",
-    "dakit-components.css",
-    "dakit-dialogs.js",
-    "dakit-tabs.js",
-    "dakit-collection.js",
+    "dakit/dakit.css",
+    "dakit/dialogs.js",
+    "dakit/tabs.js",
+    "dakit/collection.js",
+    "dakit/shell.js",
+    "dakit/split.js",
     "app.css",
     "theme.js",
     "room.js",
     "admin.js",
     "present.js",
     "qna.js",
-    "fonts/inter-var.woff2",
-    "fonts/ibm-plex-mono-400.woff2",
-    "fonts/ibm-plex-mono-500.woff2",
+    "dakit/fonts/inter-var.woff2",
+    "dakit/fonts/ibm-plex-mono-400.woff2",
+    "dakit/fonts/ibm-plex-mono-500.woff2",
 }
 
 

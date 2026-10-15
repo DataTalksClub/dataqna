@@ -1,4 +1,4 @@
-.PHONY: install test requirements build deploy validate verify
+.PHONY: install test requirements build deploy validate verify dakit
 
 install:
 	uv sync
@@ -24,3 +24,11 @@ deploy:
 
 verify:
 	uv run python scripts/verify_deployment.py
+
+# Vendor the dakit build (bundle, helpers, fonts, checkers and the lock) from a
+# sibling checkout. Build dakit first; commit src/web/dakit/ with whatever app
+# change adapts to it.
+DAKIT ?= ../dakit
+dakit:
+	node $(DAKIT)/scripts/sync.mjs --dest src/web/dakit \
+		--files dakit.css dialogs.js tabs.js collection.js shell.js split.js

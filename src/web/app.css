@@ -1,8 +1,8 @@
 /* DataQnA — read on a phone, in a dark room, one-handed.
 
    The visual system is dakit (../dakit), the design system shared with
-   dapier, dataops and relay. The vendored dakit sheets (refresh with
-   scripts/sync_dakit.sh) — tokens, base layer, .dk-* components — define
+   dapier, dataops and relay. The vendored dakit bundle (dakit/dakit.css,
+   refresh with make dakit) — tokens, base layer, .dk-* components — define
    every --dk-* semantic role in both themes, the element defaults, and the
    shared component classes; this file defines only the roles the product
    adds on top — the room bar, the QR plate, toasts — and dresses every
@@ -32,7 +32,7 @@
    near-black on bright red at 5.64:1. */
 
 /* Dakit's faces, self-hosted (SIL OFL, see fonts/LICENSE.md) and the same
-   files every internal tool ships, arrive with dakit-base.css — prose reads
+   files every internal tool ships, arrive with dakit/dakit.css — prose reads
    as Inter, quantities and IDs as IBM Plex Mono: data should read as data,
    not prose. */
 
@@ -1216,7 +1216,7 @@ textarea, input[type=text], input[type=email], input[type=number], select {
   border-radius: var(--dk-radius-md);
 }
 
-/* Dakit's shared dropdown ships in dakit-base.css: the native arrow is gone,
+/* Dakit's shared dropdown ships in dakit.css's base layer: the native arrow is gone,
    the chevron sits 12px off the right edge, and the opened list follows the
    pinned color-scheme. */
 textarea { resize: vertical; min-height: 84px; }

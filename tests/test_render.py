@@ -35,10 +35,12 @@ def test_titles_are_escaped_everywhere_they_appear():
 def test_assets_are_version_stamped():
     """A participant mid-session must not be left holding stale JS."""
     body = render.room_page(room(), config_payload={})["body"]
-    stamped = re.findall(r'/assets/[a-z.]+\?v=([0-9a-f]{10})', body)
+    stamped = re.findall(r'/assets/[a-z./]+\?v=([0-9a-f]{10})', body)
     assert stamped, body[:400]
     assert len(set(stamped)) == 1
-    assert 'href="/assets/app.css"' not in body
+    # Every asset reference, including the vendored kit under /assets/dakit/,
+    # carries the stamp: the route caches for a day as immutable.
+    assert not re.search(r'(?:href|src)="/assets/[^"?]+"', body)
 
 
 def test_no_surface_ever_clamps_a_question_to_a_line_count():
@@ -64,10 +66,10 @@ def test_fonts_travel_as_binary_not_decoded_text():
     utf-8 and served a 500 notice page in place of every font."""
     import base64
 
-    response = render.asset_response("fonts/inter-var.woff2")
+    response = render.asset_response("dakit/fonts/inter-var.woff2")
     assert response["statusCode"] == 200
     assert response["isBase64Encoded"] is True
-    assert base64.b64decode(response["body"]) == render.asset_bytes("fonts/inter-var.woff2")
+    assert base64.b64decode(response["body"]) == render.asset_bytes("dakit/fonts/inter-var.woff2")
     assert response["headers"]["content-type"] == "font/woff2"
 
 
@@ -145,12 +147,12 @@ def test_dialog_helper_is_loaded_on_every_page():
     when the vendored helper has registered once on the document."""
     import public_handler
 
-    assert "dakit-dialogs.js" in public_handler.ASSETS
-    assert render.asset_response("dakit-dialogs.js")["statusCode"] == 200
+    assert "dakit/dialogs.js" in public_handler.ASSETS
+    assert render.asset_response("dakit/dialogs.js")["statusCode"] == 200
     bodies = [render.asset_bytes(name).decode() for name in ("room.html", "admin.html", "present.html")]
     bodies.append(render.notice("Gone", "Nothing here.")["body"])
     for body in bodies:
-        assert "/assets/dakit-dialogs.js" in body
+        assert "/assets/dakit/dialogs.js" in body
 
 
 def test_tabs_helper_is_loaded_where_a_segmented_control_lives():
@@ -159,21 +161,20 @@ def test_tabs_helper_is_loaded_where_a_segmented_control_lives():
     that carries a segmented control loads it."""
     import public_handler
 
-    assert "dakit-tabs.js" in public_handler.ASSETS
-    assert render.asset_response("dakit-tabs.js")["statusCode"] == 200
+    assert "dakit/tabs.js" in public_handler.ASSETS
+    assert render.asset_response("dakit/tabs.js")["statusCode"] == 200
     for name in ("room.html", "admin.html"):
-        assert "/assets/dakit-tabs.js" in render.asset_bytes(name).decode()
+        assert "/assets/dakit/tabs.js" in render.asset_bytes(name).decode()
 
 
-def test_dakit_layers_ship_in_cascade_order():
-    """app.css resolves its colors through the vendored dakit sheets, so the
-    cascade needs them in dakit's own order — tokens, then the base layer
-    (element defaults, select chevron, the color-scheme pin), then the .dk-*
-    components — ahead of the app sheet, on every page that links one and in
-    the server-rendered shell. The asset route has to serve all three."""
+def test_dakit_bundle_ships_ahead_of_the_app_sheet():
+    """app.css resolves its colors through the vendored dakit bundle (tokens,
+    then the dk.base and dk.components cascade layers), so the bundle is
+    linked ahead of the app sheet on every page that links one and in the
+    server-rendered shell. The asset route has to serve both."""
     import public_handler
 
-    order = ("dakit-tokens.css", "dakit-base.css", "dakit-components.css", "app.css")
+    order = ("dakit/dakit.css", "app.css")
     for name in order:
         assert name in public_handler.ASSETS
         assert render.asset_response(name)["statusCode"] == 200
@@ -181,7 +182,7 @@ def test_dakit_layers_ship_in_cascade_order():
     bodies.append(render.notice("Gone", "Nothing here.")["body"])
     for body in bodies:
         positions = [body.index(f"/assets/{name}") for name in order]
-        assert positions == sorted(positions), "dakit layers are out of cascade order"
+        assert positions == sorted(positions), "dakit bundle is out of cascade order"
 
 
 def test_hidden_attribute_is_forced_over_button_display():
@@ -344,11 +345,11 @@ def test_the_session_page_keeps_only_its_own_actions_in_its_header():
 
 def test_collection_helper_is_loaded_where_a_collection_create_lives():
     """The c shortcut comes from dakit's collection.js, vendored as
-    dakit-collection.js: served from the asset route and loaded by the console,
+    dakit/collection.js: served from the asset route and loaded by the console,
     the one page with a collection create."""
     import public_handler
 
-    assert "dakit-collection.js" in public_handler.ASSETS
-    assert render.asset_response("dakit-collection.js")["statusCode"] == 200
-    assert "/assets/dakit-collection.js" in render.asset_bytes("admin.html").decode()
+    assert "dakit/collection.js" in public_handler.ASSETS
+    assert render.asset_response("dakit/collection.js")["statusCode"] == 200
+    assert "/assets/dakit/collection.js" in render.asset_bytes("admin.html").decode()
     assert "dakitCollection.installShortcut" in render.asset_bytes("admin.js").decode()

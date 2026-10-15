@@ -76,7 +76,7 @@ THEME_TOGGLE = (
 
 _cache = {}
 _version = None
-_ASSET_REF = re.compile(r'(href|src)="(/assets/[a-zA-Z0-9_.-]+)"')
+_ASSET_REF = re.compile(r'(href|src)="(/assets/[a-zA-Z0-9_./-]+)"')
 
 
 def asset_bytes(name):
@@ -99,8 +99,8 @@ def version():
     if _version is None:
         digest = hashlib.sha256()
         for name in sorted((
-            "dakit-tokens.css", "dakit-base.css", "dakit-components.css",
-            "dakit-dialogs.js", "dakit-tabs.js", "dakit-collection.js",
+            "dakit/dakit.css", "dakit/dialogs.js", "dakit/tabs.js",
+            "dakit/collection.js", "dakit/shell.js", "dakit/split.js",
             "app.css", "theme.js", "room.js", "admin.js",
             "present.js", "qna.js",
         )):
@@ -212,12 +212,10 @@ def _shell(title, inner, *, status=200):
 {THEME_CANVAS}
 {THEME_SCRIPT}
 <link rel="icon" href="{FAVICON}">
-<link rel="stylesheet" href="/assets/dakit-tokens.css">
-<link rel="stylesheet" href="/assets/dakit-base.css">
-<link rel="stylesheet" href="/assets/dakit-components.css">
+<link rel="stylesheet" href="/assets/dakit/dakit.css">
 <link rel="stylesheet" href="/assets/app.css"></head>
 <body><div class="wrap">{inner}</div>
-<script src="/assets/dakit-dialogs.js"></script>
+<script src="/assets/dakit/dialogs.js"></script>
 <script src="/assets/theme.js" defer></script></body></html>"""
     return http.html_response(status, _stamp(body))
 

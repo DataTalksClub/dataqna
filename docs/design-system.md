@@ -24,10 +24,12 @@ its banned list binds every surface). The admin console is not local: it wears
 the family shell (§7), the same way dataops and relay do.
 
 **Constraint that shapes everything:** there is no build step and no bundler.
-`render.py` reads the CSS off disk and serves it. So dakit ships vendored —
-`src/web/dakit-tokens.css` plus the self-hosted fonts, refreshed by
-`scripts/sync_dakit.sh` from a sibling dakit checkout after running its build —
-and it costs two requests.
+`render.py` reads the CSS off disk and serves it. So dakit ships vendored in
+`src/web/dakit/` — the `dakit.css` bundle (tokens plus the `dk.base` and
+`dk.components` cascade layers), the classic-script helpers, the self-hosted
+fonts, the checkers and `dakit.lock.json` — written by dakit's own
+`scripts/sync.mjs` (`make dakit`, from a sibling dakit checkout after its
+build), and `make test` fails if a vendored byte drifts from the lock.
 
 ## 2. The layers
 
@@ -234,7 +236,7 @@ Notes that are not obvious from the code:
   stats strip (`QUESTIONS / ANSWERED / STATE / CLOSES`), not a card grid; the
   queue is the view's dominant panel with the filter tabs in its header band:
   dakit's segmented control (`.dk-tabs` radiogroup, counts in `.dk-count`,
-  arrow keys from the vendored `dakit-tabs.js`), drawn by dakit alone.
+  arrow keys from the vendored `dakit/tabs.js`), drawn by dakit alone.
   Session states speak in badges on dakit's triplet roles: `open` success,
   `archived` danger, draft and closed neutral.
 - **Icons are one language**: inline SVG, 16×16 box, `stroke="currentColor"`,
@@ -306,7 +308,7 @@ The layout rules are in [specification.md](specification.md) §7. What belongs h
 
 1. **Color, type, space or radius?** Change it in dakit first (`tokens/*.json`,
    both themes, contrast pair, `node build.mjs`), commit there, then
-   `scripts/sync_dakit.sh` and adapt. A token dakit doesn't have is a token to
+   `make dakit` and adapt. A token dakit doesn't have is a token to
    propose, not a hex to inline — the layer-rule test will refuse the inline.
 2. Add or adjust an **app role** in `app.css`'s token blocks before adding a
    component rule. Most "this needs a new colour" turns out to be an existing
