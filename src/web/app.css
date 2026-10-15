@@ -675,10 +675,10 @@ textarea, input[type=text], input[type=email], input[type=number], select {
    gone, the chevron sits 12px off the right edge, and the opened list follows
    the pinned color-scheme. That layer loses to every unlayered rule here, so
    the fill above is background-color (the shorthand would erase the chevron
-   image) and the chevron's clearance is restated after this sheet's padding
-   rules, one element of specificity above them (`.console select`, `.wrap
-   select`). */
-html select:not([multiple]) { padding-right: calc(2 * var(--dk-space-3) + 10px); }
+   image), and the right padding is handed back to the kit with revert-layer,
+   one element of specificity above this sheet's padding rules (`.console
+   select`, `.wrap select`), so the text clears the glyph. */
+html select:not([multiple]) { padding-right: revert-layer; }
 textarea { resize: vertical; min-height: 84px; }
 /* The family's text-control focus recipe (dataops styles.css): the border
    goes accent and the halo is --dk-focus-ring, not the soft surface the
