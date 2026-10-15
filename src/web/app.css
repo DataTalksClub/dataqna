@@ -464,6 +464,14 @@ details.panel[open] > summary .chevron { transform: rotate(180deg); }
 
 .muted { color: var(--dk-text-muted); }
 .mono { font-family: var(--dk-font-mono); }
+/* A value inside a line of words — a count, a time, a date, a slug: mono
+   with tabular figures, and never split across lines (a date that wraps to
+   "2026-10-" / "02" stops reading as a date). */
+.datum {
+  font-family: var(--dk-font-mono);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
 
 .brand {
   display: inline-flex;

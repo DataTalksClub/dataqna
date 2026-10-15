@@ -185,3 +185,26 @@ for (const [label, viewport] of [["desktop", { width: 1440, height: 900 }], ["ph
     await context.close();
   });
 }
+
+test("counts, scores, times and dates in the console are set in mono and stay whole", async () => {
+  for (const [path, selectors] of [
+    ["/admin", [".row-meta .datum", "#keys .datum"]],
+    ["/admin/rooms/R1", ["#room-sub .datum", "li.q .meta .datum", ".vote.static .datum"]],
+  ]) {
+    const { page, context } = await open(path, { viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true });
+    for (const selector of selectors) {
+      await page.waitForSelector(selector);
+      const found = await page.$$eval(selector, (els) => els.map((el) => {
+        const s = getComputedStyle(el);
+        return { family: s.fontFamily, wrap: s.whiteSpace, lines: el.getClientRects().length, text: el.textContent };
+      }));
+      assert.ok(found.length, selector);
+      for (const f of found) {
+        assert.match(f.family, /IBM Plex Mono/, `${selector} "${f.text}" is ${f.family}`);
+        assert.equal(f.wrap, "nowrap", selector);
+        assert.equal(f.lines, 1, `${selector} "${f.text}" breaks across lines`);
+      }
+    }
+    await context.close();
+  }
+});

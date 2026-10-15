@@ -72,6 +72,16 @@
     return Math.floor(seconds / 86400) + "d ago";
   }
 
+  /* Data reads as data (dakit docs/shell.md §2): counts, times, dates, slugs
+     and other identifiers are set in the mono face with tabular figures and
+     never break mid-value; the words around them stay sans. */
+  function datum(value) {
+    var span = document.createElement("span");
+    span.className = "datum";
+    span.textContent = value;
+    return span;
+  }
+
   function tag(kind, label) {
     var span = document.createElement("span");
     span.className = "tag" + (kind ? " " + kind : "");
@@ -141,9 +151,11 @@
         link.textContent = room.title;
         var meta = document.createElement("span");
         meta.className = "row-meta";
-        meta.textContent = "/r/" + room.slug + " · " +
-          room.counts.questions + (room.counts.questions === 1 ? " question, " : " questions, ") +
-          room.counts.answered + " answered";
+        meta.append(
+          datum("/r/" + room.slug), " · ",
+          datum(String(room.counts.questions)), room.counts.questions === 1 ? " question, " : " questions, ",
+          datum(String(room.counts.answered)), " answered"
+        );
         main.appendChild(link);
         main.appendChild(meta);
         row.appendChild(main);
@@ -194,8 +206,10 @@
       items.forEach(function (key) {
         var row = table.insertRow();
         row.insertCell().textContent = key.name;
-        row.insertCell().textContent = (key.created_at || "").slice(0, 10);
-        row.insertCell().textContent = key.last_used_at ? key.last_used_at.slice(0, 10) : "never";
+        row.insertCell().appendChild(datum((key.created_at || "").slice(0, 10)));
+        var used = row.insertCell();
+        if (key.last_used_at) used.appendChild(datum(key.last_used_at.slice(0, 10)));
+        else used.textContent = "never";
         var cell = row.insertCell();
         var button = document.createElement("button");
         button.className = "ghost small";
@@ -301,13 +315,9 @@
     var badge = document.createElement("span");
     badge.className = "tag" + (stateTag[0] ? " " + stateTag[0] : "");
     badge.textContent = stateTag[1];
-    sub.append(
-      badge,
-      " /r/" + room.slug + " — hosted by " + room.owner + " · " +
-        (room.expires_at
-          ? "closes " + new Date(room.expires_at).toLocaleString()
-          : "never closes")
-    );
+    sub.append(badge, " ", datum("/r/" + room.slug), " — hosted by " + room.owner + " · ");
+    if (room.expires_at) sub.append("closes ", datum(new Date(room.expires_at).toLocaleString()));
+    else sub.append("never closes");
     $("room-owner").textContent = "Owner: " + room.owner;
     $("public-link").href = room.url;
     $("public-link").textContent = room.url;
@@ -387,7 +397,7 @@
       var meta = document.createElement("div");
       meta.className = "meta";
       var who = document.createElement("span");
-      who.textContent = (item.author_name || "Anonymous") + " · " + relative(item.created_at);
+      who.append((item.author_name || "Anonymous") + " · ", datum(relative(item.created_at)));
       meta.appendChild(who);
       // States are tags, matching the room view: text and shape, never
       // position or hue alone.
@@ -400,7 +410,7 @@
       score.setAttribute("aria-hidden", "true");
       score.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" ' +
         'stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">' +
-        '<path d="M6 14.25 12 7.5l6 7.5"/></svg><span>' + item.score + "</span>";
+        '<path d="M6 14.25 12 7.5l6 7.5"/></svg><span class="datum">' + item.score + "</span>";
 
       /* Moderation is routine — twelve times a session — so it whispers:
          quiet labelled buttons sharing the foot line with the score. The

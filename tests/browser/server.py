@@ -69,6 +69,9 @@ class Handler(BaseHTTPRequestHandler):
                 return self._json({"items": [ROOM]})
             if rest == "/rooms/R1":
                 return self._json(ROOM)
+            if rest == "/api-keys":
+                return self._json({"items": [{"key_id": "k1", "name": "ci", "created_at": "2026-10-02T12:00:00Z",
+                                              "last_used_at": "2026-10-14T08:00:00Z"}]})
             if rest.startswith("/rooms/R1/questions"):
                 return self._json({"items": QUESTIONS, "etag": "stub", "state": "open"})
             return self._json({"items": []})
