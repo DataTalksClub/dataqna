@@ -203,7 +203,7 @@ svg { flex: 0 0 auto; }
   border-radius: var(--dk-radius-md);
   background: var(--dk-accent-default);
   color: var(--dk-text-on-accent);
-  font-size: 14px;
+  font-size: var(--dk-text-body);
   font-weight: 700;
 }
 
@@ -324,7 +324,7 @@ svg { flex: 0 0 auto; }
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: var(--dk-space-1);
 }
 
 .row-link {
@@ -644,11 +644,10 @@ button.busy { color: transparent !important; pointer-events: none; position: rel
 button.busy::after {
   content: "";
   position: absolute;
-  left: 50%;
-  top: 50%;
+  inset: 0;
   width: 14px;
   height: 14px;
-  margin: -8px 0 0 -8px;
+  margin: auto;
   /* A ring cut from a conic fill by a mask: the spinner stays 2px thick
      without leaning on a thick border. */
   background: conic-gradient(transparent 0 25%, var(--dk-text-muted) 0);
@@ -701,7 +700,6 @@ input:focus-visible, select:focus-visible, textarea:focus-visible {
   width: 1px;
   height: 1px;
   padding: 0;
-  margin: -1px;
   overflow: hidden;
   clip: rect(0, 0, 0, 0);
   white-space: nowrap;
