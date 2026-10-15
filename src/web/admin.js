@@ -99,8 +99,17 @@
   function renderRooms(items) {
     var host = $("rooms");
     host.textContent = "";
+    var count = $("sessions-count");
+    count.hidden = !items.length;
+    count.textContent = items.length + (items.length === 1 ? " session" : " sessions");
     if (!items.length) {
-      host.innerHTML = '<div class="empty"><h2>No rooms yet</h2><p>Create one above.</p></div>';
+      /* The empty list repeats the create as a secondary; the header's
+         + New session stays where it is, so the action never moves. */
+      host.innerHTML = '<div class="empty"><h2>No sessions yet</h2>' +
+        "<p>A session is one live Q&amp;A room with its own link and QR code.</p>" +
+        '<div class="dk-empty__actions"><button type="button" class="dk-button dk-button--secondary"' +
+        ' id="first-session">Create the first session</button></div></div>';
+      $("first-session").addEventListener("click", openNewSession);
       return;
     }
     GROUPS.forEach(function (group) {
@@ -149,9 +158,17 @@
     request("/rooms").then(function (body) { renderRooms(body.items || []); }).catch(fail);
   }
 
-  function createRoom() {
+  /* New session is a dialog off the list header: nothing to load first, so
+     it opens at once with the title focused. */
+  function openNewSession() {
+    $("new-session-dialog").showModal();
+    $("new-title").focus();
+  }
+
+  function createRoom(event) {
+    if (event) event.preventDefault();
     var title = $("new-title").value.trim();
-    if (!title) return toast("A title is required.");
+    if (!title) { $("new-title").focus(); return toast("A title is required."); }
     var payload = { title: title, state: $("new-state").value };
     var slug = $("new-slug").value.trim();
     if (slug) payload.slug = slug;
@@ -592,7 +609,11 @@
     $("view-list").hidden = false;
     loadRooms();
     loadKeys();
-    $("create").addEventListener("click", createRoom);
+    $("new-session").addEventListener("click", openNewSession);
+    $("new-session-form").addEventListener("submit", createRoom);
+    $("new-session-cancel").addEventListener("click", function () { $("new-session-dialog").close(); });
+    // The header button is hand-written markup, so arm its c shortcut here.
+    window.dakitCollection.installShortcut(document);
     $("create-key").addEventListener("click", createKey);
   }
 })();

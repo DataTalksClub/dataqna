@@ -251,3 +251,102 @@ def test_question_filters_are_dakit_segmented_radiogroups():
     css = render.asset_bytes("app.css").decode()
     assert not re.search(r"\.dk-tab\b[^,{]*\{", css)
     assert ".tabs" not in css
+
+
+def _element_paths(body):
+    """Each element with an id or a button, with the classes and ids of every
+    ancestor, so a test can say where an action sits on the page."""
+    from html.parser import HTMLParser
+
+    void = {"meta", "link", "input", "br", "img", "hr", "path", "circle", "rect", "source"}
+
+    class Walker(HTMLParser):
+        def __init__(self):
+            super().__init__()
+            self.stack, self.found = [], []
+
+        def handle_starttag(self, tag, attrs):
+            attrs = dict(attrs)
+            node = {"tag": tag, "id": attrs.get("id"), "class": attrs.get("class") or "", "attrs": attrs, "text": ""}
+            if tag == "button" or node["id"]:
+                self.found.append((node, list(self.stack)))
+            if tag not in void:
+                self.stack.append(node)
+
+        def handle_endtag(self, tag):
+            if tag in void or all(node["tag"] != tag for node in self.stack):
+                return
+            while self.stack:
+                if self.stack.pop()["tag"] == tag:
+                    break
+
+        def handle_data(self, data):
+            for node in self.stack:
+                node["text"] += data
+
+    walker = Walker()
+    walker.feed(body)
+    return walker.found
+
+
+def test_new_session_rides_on_the_session_list_not_the_page_header():
+    """dakit "Action placement": the create sits right after the title of the
+    collection it creates into, as dakit's collection header, and the page
+    header holds only the title and description. It is the page's one create,
+    so it carries the c shortcut, and the form it opens is a dialog."""
+    body = render.asset_bytes("admin.html").decode()
+    found = _element_paths(body)
+    by_id = {node["id"]: (node, path) for node, path in found if node["id"]}
+
+    button, path = by_id["new-session"]
+    assert "dk-collection-create" in button["class"] and "dk-button--sm" in button["class"]
+    assert "New session" in button["text"]
+    assert button["attrs"].get("aria-keyshortcuts") == "c"
+    assert "data-dk-create" in button["attrs"]
+    assert "dk-collection-header__lead" in path[-1]["class"]
+    assert "dk-collection-header" in path[-2]["class"].split()
+    assert not any("page-head" in node["class"] for node in path)
+    # Title first, then the create, in the lead.
+    lead = re.search(r'<div class="dk-collection-header__lead">(.*?)</div>', body, re.S).group(1)
+    assert lead.index('id="sessions-title"') < lead.index('id="new-session"')
+
+    # The sessions page header carries no actions at all.
+    list_head = re.search(r'<div id="view-list" hidden>\s*<header class="page-head">(.*?)</header>', body, re.S).group(1)
+    assert "<button" not in list_head and "<a " not in list_head and "page-actions" not in list_head
+
+    # The old inline "New session" panel is gone; its form lives in the dialog.
+    _, create_path = by_id["create"]
+    assert any(node["id"] == "new-session-dialog" for node in create_path)
+    assert '<div class="panel-header"><h2>New session</h2></div>' not in body
+    assert sum("data-dk-create" in node["attrs"] for node, _ in found) == 1
+
+
+def test_an_empty_session_list_repeats_the_create():
+    """The empty state offers the create again as a secondary, and the header
+    button stays put."""
+    script = render.asset_bytes("admin.js").decode()
+    assert "Create the first session" in script
+    assert "dk-empty__actions" in script and "dk-button--secondary" in script
+    assert "Create one above" not in script
+
+
+def test_the_session_page_keeps_only_its_own_actions_in_its_header():
+    """A record's detail page may keep that record's own actions in its
+    header: Presentation mode and Copy link act on this session. No create,
+    refresh or export sits there."""
+    body = render.asset_bytes("admin.html").decode()
+    actions = re.search(r'<div class="page-actions">(.*?)</div>', body, re.S).group(1)
+    assert re.findall(r'id="([^"]+)"', actions) == ["present", "copy-link"]
+    assert not re.search(r"\b(New|Create|Add|Refresh|Export)\b", actions)
+
+
+def test_collection_helper_is_loaded_where_a_collection_create_lives():
+    """The c shortcut comes from dakit's collection.js, vendored as
+    dakit-collection.js: served from the asset route and loaded by the console,
+    the one page with a collection create."""
+    import public_handler
+
+    assert "dakit-collection.js" in public_handler.ASSETS
+    assert render.asset_response("dakit-collection.js")["statusCode"] == 200
+    assert "/assets/dakit-collection.js" in render.asset_bytes("admin.html").decode()
+    assert "dakitCollection.installShortcut" in render.asset_bytes("admin.js").decode()

@@ -81,45 +81,64 @@
           </div>
         </header>
 
-        <section class="panel">
-          <div class="panel-header"><h2>New session</h2></div>
-          <div class="panel-body stack">
-            <div class="field">
-              <label class="field-label" for="new-title">Title</label>
-              <input type="text" id="new-title" placeholder="Session title" aria-label="Session title">
-            </div>
-            <div class="field-grid">
-              <div class="field">
-                <label class="field-label" for="new-slug">Custom link</label>
-                <input type="text" id="new-slug" placeholder="custom-link (optional)" aria-label="Slug">
-              </div>
-              <div class="field">
-                <label class="field-label" for="new-state">Initial state</label>
-                <select id="new-state" aria-label="Initial state">
-                  <option value="open">Open now</option>
-                  <option value="draft">Draft</option>
-                </select>
-              </div>
-              <div class="field">
-                <label class="field-label" for="new-expiry">Closes after</label>
-                <select id="new-expiry" aria-label="Closes after">
-                  <option value="">never closes</option>
-                  <option value="1">closes in 1 hour</option>
-                  <option value="2">closes in 2 hours</option>
-                  <option value="4">closes in 4 hours</option>
-                  <option value="24">closes in 1 day</option>
-                  <option value="2880">closes in 4 months</option>
-                </select>
-              </div>
-            </div>
+        <!-- dakit "Action placement": New session rides on the session list
+             it creates into, right after its title, not in the page corner. -->
+        <header class="dk-collection-header sessions-head">
+          <div class="dk-collection-header__lead">
+            <h2 class="dk-collection-header__title" id="sessions-title">Your sessions</h2>
+            <button type="button" id="new-session" class="dk-button dk-button--primary dk-button--sm dk-collection-create"
+              data-dk-create aria-keyshortcuts="c" title="New session (C)" aria-haspopup="dialog" aria-controls="new-session-dialog">
+              <span class="dk-collection-create__icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></span>
+              <span>New session</span>
+            </button>
           </div>
-          <div class="panel-footer">
-            <span class="muted">Participants join through the session link or its QR code.</span>
-            <button id="create">Create session</button>
+          <div class="dk-collection-header__trail">
+            <span class="dk-collection-header__meta" id="sessions-count" hidden></span>
           </div>
-        </section>
+        </header>
 
         <div id="rooms"></div>
+
+        <dialog class="dk-dialog" id="new-session-dialog" aria-labelledby="new-session-dialog-title">
+          <form id="new-session-form" style="display: contents">
+            <div class="dk-dialog__head"><h2 id="new-session-dialog-title">New session</h2></div>
+            <div class="dk-dialog__body">
+              <div class="field">
+                <label class="field-label" for="new-title">Title</label>
+                <input type="text" id="new-title" placeholder="Session title" autofocus>
+              </div>
+              <div class="field">
+                <label class="field-label" for="new-slug">Custom link</label>
+                <input type="text" id="new-slug" placeholder="custom-link (optional)">
+              </div>
+              <div class="field-grid">
+                <div class="field">
+                  <label class="field-label" for="new-state">Initial state</label>
+                  <select id="new-state">
+                    <option value="open">Open now</option>
+                    <option value="draft">Draft</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label class="field-label" for="new-expiry">Closes after</label>
+                  <select id="new-expiry">
+                    <option value="">never closes</option>
+                    <option value="1">closes in 1 hour</option>
+                    <option value="2">closes in 2 hours</option>
+                    <option value="4">closes in 4 hours</option>
+                    <option value="24">closes in 1 day</option>
+                    <option value="2880">closes in 4 months</option>
+                  </select>
+                </div>
+              </div>
+              <p class="muted" style="margin:0">Participants join through the session link or its QR code.</p>
+            </div>
+            <div class="dk-dialog__foot">
+              <button type="button" class="dk-button dk-button--secondary" id="new-session-cancel">Cancel</button>
+              <button type="submit" class="dk-button dk-button--primary" id="create">Create session</button>
+            </div>
+          </form>
+        </dialog>
 
         <section class="panel">
           <div class="panel-header">
@@ -410,6 +429,7 @@
 </script>
 <script src="/assets/dakit-dialogs.js"></script>
 <script src="/assets/dakit-tabs.js"></script>
+<script src="/assets/dakit-collection.js"></script>
 <script src="/assets/qna.js"></script>
 <script src="/assets/theme.js" defer></script>
 <script src="/assets/admin.js"></script>
