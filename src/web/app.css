@@ -74,9 +74,6 @@
   --qr-ink: var(--dk-text-primary);
   --qr-paper: transparent;
 
-  /* The scrim over the page behind a sheet: dakit's backdrop role, which
-     already carries a dark-theme remap. */
-  --scrim-bg: var(--dk-bg-backdrop);
 }
 
 /* Dark: dakit remaps every --dk-* role under :root[data-theme="dark"], so
@@ -108,9 +105,8 @@ body {
   -webkit-text-size-adjust: 100%;
 }
 
-/* Links take the family link role, not the bare accent (same value
-   today, but the role is what dataops names and what the theme remaps). */
-a { color: var(--dk-text-link); }
+/* Links take dakit's link role from its base layer; an unlayered `a`
+   rule here would outrank every kit link component (nav items, buttons). */
 
 /* The family's keyboard indicator (dakit docs/family.md, dataops
    styles.css): always visible, 3px of the translucent --dk-focus-ring, so
@@ -132,51 +128,39 @@ svg { flex: 0 0 auto; }
 .right { margin-left: auto; }
 .stack > * + * { margin-top: var(--dk-space-3); }
 
-/* ------------------------------------------------- console shell
+/* ------------------------------------------------- console controls
 
-   The family shell from dakit's spec: a persistent 268px sidebar on the
-   muted surface carrying the product mark and icon-plus-text nav rows, and
-   a canvas with a slim toolbar for global actions. The geometry is the
-   dataops console's — the family one shell, so the tools read as siblings.
+   The console wears dakit's topbar shell (.dk-shell--topbar in admin.html,
+   chrome entirely from dakit.css). Its form controls sit on dakit's desktop
+   control scale (34px, 13px text, radius-md), not the room's touch-first
+   one. The scope carries the specificity — a bare :where cannot beat the
+   sheet's 44px touch defaults below — while the :where group skips every
+   dakit-classed button: kit chrome, tabs and buttons are the kit's to draw.
+   The phone media block re-raises the rest to --dk-size-touch. */
 
-   Console controls sit on dakit's desktop control scale (34px, 13px text,
-   radius-md), not the room's touch-first one. The scope carries the
-   specificity — a bare :where cannot beat the sheet's 44px touch defaults
-   below — while the :where groups keep the exclusions cheap: .icon-btn and
-   .icon-button stay touch/chrome sizes, and the phone media block re-raises
-   the rest to --dk-size-touch. */
-
-.app-shell {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  min-height: 100vh;
-  background: var(--dk-bg-page);
-  font-size: var(--dk-text-body);
-}
-
-.app-shell button:where(:not(.icon-btn):not(.icon-button):not(.account-button):not(.account-menu-item):not(.dk-tab):not(.dk-button)),
-.app-shell .btn:where(:not(.icon-btn)) {
+.console button:where(:not([class*="dk-"]):not(.icon-btn)),
+.console .btn:where(:not(.icon-btn)) {
   min-height: var(--dk-size-control-md);
   padding: 0 var(--dk-space-4);
   font-size: var(--dk-text-md);
   border-radius: var(--dk-radius-md);
 }
-.app-shell button.small,
-.app-shell .btn.small {
+.console button.small,
+.console .btn.small {
   min-height: var(--dk-size-control-sm);
   padding: 0 var(--dk-space-3);
   font-size: var(--dk-text-sm);
 }
-.app-shell input[type=text],
-.app-shell input[type=email],
-.app-shell input[type=number],
-.app-shell select {
+.console input[type=text],
+.console input[type=email],
+.console input[type=number],
+.console select {
   min-height: var(--dk-size-control-md);
-  padding: var(--dk-space-2) 10px;
+  padding: var(--dk-space-2) var(--dk-space-3);
   font-size: var(--dk-text-md);
   border-radius: var(--dk-radius-md);
 }
-.app-shell textarea { padding: var(--dk-space-2) 10px; font-size: var(--dk-text-md); }
+.console textarea { padding: var(--dk-space-2) var(--dk-space-3); font-size: var(--dk-text-md); }
 
 /* The public operator pages (directory, notices, co-host handoff) sit on
    the same desktop control scale once the viewport is a desk, not a hand;
@@ -208,66 +192,7 @@ svg { flex: 0 0 auto; }
   .room-wrap input[type=text], .room-wrap textarea { font-size: var(--dk-text-lg); }
 }
 
-/* Quiet chrome button — 28px, no border until hover. Chrome, not touch:
-   the 44px .icon-btn stays for controls that sit in the flow of work. */
-.icon-button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--dk-space-2);
-  width: auto;
-  min-width: 28px;
-  min-height: 28px;
-  height: 28px;
-  padding: 0 var(--dk-space-2);
-  border: 1px solid transparent;
-  border-radius: var(--dk-radius-md);
-  background: transparent;
-  color: var(--dk-text-muted);
-  font-size: var(--dk-text-md);
-  cursor: pointer;
-  text-decoration: none;
-}
-.icon-button:hover {
-  color: var(--dk-text-primary);
-  border-color: var(--dk-border-default);
-  background: var(--dk-bg-hover);
-  text-decoration: none;
-}
-
-.app-shell.has-sidebar {
-  grid-template-columns: var(--dk-size-sidebar) minmax(0, 1fr);
-}
-
-.app-shell.has-sidebar.sidebar-collapsed {
-  grid-template-columns: 56px minmax(0, 1fr);
-}
-
-.app-sidebar {
-  position: sticky;
-  top: 0;
-  display: flex;
-  flex-direction: column;
-  gap: var(--dk-space-4);
-  height: 100vh;
-  padding: var(--dk-space-3);
-  overflow-y: auto;
-  border-right: 1px solid var(--dk-border-default);
-  background: var(--dk-bg-muted);
-}
-
-.sidebar-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--dk-space-1);
-  min-height: 32px;
-}
-
-.sidebar-head .brand { min-height: 0; }
-
-/* The family's brand mark: the product initial on an accent chip, like the
-   sibling tools' consoles. */
+/* The public pages' brand mark: the product initial on an accent chip. */
 .brand-mark {
   display: inline-flex;
   align-items: center;
@@ -280,378 +205,6 @@ svg { flex: 0 0 auto; }
   color: var(--dk-text-on-accent);
   font-size: 14px;
   font-weight: 700;
-}
-
-.brand-text {
-  overflow: hidden;
-  font-size: var(--dk-text-md);
-  font-weight: 600;
-  letter-spacing: var(--tracking-snug);
-  white-space: nowrap;
-}
-
-/* The drawer open control lives in the toolbar on phones, where the bar
-   also carries the page's name (hidden on desktop — the sidebar brands
-   the page there). */
-.sidebar-menu-toggle { display: none; }
-.toolbar-title { display: none; }
-
-.sidebar-nav {
-  display: grid;
-  gap: var(--dk-space-5);
-  align-content: start;
-  flex: 1;
-}
-
-.sidebar-nav-group { display: grid; gap: 2px; }
-
-.sidebar-nav-label {
-  margin: 18px 10px 5px;
-  color: var(--dk-text-muted);
-  font-size: var(--dk-text-xs);
-  font-weight: 600;
-  letter-spacing: 0.07em;
-  text-transform: uppercase;
-}
-
-/* Family nav row: 36px icon+text, radius-md, medium weight; the filled row
-   is the whole selection signal — no rail, no stripe. */
-.sidebar-nav a {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  min-height: 36px;
-  padding: 6px 10px;
-  border-radius: var(--dk-radius-md);
-  color: var(--dk-text-primary);
-  font-size: var(--dk-text-body);
-  font-weight: 500;
-  text-decoration: none;
-  white-space: nowrap;
-}
-
-.sidebar-nav a .icon { color: var(--dk-text-muted); }
-.sidebar-nav a span { overflow: hidden; text-overflow: ellipsis; }
-.sidebar-nav a:hover { background: var(--dk-bg-hover); text-decoration: none; }
-
-/* Nav rows sit flush against each other, so a ring at the default offset
-   is painted over by the next row — the family insets the indicator on
-   full-bleed and adjacent rows (dakit docs/family.md). */
-.sidebar-nav a:focus-visible { outline-offset: -3px; }
-
-.sidebar-nav a[aria-current="page"] {
-  background: var(--dk-accent-soft);
-  color: var(--dk-accent-default);
-  font-weight: 600;
-}
-
-.sidebar-nav a[aria-current="page"] .icon { color: var(--dk-accent-default); }
-
-/* Collapsed rail: icon-only rows, the restore control stays visible. */
-.sidebar-collapsed .app-sidebar { padding: var(--dk-space-2); }
-.sidebar-collapsed .sidebar-head { justify-content: center; }
-.sidebar-collapsed .brand-text,
-.sidebar-collapsed .sidebar-nav-label,
-.sidebar-collapsed .sidebar-nav a span { display: none; }
-.sidebar-collapsed .sidebar-nav a { justify-content: center; padding: 0; }
-
-.sidebar-toggle-closed { display: none; }
-.sidebar-collapsed .sidebar-toggle-open { display: none; }
-.sidebar-collapsed .sidebar-toggle-closed { display: block; }
-
-.sidebar-scrim { display: none; }
-
-/* Sidebar footer: the shell's only global strip. The Account trigger (avatar,
-   name, chevron) owns identity, appearance, and sign-out; the popover opens
-   above it. No desktop top bar — the toolbar returns only as the mobile
-   64px bar with the menu control and page title. */
-.has-sidebar .app-toolbar {
-  display: none;
-}
-
-.sidebar-foot {
-  margin-top: auto;
-  border-top: 1px solid var(--dk-border-default);
-  padding-top: var(--dk-space-3);
-}
-
-.sidebar-foot .account-button {
-  width: 100%;
-  justify-content: flex-start;
-  padding: var(--dk-space-1) var(--dk-space-2);
-}
-
-.sidebar-foot .account-button-name {
-  flex: 1 1 auto;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  text-align: left;
-}
-
-.sidebar-collapsed .sidebar-foot .account-button-name,
-.sidebar-collapsed .sidebar-foot .account-chevron {
-  display: none;
-}
-
-.sidebar-collapsed .sidebar-foot .account-button {
-  justify-content: center;
-  padding: 0;
-}
-
-/* --- canvas toolbar -------------------------------------------------------
-   Mobile-only for the operator shell (menu + page title); the Account
-   control lives in the sidebar footer. */
-
-.app-toolbar {
-  position: sticky;
-  top: 0;
-  z-index: 5;
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  min-height: 48px;
-  padding: 0 var(--dk-space-6);
-  border-bottom: 1px solid var(--dk-border-default);
-  background: var(--dk-bg-page);
-}
-
-button.account-button {
-  display: inline-flex;
-  min-height: var(--dk-size-control-md);
-  align-items: center;
-  justify-content: center;
-  gap: var(--dk-space-2);
-  border: 0;
-  border-radius: var(--dk-radius-md);
-  background: transparent;
-  color: var(--dk-text-primary);
-  padding: 4px 8px;
-  font-size: var(--dk-text-md);
-  font-weight: 600;
-}
-button.account-button:not(:disabled):hover {
-  background: var(--dk-bg-hover);
-  color: var(--dk-text-primary);
-}
-
-.account-avatar {
-  display: inline-grid;
-  flex: 0 0 26px;
-  width: 26px;
-  height: 26px;
-  place-items: center;
-  border-radius: var(--dk-radius-full);
-  background: var(--dk-accent-default);
-  color: var(--dk-text-on-accent);
-  font-size: var(--dk-text-xs);
-  font-weight: 700;
-  letter-spacing: 0.02em;
-  line-height: 1;
-}
-
-.account-button-name {
-  max-width: 120px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.account-chevron {
-  width: 20px;
-  height: 20px;
-  color: var(--dk-text-muted);
-}
-
-.account-menu {
-  position: fixed;
-  left: var(--dk-space-3);
-  bottom: 84px;
-  z-index: 40;
-  width: min(380px, calc(100vw - 32px));
-  max-height: calc(100vh - 104px);
-  overflow: auto;
-  border: 1px solid var(--dk-border-default);
-  border-radius: var(--dk-radius-lg);
-  background: var(--dk-bg-surface);
-  box-shadow: var(--dk-shadow-overlay);
-}
-
-.account-menu-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--dk-space-3);
-  border-bottom: 1px solid var(--dk-border-default);
-  background: var(--dk-bg-muted);
-  min-height: 54px;
-  padding: var(--dk-space-2) 10px var(--dk-space-2) var(--dk-space-4);
-}
-
-.account-menu-header strong {
-  color: var(--dk-text-heading);
-  font-size: var(--dk-text-lg);
-}
-
-button.account-menu-close:not(:disabled):hover {
-  background: var(--dk-bg-hover);
-  color: var(--dk-text-primary);
-}
-
-.account-menu-body { display: grid; }
-
-.account-section-label {
-  margin: 0;
-  border-bottom: 1px solid var(--dk-border-default);
-  background: var(--dk-bg-muted);
-  color: var(--dk-text-muted);
-  padding: var(--dk-space-2) var(--dk-space-4);
-  font-size: var(--dk-text-sm);
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-}
-
-.account-identity {
-  display: grid;
-  grid-template-columns: 40px minmax(0, 1fr);
-  align-items: center;
-  gap: var(--dk-space-3);
-  border-bottom: 1px solid var(--dk-border-default);
-  background: var(--dk-bg-surface);
-  padding: 14px var(--dk-space-4);
-}
-
-.account-avatar-large {
-  width: 40px;
-  height: 40px;
-  flex-basis: 40px;
-  font-size: var(--dk-text-body);
-}
-
-.account-identity-copy {
-  display: grid;
-  min-width: 0;
-}
-
-.account-identity-copy small,
-.account-identity-copy > span {
-  color: var(--dk-text-muted);
-  font-size: var(--dk-text-sm);
-}
-
-.account-identity-copy > span:empty { display: none; }
-
-.account-identity-copy strong,
-.account-identity-copy > span {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.account-identity-copy strong {
-  color: var(--dk-text-heading);
-  font-size: var(--dk-text-body);
-}
-
-button.account-menu-item,
-a.account-menu-item {
-  display: grid;
-  grid-template-columns: 24px minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 10px;
-  width: 100%;
-  min-height: 54px;
-  margin: 0;
-  padding: 10px var(--dk-space-4);
-  border: 0;
-  border-bottom: 1px solid var(--dk-border-default);
-  border-radius: 0;
-  background: var(--dk-bg-surface);
-  color: var(--dk-text-primary);
-  font-size: var(--dk-text-body);
-  font-weight: 500;
-  text-align: left;
-  text-decoration: none;
-  justify-content: stretch;
-}
-button.account-menu-item:not(:disabled):hover,
-a.account-menu-item:hover {
-  background: var(--dk-bg-hover);
-  color: var(--dk-text-primary);
-  text-decoration: none;
-}
-
-.account-menu-item > span:nth-child(2) {
-  display: grid;
-  gap: 2px;
-  min-width: 0;
-}
-
-.account-menu-item strong {
-  color: var(--dk-text-heading);
-  font-size: var(--dk-text-body);
-}
-
-.account-menu-item small {
-  display: block;
-  color: var(--dk-text-muted);
-  font-size: var(--dk-text-sm);
-  font-weight: 400;
-}
-
-.account-menu-icon {
-  display: grid;
-  place-items: center;
-  color: var(--dk-text-muted);
-}
-
-.account-theme-label {
-  color: var(--dk-text-heading);
-  font-weight: 600;
-}
-
-.account-toggle-track {
-  display: flex;
-  width: 36px;
-  height: 20px;
-  align-items: center;
-  border-radius: var(--dk-radius-full);
-  background: var(--dk-border-strong);
-  padding: 2px;
-}
-
-.account-toggle-track span {
-  width: 16px;
-  height: 16px;
-  border-radius: var(--dk-radius-full);
-  background: var(--dk-text-on-deep);
-}
-
-.account-theme-toggle[aria-pressed="true"] .account-toggle-track {
-  background: var(--dk-accent-default);
-}
-
-.account-theme-toggle[aria-pressed="true"] .account-toggle-track span {
-  transform: translateX(16px);
-}
-
-.account-sign-out,
-.account-sign-out strong,
-.account-sign-out .account-menu-icon {
-  color: var(--dk-danger-text);
-}
-a.account-sign-out:hover,
-a.account-sign-out:hover strong {
-  color: var(--dk-danger-text);
-}
-
-.app-main {
-  width: 100%;
-  max-width: var(--dk-size-content-max);
-  margin: 0 auto;
-  padding: var(--dk-space-7) var(--dk-space-6) 64px;
 }
 
 /* --- console surfaces -----------------------------------------------------
@@ -888,121 +441,26 @@ details.panel[open] > summary .chevron { transform: rotate(180deg); }
 
 
 @media (max-width: 820px) {
-  /* One pane at a time: the canvas takes the width, the nav becomes a
-     modal drawer with a scrim. Without JS the sidebar simply stacks. */
-  .app-shell,
-  .app-shell.has-sidebar,
-  .app-shell.has-sidebar.sidebar-collapsed {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  /* The toolbar returns as the 64px top bar: menu control and page title;
-     account lives in the drawer's pinned footer row. */
-  .has-sidebar .app-toolbar {
-    display: flex;
-  }
-
-  .app-toolbar {
-    justify-content: space-between;
-    min-height: 64px;
-    padding: 0 var(--dk-space-4);
-  }
-
-  .sidebar-menu-toggle { display: inline-flex; }
-  .sidebar-foot .account-button {
-    min-height: var(--dk-size-touch);
-  }
-  .sidebar-foot {
-    position: sticky;
-    bottom: 0;
-    z-index: 1;
-    margin-top: auto;
-    background: var(--dk-bg-muted);
-  }
-  .account-menu {
-    inset: 0;
-    top: 0;
-    right: 0;
-    z-index: 40;
-    width: 100%;
-    max-height: none;
-    border: 0;
-    border-radius: 0;
-    box-shadow: none;
-  }
-  .account-menu-header {
-    display: grid;
-    grid-template-columns: var(--dk-size-touch) minmax(0, 1fr) var(--dk-size-touch);
-    min-height: 64px;
-    padding: 0 var(--dk-space-2);
-  }
-  .account-menu-header strong {
-    grid-column: 2;
-    grid-row: 1;
-    text-align: center;
-  }
-  .account-menu-close {
-    grid-column: 1;
-    grid-row: 1;
-    width: var(--dk-size-touch);
-    min-width: var(--dk-size-touch);
-    min-height: var(--dk-size-touch);
-    height: var(--dk-size-touch);
-  }
-  .toolbar-title {
-    display: block;
-    flex: 1;
-    min-width: 0;
-    margin-left: var(--dk-space-2);
-    font-weight: 600;
-    font-size: var(--dk-text-md);
-    color: var(--dk-text-primary);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
   /* The family's mobile header scale. */
   .page-head h1 { font-size: var(--dk-text-xl); }
-
-  html.js .app-sidebar {
-    position: fixed;
-    inset: 0 auto 0 0;
-    z-index: 30;
-    width: min(300px, 84vw);
-    transform: translateX(-102%);
-  }
-  html.js .app-shell.sidebar-open .app-sidebar { transform: none; }
-  html.js .sidebar-scrim {
-    display: block;
-    position: fixed;
-    inset: 0;
-    z-index: 25;
-    background: var(--scrim-bg);
-  }
 
   /* The room's touch scale is for hands, not pointers — the console keeps
      it on a phone, where the pointer is a finger again. The selectors
      mirror the desktop scope's specificity so the re-raise wins. */
-  .app-shell button:where(:not(.icon-button):not(.icon-btn):not(.account-button):not(.account-menu-item):not(.dk-tab):not(.dk-button)),
-  .app-shell .btn:where(:not(.icon-btn)) {
+  .console button:where(:not([class*="dk-"]):not(.icon-btn)),
+  .console .btn:where(:not(.icon-btn)) {
     min-height: var(--dk-size-touch);
     padding: 0 var(--dk-space-4);
   }
-  .app-shell button.small, .app-shell .btn.small { min-height: var(--dk-size-touch); }
-  .app-shell input[type=text], .app-shell input[type=email],
-  .app-shell input[type=number], .app-shell select {
+  .console button.small, .console .btn.small { min-height: var(--dk-size-touch); }
+  .console input[type=text], .console input[type=email],
+  .console input[type=number], .console select {
     min-height: var(--dk-size-touch);
     padding: var(--dk-space-3);
     font-size: var(--dk-text-lg);
   }
-  .app-shell textarea { padding: var(--dk-space-3); font-size: var(--dk-text-lg); }
+  .console textarea { padding: var(--dk-space-3); font-size: var(--dk-text-lg); }
 }
-
-@media (prefers-reduced-motion: no-preference) {
-  html.js .app-sidebar { transition: transform var(--duration-3) var(--ease-out); }
-}
-
 
 /* --------------------------------------------------------------- type */
 
@@ -1084,11 +542,12 @@ details.panel[open] > summary .chevron { transform: rotate(180deg); }
 
 /* ------------------------------------------------------------ buttons */
 
-/* The app button skips .dk-tab and .dk-button: segmented-control segments
-   and dakit buttons (the collection create, dialog feet) are dakit's to
-   draw, and this sheet's fill, padding and 44px floor would leak into them
-   through the bare element selector. */
-button:where(:not(.dk-tab):not(.dk-button)), .btn {
+/* The app button skips every dakit-classed button — segmented-control
+   segments, dakit buttons (the collection create, dialog feet), and the
+   shell's nav, account trigger and menu rows: they are dakit's to draw, and
+   this sheet's fill, padding and 44px floor would leak into them through the
+   bare element selector. */
+button:where(:not([class*="dk-"])), .btn {
   font: 600 var(--dk-text-lg)/var(--leading-snug) var(--dk-font-sans);
   padding: var(--dk-space-2) var(--dk-space-4);
   min-height: 44px;
@@ -1104,8 +563,8 @@ button:where(:not(.dk-tab):not(.dk-button)), .btn {
   gap: var(--dk-space-2);
   touch-action: manipulation;
 }
-button:where(:not(.dk-button)):disabled { opacity: .5; cursor: default; }
-button:not(:disabled, .dk-tab, .dk-button):hover, .btn:hover { background: var(--accent-fill-hover); }
+button:where(:not([class*="dk-"])):disabled { opacity: .5; cursor: default; }
+button:not(:disabled, [class*="dk-"]):hover, .btn:hover { background: var(--accent-fill-hover); }
 
 /* The family's secondary: muted surface, neutral border, primary text —
    dakit's own --secondary pairing. */
@@ -1355,22 +814,11 @@ th {
    mid-session — presentation mode and the link — and the queue starts
    inside the first screenful on a phone. */
 
-.room-head { margin-bottom: var(--dk-space-2); }
-.back-link {
-  display: inline-flex;
-  align-items: center;
-  min-height: 44px;
-  font-size: var(--dk-text-body);
-  color: var(--dk-text-muted);
-  text-decoration: none;
-}
-.back-link:hover { color: var(--dk-text-primary); }
-.room-head h1 {
-  /* The console heading is the family page heading: .page-head h1 supplies
-     32px/600 and the 22px phone step — this rule only positions it. */
-  margin: 0 0 var(--dk-space-1);
-}
-.room-sub { font-size: var(--dk-text-body); }
+/* The console views are blocks of their own inside dakit's main column, so
+   the page header keeps its distance from the first panel here. */
+.console .dk-page-header { margin-bottom: var(--dk-space-5); }
+/* The session's state badge leads the subtitle line. */
+#room-sub .tag { margin-right: var(--dk-space-1); }
 .room-tools { margin-top: var(--dk-space-3); }
 
 /* Setup panels: share, settings, people — collapsed rows so the done-once

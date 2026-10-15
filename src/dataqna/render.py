@@ -174,6 +174,10 @@ def page(template, replacements):
     body = asset_bytes(template).decode("utf-8")
     values = dict(replacements)
     values.setdefault("FAVICON", FAVICON)
+    # The account menu's meta row: which build and where it runs, mono and
+    # faint at the foot of the menu (dakit docs/shell.md §6).
+    values.setdefault("APP_BUILD", version())
+    values.setdefault("APP_REGION", html.escape(os.environ.get("AWS_REGION", "local")))
     for key, value in values.items():
         body = body.replace("{{" + key + "}}", value)
     return _stamp(body)

@@ -3,8 +3,11 @@
    This lived in room.js and admin.js as the same thirty lines twice, which is
    how the front page ended up with no toggle at all: adding one meant a third
    copy. A page opts in with a [data-theme-toggle] icon button (room, present,
-   public pages) or a [data-appearance-toggle] track switch (the admin Account
-   popover — the only theme control on that surface). The pin itself is applied
+   public pages) or a [data-appearance-toggle] switch row (the admin account
+   menu, dakit's .dk-menu__item with a .dk-switch — the only theme control on
+   that surface). The admin row deliberately is not dakit's
+   [data-dk-theme-toggle]: that stores under dakit's key, and the console and
+   the public pages must share one pin. The pin itself is applied
    before paint by the inline script in each head, because a deferred asset is
    far too late to decide what colour the page is.
 
@@ -48,12 +51,11 @@
       button.innerHTML = dark ? SUN : MOON;
       button.setAttribute("aria-label", label);
     });
+    /* The account menu's "Dark mode" row is a switch: its name stays put
+       and aria-checked says whether it is on (dakit docs/shell.md §6). */
     var switches = document.querySelectorAll("[data-appearance-toggle]");
     Array.prototype.forEach.call(switches, function (button) {
-      button.setAttribute("aria-pressed", dark ? "true" : "false");
-      button.setAttribute("aria-label", label);
-      var text = button.querySelector("[data-appearance-label]");
-      if (text) text.textContent = dark ? "Light mode" : "Dark mode";
+      button.setAttribute("aria-checked", dark ? "true" : "false");
     });
   }
 

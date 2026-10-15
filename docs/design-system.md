@@ -78,10 +78,10 @@ treats anything but `"dark"` as light.
 
 **Theme logic lives once, in `theme.js`.** Single-purpose views (the room, the
 projector, the directory, the co-host gate, notices) carry a compact
-`[data-theme-toggle]` icon in their own top bar. Admin, the operator app with a
-sidebar, follows the family account recipe: appearance is a labeled Dark
-mode / Light mode track switch inside the Account popover, and that is the
-only theme control on the console. A page opts in with one of those two
+`[data-theme-toggle]` icon in their own top bar. Admin, the operator app in
+dakit's shell, follows the shell's account recipe: appearance is a Dark mode
+switch row in the account menu (`[data-appearance-toggle]`, `aria-checked`), and
+that is the only theme control on the console. A page opts in with one of those two
 hooks and a `<script src="/assets/theme.js" defer>`.
 
 Three things have to happen before first paint, and a deferred asset is far too
@@ -221,14 +221,17 @@ banners, tabs, question list, empty state and toast, presentation mode.
 
 Notes that are not obvious from the code:
 
-- **The console wears the family shell** (dakit `docs/family.md`): a persistent
-  268px sidebar on the muted surface — product mark, icon-plus-text nav rows,
-  selection is the filled row alone — and a slim right-aligned toolbar over the
-  canvas. Console controls sit on dakit's desktop control scale (34px,
-  radius-md, 14px text); on a phone the touch floor returns and the nav becomes
-  a modal drawer with a scrim, Escape, and focus restoration. The desktop
-  sidebar collapses to an icon rail; the preference persists in
-  `dq.sidebar.collapsed`.
+- **The console wears dakit's topbar shell** (dakit `docs/shell.md` §4.2, the
+  variant for two or three destinations): one 48px bar on the muted surface
+  with the DataQnA wordmark, Live Q&A and Sessions as `.dk-nav-item`s
+  (selection is the soft accent fill alone), and the avatar-only account
+  trigger at the far end. Its menu is dakit's disclosure: identity, the Dark
+  mode switch, a mono build-and-region line, Sign out. There is no bell — no
+  DataQnA event needs the host to act from elsewhere — and no rail or drawer:
+  the bar stays a bar on a phone. All of it is dakit's markup, CSS and
+  `shell.js`; `app.css` holds none of the chrome. Console controls sit on
+  dakit's desktop control scale (34px, radius-md, 13px text) under the
+  `.console` scope, and on a phone the touch floor returns.
 - **Content is panels and rows, not cards.** A `.panel` is one bordered
   container whose header and footer bands sit on `--dk-bg-muted`; `.panel-row`
   is a hairline-divided row carrying one primary label, one metadata line, and

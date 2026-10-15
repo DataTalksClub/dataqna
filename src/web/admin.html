@@ -29,402 +29,226 @@
 <link rel="stylesheet" href="/assets/app.css">
 </head>
 <body>
-<div class="app-shell has-sidebar" data-sidebar-shell>
-  <aside class="app-sidebar" data-sidebar id="console-sidebar" aria-label="Console navigation">
-    <div class="sidebar-head">
-      <a class="brand" href="/" title="DataQnA home">
-        <span class="brand-mark" aria-hidden="true">Q</span>
-        <span class="brand-text">DataQnA</span>
+<!-- dakit's topbar shell (docs/shell.md §4.2): the console has two
+     destinations, so they sit in one 48px bar instead of a 240px column.
+     No bell: nothing in DataQnA needs the host to act from another page.
+     The bar stays a bar on a phone; two links and the avatar fit. -->
+<div class="dk-shell dk-shell--topbar console" data-app="dataqna">
+  <a class="dk-skip-link" href="#main-content">Skip to content</a>
+  <header class="dk-shell__bar">
+    <a class="dk-brand" href="/"><span class="dk-brand__name">DataQnA</span></a>
+    <nav class="dk-shell__nav" aria-label="Primary">
+      <a class="dk-nav-item" href="/live">
+        <svg class="dk-nav-item__icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="2.7"/><path d="M7.35 16.65a6.6 6.6 0 010-9.3"/><path d="M16.65 7.35a6.6 6.6 0 010 9.3"/><path d="M4.05 19.95a11.25 11.25 0 010-15.9"/><path d="M19.95 4.05a11.25 11.25 0 010 15.9"/></svg>
+        <span class="dk-nav-item__label">Live Q&amp;A</span>
       </a>
-      <button class="icon-button sidebar-toggle" type="button" data-sidebar-toggle aria-expanded="true" aria-controls="console-sidebar" aria-label="Collapse navigation">
-        <svg class="icon sidebar-toggle-open" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m14 7-5 5 5 5"/></svg>
-        <svg class="icon sidebar-toggle-closed" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m10 7 5 5-5 5"/></svg>
+      <a class="dk-nav-item" href="/admin" aria-current="page">
+        <svg class="dk-nav-item__icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8.25 3.75H4.5a1.5 1.5 0 00-1.5 1.5v13.5a1.5 1.5 0 001.5 1.5h15a1.5 1.5 0 001.5-1.5V5.25a1.5 1.5 0 00-1.5-1.5h-3.75"/><rect x="8.25" y="2.25" width="7.5" height="4.5" rx="1.5"/><path d="M7.5 12h9M7.5 16.5h6"/></svg>
+        <span class="dk-nav-item__label">Sessions</span>
+      </a>
+    </nav>
+    <div class="dk-shell__end">
+      <button class="dk-account-trigger dk-account-trigger--compact" type="button" data-dk-popover-trigger="dk-account-menu" aria-expanded="false" aria-controls="dk-account-menu" aria-label="Account, {{ACCOUNT_NAME}}">
+        <span class="dk-avatar dk-avatar--sm" aria-hidden="true">{{ACCOUNT_INITIAL}}</span>
+        <span class="dk-account-trigger__name">{{ACCOUNT_NAME}}</span>
       </button>
     </div>
-    <nav class="sidebar-nav" aria-label="Console">
-      <div class="sidebar-nav-group">
-        <span class="sidebar-nav-label">Run</span>
-        <a href="/live" title="Live sessions">
-          <svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="2.7"/><path d="M7.35 16.65a6.6 6.6 0 010-9.3"/><path d="M16.65 7.35a6.6 6.6 0 010 9.3"/><path d="M4.05 19.95a11.25 11.25 0 010-15.9"/><path d="M19.95 4.05a11.25 11.25 0 010 15.9"/></svg>
-          <span>Live Q&amp;A</span>
-        </a>
-        <a href="/admin" aria-current="page" title="Sessions">
-          <svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8.25 3.75H4.5a1.5 1.5 0 00-1.5 1.5v13.5a1.5 1.5 0 001.5 1.5h15a1.5 1.5 0 001.5-1.5V5.25a1.5 1.5 0 00-1.5-1.5h-3.75"/><rect x="8.25" y="2.25" width="7.5" height="4.5" rx="1.5"/><path d="M7.5 12h9M7.5 16.5h6"/></svg>
-          <span>Sessions</span>
-        </a>
-      </div>
-    </nav>
-    <footer class="sidebar-foot">
-      <button type="button" class="account-button" data-account-menu-trigger title="Account" aria-label="Account" aria-haspopup="dialog" aria-expanded="false" aria-controls="account-menu">
-        <span class="account-avatar" data-account-menu-avatar aria-hidden="true">{{ACCOUNT_INITIAL}}</span>
-        <span class="account-button-name" data-account-menu-name>{{ACCOUNT_NAME}}</span>
-        <svg class="account-chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
-      </button>
-    </footer>
-  </aside>
-  <div class="sidebar-scrim" data-sidebar-scrim hidden></div>
-  <div class="app-column">
-    <header class="app-toolbar">
-      <button class="icon-button sidebar-menu-toggle" type="button" data-sidebar-menu-toggle aria-expanded="false" aria-controls="console-sidebar" aria-label="Open navigation">
-        <svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
-      </button>
-      <span class="toolbar-title" aria-hidden="true"></span>
-    </header>
-    <main class="app-main">
-      <div id="view-list" hidden>
-        <header class="page-head">
-          <div>
-            <h1>Sessions</h1>
-            <p class="page-desc">Live Q&amp;A rooms you run, and the keys other tools use to create them.</p>
-          </div>
-        </header>
-
-        <!-- dakit "Action placement": New session rides on the session list
-             it creates into, right after its title, not in the page corner. -->
-        <header class="dk-collection-header sessions-head">
-          <div class="dk-collection-header__lead">
-            <h2 class="dk-collection-header__title" id="sessions-title">Your sessions</h2>
-            <button type="button" id="new-session" class="dk-button dk-button--primary dk-button--sm dk-collection-create"
-              data-dk-create aria-keyshortcuts="c" title="New session (C)" aria-haspopup="dialog" aria-controls="new-session-dialog">
-              <span class="dk-collection-create__icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></span>
-              <span>New session</span>
-            </button>
-          </div>
-          <div class="dk-collection-header__trail">
-            <span class="dk-collection-header__meta" id="sessions-count" hidden></span>
-          </div>
-        </header>
-
-        <div id="rooms"></div>
-
-        <dialog class="dk-dialog" id="new-session-dialog" aria-labelledby="new-session-dialog-title">
-          <form id="new-session-form" style="display: contents">
-            <div class="dk-dialog__head"><h2 id="new-session-dialog-title">New session</h2></div>
-            <div class="dk-dialog__body">
-              <div class="field">
-                <label class="field-label" for="new-title">Title</label>
-                <input type="text" id="new-title" placeholder="Session title" autofocus>
-              </div>
-              <div class="field">
-                <label class="field-label" for="new-slug">Custom link</label>
-                <input type="text" id="new-slug" placeholder="custom-link (optional)">
-              </div>
-              <div class="field-grid">
-                <div class="field">
-                  <label class="field-label" for="new-state">Initial state</label>
-                  <select id="new-state">
-                    <option value="open">Open now</option>
-                    <option value="draft">Draft</option>
-                  </select>
-                </div>
-                <div class="field">
-                  <label class="field-label" for="new-expiry">Closes after</label>
-                  <select id="new-expiry">
-                    <option value="">never closes</option>
-                    <option value="1">closes in 1 hour</option>
-                    <option value="2">closes in 2 hours</option>
-                    <option value="4">closes in 4 hours</option>
-                    <option value="24">closes in 1 day</option>
-                    <option value="2880">closes in 4 months</option>
-                  </select>
-                </div>
-              </div>
-              <p class="muted" style="margin:0">Participants join through the session link or its QR code.</p>
-            </div>
-            <div class="dk-dialog__foot">
-              <button type="button" class="dk-button dk-button--secondary" id="new-session-cancel">Cancel</button>
-              <button type="submit" class="dk-button dk-button--primary" id="create">Create session</button>
-            </div>
-          </form>
-        </dialog>
-
-        <section class="panel">
-          <div class="panel-header">
-            <h2>API keys</h2>
-            <span class="muted panel-hint">Shown once, at creation.</span>
-          </div>
-          <div class="panel-body stack">
-            <div class="row wrapping">
-              <input type="text" id="key-name" class="grow" placeholder="Key name" aria-label="Key name">
-              <button id="create-key" class="ghost">Create key</button>
-            </div>
-            <div id="key-reveal" hidden></div>
-            <p class="table-empty" id="keys-empty" hidden>No keys yet.</p>
-            <div class="table-wrap"><table id="keys" hidden></table></div>
-          </div>
-        </section>
-      </div>
-
-      <div id="view-room" hidden>
-        <div class="room-head">
-          <a href="/admin" class="back-link">&larr; All sessions</a>
-          <div class="page-head">
-            <div>
-              <h1 id="room-title"></h1>
-              <p class="page-desc" id="room-sub"></p>
-            </div>
-            <div class="page-actions">
-              <a id="present" class="btn" href="#" target="_blank" rel="noopener">Presentation mode</a>
-              <button id="copy-link" class="ghost">Copy link</button>
-            </div>
-          </div>
-        </div>
-
-        <div class="banner" id="cohost-notice" hidden>
-          You're running this session with an invite. Only the owner can add people.
-        </div>
-
-        <div class="banner" id="archived-notice" hidden>
-          This session is archived — its link is closed, the questions below are
-          frozen as they ended, and it is deleted in seven days unless reopened.
-        </div>
-        <div class="row wrapping" id="archived-tools" hidden>
-          <button type="button" id="reopen" class="btn ghost">Reopen session</button>
-          <span class="muted">Back as it was, taking questions again — and the deletion is cancelled.</span>
-        </div>
-
-        <section class="panel queue-panel">
-          <div class="panel-header">
-            <h2>Questions</h2>
-            <div class="dk-tabs" role="radiogroup" id="question-filter" aria-label="Filter questions">
-              <button type="button" class="dk-tab" role="radio" id="f-all" aria-checked="true" tabindex="0">All <span class="dk-count" id="f-all-count" hidden></span></button>
-              <button type="button" class="dk-tab" role="radio" id="f-unanswered" aria-checked="false" tabindex="-1">Unanswered <span class="dk-count" id="f-unanswered-count" hidden></span></button>
-              <button type="button" class="dk-tab" role="radio" id="f-answered" aria-checked="false" tabindex="-1">Answered <span class="dk-count" id="f-answered-count" hidden></span></button>
-            </div>
-          </div>
-          <ul class="questions" id="qlist"></ul>
-          <div class="empty" id="qempty" hidden>
-            <h2 id="qempty-title">No questions yet</h2>
-            <p id="qempty-body">Share the link below — questions appear the moment they are asked.</p>
-          </div>
-        </section>
-
-        <details class="panel" id="share-card">
-          <summary>Share <span class="summary-hint">public link and QR code</span><svg class="chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary>
-          <div class="details-body share">
-            <div class="qr" id="qr"></div>
-            <div class="stack grow">
-              <a id="public-link" href="#" class="share-url" target="_blank" rel="noopener"></a>
-              <div class="row wrapping">
-                <a id="qr-png" class="btn ghost small" href="#" target="_blank" rel="noopener">QR PNG</a>
-                <a id="qr-svg" class="btn ghost small" href="#" target="_blank" rel="noopener">QR SVG</a>
-              </div>
-            </div>
-          </div>
-        </details>
-        <details class="panel" id="settings-card">
-          <summary>Settings <span class="summary-hint">state and visibility</span><svg class="chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary>
-          <div class="details-body stack">
-            <div class="row wrapping">
-              <select id="state" aria-label="Session state">
-                <option value="draft">Draft</option>
-                <option value="open">Open</option>
-                <option value="closed">Closed</option>
-              </select>
-              <label class="row check"><input type="checkbox" id="listed"> <span>Show on the front page</span></label>
-            </div>
-            <div class="row wrapping">
-              <button type="button" id="archive" class="ghost small">Archive session</button>
-              <span class="muted">The link closes and the session is deleted in seven days — reopening cancels that.</span>
-            </div>
-          </div>
-        </details>
-        <details class="panel" id="cohost-card">
-          <summary>People <span class="summary-hint">co-host invites</span><svg class="chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary>
-          <div class="details-body stack">
-            <p class="muted" id="room-owner" style="margin:0"></p>
-            <p class="muted" style="margin:0">Send both the link and the passcode. An invite lasts as long as the session.</p>
-            <div class="row wrapping">
-              <input type="text" id="cohost-name" class="grow" placeholder="Name (optional)" aria-label="Name">
-              <input type="text" id="cohost-passcode" class="grow mono" placeholder="Passcode (optional)" aria-label="Passcode">
-              <button id="create-cohost" class="ghost">Create invite</button>
-            </div>
-            <p class="table-empty" id="cohosts-empty" hidden>No invites yet.</p>
-            <div class="table-wrap"><table id="cohosts" hidden></table></div>
-          </div>
-        </details>
-      </div>
-    </main>
-  </div>
-</div>
-
-<div id="account-menu" class="account-menu" hidden role="dialog" aria-labelledby="account-menu-title" data-account-menu>
-  <header class="account-menu-header">
-    <strong id="account-menu-title">Account</strong>
-    <button type="button" class="icon-button account-menu-close" data-account-menu-close aria-label="Close account menu">
-      <svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
-    </button>
   </header>
-  <div class="account-menu-body">
-    <section class="account-identity" aria-live="polite">
-      <span class="account-avatar account-avatar-large" data-account-actor-avatar aria-hidden="true">{{ACCOUNT_INITIAL}}</span>
-      <span class="account-identity-copy">
-        <small>Signed in as</small>
-        <strong data-account-actor-name>{{ACCOUNT_NAME}}</strong>
-        <span data-account-meta>{{ACCOUNT_EMAIL}}</span>
-      </span>
-    </section>
-    <p class="account-section-label">Appearance</p>
-    <button type="button" class="account-menu-item account-theme-toggle" data-appearance-toggle aria-pressed="false" aria-label="Switch to dark theme">
-      <span class="account-menu-icon" aria-hidden="true">
-        <svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19.8 14.4A8.25 8.25 0 119.6 4.2a6.45 6.45 0 0010.2 10.2Z"/></svg>
-      </span>
-      <span class="account-theme-label" data-appearance-label>Dark mode</span>
-      <span class="account-toggle-track" aria-hidden="true"><span></span></span>
+  <main class="dk-main" id="main-content" tabindex="-1">
+    <div class="dk-main__inner dk-main__inner--narrow">
+        <div id="view-list" hidden>
+          <header class="dk-page-header">
+            <div class="dk-page-header__main">
+              <h1 class="dk-page-header__title">Sessions</h1>
+              <p class="dk-page-header__subtitle">Live Q&amp;A rooms you run, and the keys other tools use to create them.</p>
+            </div>
+          </header>
+
+          <!-- dakit "Action placement": New session rides on the session list
+               it creates into, right after its title, not in the page corner. -->
+          <header class="dk-collection-header sessions-head">
+            <div class="dk-collection-header__lead">
+              <h2 class="dk-collection-header__title" id="sessions-title">Your sessions</h2>
+              <button type="button" id="new-session" class="dk-button dk-button--primary dk-button--sm dk-collection-create"
+                data-dk-create aria-keyshortcuts="c" title="New session (C)" aria-haspopup="dialog" aria-controls="new-session-dialog">
+                <span class="dk-collection-create__icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></span>
+                <span>New session</span>
+              </button>
+            </div>
+            <div class="dk-collection-header__trail">
+              <span class="dk-collection-header__meta" id="sessions-count" hidden></span>
+            </div>
+          </header>
+
+          <div id="rooms"></div>
+
+          <dialog class="dk-dialog" id="new-session-dialog" aria-labelledby="new-session-dialog-title">
+            <form id="new-session-form" style="display: contents">
+              <div class="dk-dialog__head"><h2 id="new-session-dialog-title">New session</h2></div>
+              <div class="dk-dialog__body">
+                <div class="field">
+                  <label class="field-label" for="new-title">Title</label>
+                  <input type="text" id="new-title" placeholder="Session title" autofocus>
+                </div>
+                <div class="field">
+                  <label class="field-label" for="new-slug">Custom link</label>
+                  <input type="text" id="new-slug" placeholder="custom-link (optional)">
+                </div>
+                <div class="field-grid">
+                  <div class="field">
+                    <label class="field-label" for="new-state">Initial state</label>
+                    <select id="new-state">
+                      <option value="open">Open now</option>
+                      <option value="draft">Draft</option>
+                    </select>
+                  </div>
+                  <div class="field">
+                    <label class="field-label" for="new-expiry">Closes after</label>
+                    <select id="new-expiry">
+                      <option value="">never closes</option>
+                      <option value="1">closes in 1 hour</option>
+                      <option value="2">closes in 2 hours</option>
+                      <option value="4">closes in 4 hours</option>
+                      <option value="24">closes in 1 day</option>
+                      <option value="2880">closes in 4 months</option>
+                    </select>
+                  </div>
+                </div>
+                <p class="muted" style="margin:0">Participants join through the session link or its QR code.</p>
+              </div>
+              <div class="dk-dialog__foot">
+                <button type="button" class="dk-button dk-button--secondary" id="new-session-cancel">Cancel</button>
+                <button type="submit" class="dk-button dk-button--primary" id="create">Create session</button>
+              </div>
+            </form>
+          </dialog>
+
+          <section class="panel">
+            <div class="panel-header">
+              <h2>API keys</h2>
+              <span class="muted panel-hint">Shown once, at creation.</span>
+            </div>
+            <div class="panel-body stack">
+              <div class="row wrapping">
+                <input type="text" id="key-name" class="grow" placeholder="Key name" aria-label="Key name">
+                <button id="create-key" class="ghost">Create key</button>
+              </div>
+              <div id="key-reveal" hidden></div>
+              <p class="table-empty" id="keys-empty" hidden>No keys yet.</p>
+              <div class="table-wrap"><table id="keys" hidden></table></div>
+            </div>
+          </section>
+        </div>
+
+        <div id="view-room" hidden>
+          <header class="dk-page-header">
+            <div class="dk-page-header__main">
+              <nav class="dk-page-header__crumb" aria-label="Breadcrumb"><a href="/admin">Sessions</a><span aria-hidden="true">/</span></nav>
+              <h1 class="dk-page-header__title" id="room-title"></h1>
+              <p class="dk-page-header__subtitle" id="room-sub"></p>
+            </div>
+            <div class="dk-page-header__actions">
+              <a id="present" class="dk-button dk-button--primary" href="#" target="_blank" rel="noopener">Presentation mode</a>
+              <button type="button" id="copy-link" class="dk-button dk-button--secondary">Copy link</button>
+            </div>
+          </header>
+
+          <div class="banner" id="cohost-notice" hidden>
+            You're running this session with an invite. Only the owner can add people.
+          </div>
+
+          <div class="banner" id="archived-notice" hidden>
+            This session is archived — its link is closed, the questions below are
+            frozen as they ended, and it is deleted in seven days unless reopened.
+          </div>
+          <div class="row wrapping" id="archived-tools" hidden>
+            <button type="button" id="reopen" class="btn ghost">Reopen session</button>
+            <span class="muted">Back as it was, taking questions again — and the deletion is cancelled.</span>
+          </div>
+
+          <section class="panel queue-panel">
+            <div class="panel-header">
+              <h2>Questions</h2>
+              <div class="dk-tabs" role="radiogroup" id="question-filter" aria-label="Filter questions">
+                <button type="button" class="dk-tab" role="radio" id="f-all" aria-checked="true" tabindex="0">All <span class="dk-count" id="f-all-count" hidden></span></button>
+                <button type="button" class="dk-tab" role="radio" id="f-unanswered" aria-checked="false" tabindex="-1">Unanswered <span class="dk-count" id="f-unanswered-count" hidden></span></button>
+                <button type="button" class="dk-tab" role="radio" id="f-answered" aria-checked="false" tabindex="-1">Answered <span class="dk-count" id="f-answered-count" hidden></span></button>
+              </div>
+            </div>
+            <ul class="questions" id="qlist"></ul>
+            <div class="empty" id="qempty" hidden>
+              <h2 id="qempty-title">No questions yet</h2>
+              <p id="qempty-body">Share the link below — questions appear the moment they are asked.</p>
+            </div>
+          </section>
+
+          <details class="panel" id="share-card">
+            <summary>Share <span class="summary-hint">public link and QR code</span><svg class="chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary>
+            <div class="details-body share">
+              <div class="qr" id="qr"></div>
+              <div class="stack grow">
+                <a id="public-link" href="#" class="share-url" target="_blank" rel="noopener"></a>
+                <div class="row wrapping">
+                  <a id="qr-png" class="btn ghost small" href="#" target="_blank" rel="noopener">QR PNG</a>
+                  <a id="qr-svg" class="btn ghost small" href="#" target="_blank" rel="noopener">QR SVG</a>
+                </div>
+              </div>
+            </div>
+          </details>
+          <details class="panel" id="settings-card">
+            <summary>Settings <span class="summary-hint">state and visibility</span><svg class="chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary>
+            <div class="details-body stack">
+              <div class="row wrapping">
+                <select id="state" aria-label="Session state">
+                  <option value="draft">Draft</option>
+                  <option value="open">Open</option>
+                  <option value="closed">Closed</option>
+                </select>
+                <label class="row check"><input type="checkbox" id="listed"> <span>Show on the front page</span></label>
+              </div>
+              <div class="row wrapping">
+                <button type="button" id="archive" class="ghost small">Archive session</button>
+                <span class="muted">The link closes and the session is deleted in seven days — reopening cancels that.</span>
+              </div>
+            </div>
+          </details>
+          <details class="panel" id="cohost-card">
+            <summary>People <span class="summary-hint">co-host invites</span><svg class="chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary>
+            <div class="details-body stack">
+              <p class="muted" id="room-owner" style="margin:0"></p>
+              <p class="muted" style="margin:0">Send both the link and the passcode. An invite lasts as long as the session.</p>
+              <div class="row wrapping">
+                <input type="text" id="cohost-name" class="grow" placeholder="Name (optional)" aria-label="Name">
+                <input type="text" id="cohost-passcode" class="grow mono" placeholder="Passcode (optional)" aria-label="Passcode">
+                <button id="create-cohost" class="ghost">Create invite</button>
+              </div>
+              <p class="table-empty" id="cohosts-empty" hidden>No invites yet.</p>
+              <div class="table-wrap"><table id="cohosts" hidden></table></div>
+            </div>
+          </details>
+        </div>
+    </div>
+  </main>
+  <!-- The account disclosure (docs/shell.md §6): who you are, the one theme
+       control, the build, and sign out. No destinations live here. -->
+  <div class="dk-menu dk-account-menu" id="dk-account-menu" data-dk-popover hidden>
+    <div class="dk-menu__identity"><span class="dk-menu__name">{{ACCOUNT_NAME}}</span><span class="dk-menu__email">{{ACCOUNT_EMAIL}}</span></div>
+    <hr class="dk-menu__sep">
+    <button class="dk-menu__item" type="button" role="switch" aria-checked="false" data-appearance-toggle>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19.8 14.4A8.25 8.25 0 119.6 4.2a6.45 6.45 0 0010.2 10.2Z"/></svg>
+      Dark mode<span class="dk-switch" aria-hidden="true"></span>
     </button>
-    <a class="account-menu-item account-sign-out" href="/auth/logout" {{ACCOUNT_SIGN_OUT_HIDDEN}}>
-      <span class="account-menu-icon" aria-hidden="true">
-        <svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3.75H5.25a1.5 1.5 0 00-1.5 1.5v13.5a1.5 1.5 0 001.5 1.5H9"/><path d="m15 7.5 4.5 4.5-4.5 4.5"/><path d="M19.5 12H9"/></svg>
-      </span>
-      <span><strong>Sign out</strong><small>End this browser session.</small></span>
+    <hr class="dk-menu__sep">
+    <div class="dk-menu__meta"><span>build {{APP_BUILD}}</span><span>{{APP_REGION}}</span></div>
+    <a class="dk-menu__item dk-menu__item--danger" href="/auth/logout" {{ACCOUNT_SIGN_OUT_HIDDEN}}>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 3.75H5.25a1.5 1.5 0 00-1.5 1.5v13.5a1.5 1.5 0 001.5 1.5H9"/><path d="m15 7.5 4.5 4.5-4.5 4.5"/><path d="M19.5 12H9"/></svg>
+      Sign out
     </a>
   </div>
+  <div id="dk-live" class="dk-visually-hidden" aria-live="polite"></div>
 </div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
-<script>
-/* The family shell behavior: on the desktop the sidebar collapses to an icon
-   rail (the preference persists); on a phone it opens as a modal drawer with
-   a scrim, Escape, and focus restoration. */
-(function () {
-  "use strict";
-  var shell = document.querySelector("[data-sidebar-shell]");
-  var sidebar = shell.querySelector("[data-sidebar]");
-  var toggle = shell.querySelector("[data-sidebar-toggle]");
-  var menuToggle = shell.querySelector("[data-sidebar-menu-toggle]");
-  var scrim = shell.querySelector("[data-sidebar-scrim]");
-  var key = "dq.sidebar.collapsed";
-  var mobile = window.matchMedia("(max-width: 820px)");
-  var lastFocus = null;
-
-  /* Desktop collapse: icon rail, restore control stays visible. */
-  if (toggle) {
-    var storedPreference = function () {
-      try { return localStorage.getItem(key); } catch (e) { return null; }
-    };
-    var setCollapsed = function (collapsed, persist) {
-      shell.classList.toggle("sidebar-collapsed", collapsed);
-      toggle.setAttribute("aria-expanded", String(!collapsed));
-      toggle.setAttribute("aria-label", collapsed ? "Expand navigation" : "Collapse navigation");
-      if (persist !== false) {
-        try { localStorage.setItem(key, collapsed ? "1" : "0"); } catch (e) {}
-      }
-    };
-    setCollapsed(storedPreference() === "1", false);
-    toggle.addEventListener("click", function () {
-      setCollapsed(!shell.classList.contains("sidebar-collapsed"));
-    });
-  }
-
-  /* Mobile drawer. */
-  function setDrawer(open) {
-    shell.classList.toggle("sidebar-open", open);
-    if (scrim) scrim.hidden = !open;
-    if (menuToggle) {
-      menuToggle.setAttribute("aria-expanded", String(open));
-      menuToggle.setAttribute("aria-label", open ? "Close navigation" : "Open navigation");
-    }
-    if (open) {
-      closeAccount();
-      lastFocus = document.activeElement;
-      var first = sidebar.querySelector("a, button");
-      if (first) first.focus();
-    } else if (lastFocus && lastFocus.focus) {
-      lastFocus.focus();
-    }
-  }
-  if (menuToggle) {
-    menuToggle.addEventListener("click", function () {
-      setDrawer(!shell.classList.contains("sidebar-open"));
-    });
-  }
-  if (scrim) scrim.addEventListener("click", function () { setDrawer(false); });
-  document.addEventListener("keydown", function (event) {
-    if (event.key === "Escape" && shell.classList.contains("sidebar-open")) setDrawer(false);
-    /* A modal drawer keeps focus: cycle Tab inside the sidebar while open. */
-    if (event.key === "Tab" && shell.classList.contains("sidebar-open")) {
-      var focusable = sidebar.querySelectorAll("a[href], button:not([disabled])");
-      if (!focusable.length) return;
-      var first = focusable[0];
-      var last = focusable[focusable.length - 1];
-      if (event.shiftKey && document.activeElement === first) { last.focus(); event.preventDefault(); }
-      else if (!event.shiftKey && document.activeElement === last) { first.focus(); event.preventDefault(); }
-    }
-  });
-  if (mobile.addEventListener) {
-    mobile.addEventListener("change", function (event) {
-      if (!event.matches) setDrawer(false);
-    });
-  }
-  /* The family's phone bar titles itself with the page (dataops' bar says
-     "Today"), so the toolbar mirrors whichever view is visible — including
-     the room title admin.js fills in later. */
-  var toolbarTitle = document.querySelector(".toolbar-title");
-  function syncToolbarTitle() {
-    if (!toolbarTitle) return;
-    var view = document.querySelector("#view-list:not([hidden]), #view-room:not([hidden])");
-    var heading = view ? view.querySelector("h1") : null;
-    toolbarTitle.textContent = heading ? heading.textContent.trim() : "";
-  }
-  syncToolbarTitle();
-  if (mobile.addEventListener) mobile.addEventListener("change", syncToolbarTitle);
-  if (window.MutationObserver) {
-    var titleObserver = new MutationObserver(syncToolbarTitle);
-    ["view-list", "view-room"].forEach(function (id) {
-      var el = document.getElementById(id);
-      if (el) titleObserver.observe(el, { attributes: true, attributeFilter: ["hidden"], subtree: true, childList: true, characterData: true });
-    });
-  }
-  /* Choosing a destination closes the drawer, the way a menu dismisses. */
-  sidebar.addEventListener("click", function (event) {
-    if (event.target.closest("a") && shell.classList.contains("sidebar-open")) setDrawer(false);
-  });
-
-  /* Family account popover: identity, appearance, sign-out. Escape restores
-     the trigger; a click outside dismisses. Appearance is painted by theme.js. */
-  var accountTrigger = document.querySelector("[data-account-menu-trigger]");
-  var accountMenu = document.querySelector("[data-account-menu]");
-  var accountClose = document.querySelector("[data-account-menu-close]");
-  var accountOpener = null;
-  function accountOpen() {
-    return accountMenu && !accountMenu.hidden;
-  }
-  function closeAccount() {
-    if (!accountOpen()) return;
-    accountMenu.hidden = true;
-    if (accountTrigger) accountTrigger.setAttribute("aria-expanded", "false");
-    if (accountOpener && accountOpener.focus) accountOpener.focus();
-    accountOpener = null;
-  }
-  function openAccount() {
-    if (!accountMenu || !accountTrigger) return;
-    if (shell.classList.contains("sidebar-open")) setDrawer(false);
-    accountOpener = document.activeElement;
-    accountMenu.hidden = false;
-    accountTrigger.setAttribute("aria-expanded", "true");
-    if (window.dqTheme && window.dqTheme.paint) window.dqTheme.paint();
-    if (accountClose) accountClose.focus();
-  }
-  if (accountTrigger && accountMenu) {
-    accountTrigger.addEventListener("click", function (event) {
-      event.stopPropagation();
-      if (accountOpen()) closeAccount();
-      else openAccount();
-    });
-    if (accountClose) accountClose.addEventListener("click", closeAccount);
-    document.addEventListener("click", function (event) {
-      if (!accountOpen()) return;
-      if (accountMenu.contains(event.target) || accountTrigger.contains(event.target)) return;
-      closeAccount();
-    });
-    document.addEventListener("keydown", function (event) {
-      if (event.key === "Escape" && accountOpen()) {
-        event.preventDefault();
-        closeAccount();
-      }
-    });
-  }
-})();
-</script>
+<script src="/assets/dakit/shell.js"></script>
 <script src="/assets/dakit/dialogs.js"></script>
 <script src="/assets/dakit/tabs.js"></script>
 <script src="/assets/dakit/collection.js"></script>

@@ -73,23 +73,51 @@ def test_fonts_travel_as_binary_not_decoded_text():
     assert response["headers"]["content-type"] == "font/woff2"
 
 
-def test_admin_markup_is_the_family_account_popover():
-    """Operator admin owns identity, appearance and sign-out in one Account
-    control — avatar, name, chevron — triggered from the sidebar footer, not
-    a lone theme icon or a top-bar sign-out link."""
+def _between(body, start, end):
+    return body.split(start, 1)[1].split(end, 1)[0]
+
+
+def test_admin_wears_the_dakit_topbar_shell():
+    """Two destinations, so dakit's topbar shell (docs/shell.md §4.2): the
+    wordmark, Live Q&A and Sessions in one bar, the avatar-only account
+    trigger at its end. No sidebar, no rail, no drawer, no bell, and none of
+    the app's own shell script or classes left over."""
     body = render.asset_bytes("admin.html").decode()
-    assert 'aria-label="Account"' in body
-    assert "account-button" in body
-    assert 'id="account-menu"' in body
-    assert "data-appearance-toggle" in body
-    assert "Signed in as" in body
-    assert "Sign out" in body
+    assert 'class="dk-shell dk-shell--topbar console"' in body
+    assert 'class="dk-skip-link" href="#main-content"' in body
+    bar = _between(body, '<header class="dk-shell__bar">', "</header>")
+    assert '<span class="dk-brand__name">DataQnA</span>' in bar
+    nav = _between(bar, '<nav class="dk-shell__nav" aria-label="Primary">', "</nav>")
+    assert re.findall(r'class="dk-nav-item" href="([^"]+)"', nav) == ["/live", "/admin"]
+    assert nav.count('aria-current="page"') == 1
+    end = _between(bar, '<div class="dk-shell__end">', "</div>")
+    assert "dk-account-trigger--compact" in end
+    assert 'data-dk-popover-trigger="dk-account-menu"' in end
+    assert 'aria-controls="dk-account-menu"' in end
+    assert '<main class="dk-main" id="main-content"' in body
+    assert "/assets/dakit/shell.js" in body
+    for gone in ("dk-sidebar", "dk-notif", "app-shell", "app-sidebar", "sidebar-", "account-button",
+                 "data-sidebar", "data-account-menu", "brand-mark"):
+        assert gone not in body, gone
+
+
+def test_admin_account_menu_is_the_dakit_disclosure():
+    """Identity, the one theme control, the build, sign out — in that order,
+    with no destinations, header bar or close button (docs/shell.md §6)."""
+    body = render.page("admin.html", render.account_chrome(email="host@datatalks.club"))
+    menu = _between(body, 'id="dk-account-menu" data-dk-popover hidden>', '<div id="dk-live"')
+    order = [menu.index(marker) for marker in (
+        'class="dk-menu__identity"', 'role="switch"', 'class="dk-menu__meta"', "Sign out")]
+    assert order == sorted(order)
+    assert "host@datatalks.club" in menu
+    assert 'class="dk-menu__item" type="button" role="switch" aria-checked="false" data-appearance-toggle' in menu
+    assert '<span class="dk-switch" aria-hidden="true"></span>' in menu
+    assert 'class="dk-menu__item dk-menu__item--danger" href="/auth/logout"' in menu
+    assert f"build {render.version()}" in menu
+    # Only sign out leaves the menu; nothing else in it is a destination.
+    assert re.findall(r'href="([^"]+)"', menu) == ["/auth/logout"]
+    assert "Signed in as" not in menu and "aria-label=\"Close" not in menu
     assert "data-theme-toggle" not in body
-    assert "toolbar-who" not in body
-    foot = body.split('class="sidebar-foot">', 1)[1].split("</footer>", 1)[0]
-    assert "data-account-menu-trigger" in foot
-    toolbar = body.split('<header class="app-toolbar">', 1)[1].split("</header>", 1)[0]
-    assert "data-account-menu-trigger" not in toolbar
 
 
 def test_account_chrome_names_the_operator_from_their_email():
@@ -138,7 +166,7 @@ def test_the_admin_console_renders_the_signed_in_operator():
     assert response["statusCode"] == 200
     assert "Alexey" in response["body"]
     assert "alexey@datatalks.club" in response["body"]
-    assert "account-button" in response["body"]
+    assert "dk-account-trigger" in response["body"]
     assert "data-theme-toggle" not in response["body"]
 
 
@@ -312,8 +340,8 @@ def test_new_session_rides_on_the_session_list_not_the_page_header():
     assert lead.index('id="sessions-title"') < lead.index('id="new-session"')
 
     # The sessions page header carries no actions at all.
-    list_head = re.search(r'<div id="view-list" hidden>\s*<header class="page-head">(.*?)</header>', body, re.S).group(1)
-    assert "<button" not in list_head and "<a " not in list_head and "page-actions" not in list_head
+    list_head = re.search(r'<div id="view-list" hidden>\s*<header class="dk-page-header">(.*?)</header>', body, re.S).group(1)
+    assert "<button" not in list_head and "<a " not in list_head and "__actions" not in list_head
 
     # The old inline "New session" panel is gone; its form lives in the dialog.
     _, create_path = by_id["create"]
@@ -338,7 +366,7 @@ def test_the_session_page_keeps_only_its_own_actions_in_its_header():
     header: Presentation mode and Copy link act on this session. No create,
     refresh or export sits there."""
     body = render.asset_bytes("admin.html").decode()
-    actions = re.search(r'<div class="page-actions">(.*?)</div>', body, re.S).group(1)
+    actions = re.search(r'<div class="dk-page-header__actions">(.*?)</div>', body, re.S).group(1)
     assert re.findall(r'id="([^"]+)"', actions) == ["present", "copy-link"]
     assert not re.search(r"\b(New|Create|Add|Refresh|Export)\b", actions)
 

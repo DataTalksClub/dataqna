@@ -147,8 +147,8 @@ def test_every_page_with_a_toggle_loads_the_script_that_works_it():
     """Theme logic lives once, in theme.js; each surface opts in.
 
     Room, directory, notices and the co-host gate carry a compact
-    [data-theme-toggle] icon. Admin, the operator app with a sidebar, puts
-    the same pin behind the Account popover's appearance switch — the family
+    [data-theme-toggle] icon. Admin, the operator app in dakit's shell, puts
+    the same pin behind the account menu's Dark mode switch row — the shell
     recipe, and the only theme control on that chrome.
     """
     pages = {name: render.asset_bytes(name).decode()
