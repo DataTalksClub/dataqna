@@ -232,7 +232,7 @@ def cohost_page(room, error=None, name=""):
     """
     message = f'<div class="banner warn">{html.escape(error)}</div>' if error else ""
     action = f"/r/{html.escape(room.get('slug') or '')}/cohost/{html.escape(name)}"
-    inner = f"""<div class="row" style="margin-bottom:22px">
+    inner = f"""<div class="row public-bar">
 <span class="grow">{BRAND}</span>{THEME_TOGGLE}</div>
 <header class="page-head"><div><h1>Co-host access</h1>
 <p class="page-desc">Enter the passcode the host gave you. It lets you run
@@ -283,7 +283,7 @@ def _room_panel(heading, rooms, *, note):
 def directory_page(live, recent, *, signed_in=None):
     """The front page: what is on now, and what was on recently."""
     parts = [
-        '<div class="row" style="margin-bottom:22px">',
+        '<div class="row public-bar">',
         f'<span class="grow">{BRAND}</span>',
         THEME_TOGGLE,
     ]
@@ -309,7 +309,7 @@ def directory_page(live, recent, *, signed_in=None):
         parts.append(
             '<div class="panel"><div class="panel-body stack">'
             f"<strong>Signed in as {html.escape(signed_in)}</strong>"
-            '<p class="muted" style="margin:0">Create a session, share its QR code, '
+            '<p class="muted flush">Create a session, share its QR code, '
             'and run presentation mode from the console.</p>'
             '<div class="row wrapping">'
             '<a class="btn" href="/admin#new-session">New session</a>'
@@ -336,11 +336,11 @@ def directory_page(live, recent, *, signed_in=None):
 
 def notice(title, message, *, status=200, link=None):
     target, label = (link[1], link[0]) if link else ("/live", "See what's live")
-    inner = f"""<div class="row" style="margin-bottom:22px">
+    inner = f"""<div class="row public-bar">
 <span class="grow">{BRAND}</span>{THEME_TOGGLE}</div>
 <div class="empty">
-<h2 style="font-size:1.3rem">{html.escape(title)}</h2>
+<h2 class="notice-title">{html.escape(title)}</h2>
 <p>{html.escape(message)}</p>
-<p style="margin-top:18px"><a class="btn" href="{html.escape(target)}">{html.escape(label)}</a></p>
+<p class="notice-action"><a class="btn" href="{html.escape(target)}">{html.escape(label)}</a></p>
 </div>"""
     return _shell(title, inner, status=status)

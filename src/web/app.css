@@ -124,6 +124,15 @@ svg { flex: 0 0 auto; }
    input is not a field anyone can type into. */
 .row.wrapping > .grow { min-width: 160px; }
 .right { margin-left: auto; }
+/* Layout helpers the templates used to write as inline style="" (which no
+   scale check can see): markup carries no style attributes at all now. */
+.flush { margin: 0; }
+.contents { display: contents; }
+/* The brand-and-theme bar that opens the public pages. */
+.public-bar { margin-bottom: var(--dk-space-5); }
+/* A notice page: its title and its one way onward. */
+.notice-title { font-size: var(--dk-text-xl); }
+.notice-action { margin-top: var(--dk-space-5); }
 .stack > * + * { margin-top: var(--dk-space-3); }
 
 /* ------------------------------------------------- console controls
@@ -178,7 +187,7 @@ svg { flex: 0 0 auto; }
   }
   .wrap input[type=text], .wrap input[type=email], .wrap input[type=number], .wrap select {
     min-height: var(--dk-size-control-md);
-    padding: var(--dk-space-2) 10px;
+    padding: var(--dk-space-2) var(--dk-space-3);
     font-size: var(--dk-text-md);
   }
   .room-wrap button:where(:not(.icon-btn):not(.icon-button):not(.vote):not(.dk-tab):not(.dk-button)),
@@ -750,8 +759,10 @@ input:focus-visible, select:focus-visible, textarea:focus-visible {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 10px;
-  font-weight: 700;
+  font-family: var(--dk-font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--dk-text-xs);
+  font-weight: 500;
   color: var(--dk-text-muted);
 }
 .limit-ring.warn .left { color: var(--dk-warning-text); }

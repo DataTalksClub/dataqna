@@ -1,6 +1,1 @@
-{
-  "../src/web/app.css": {
-    "font-size: 10px": 1,
-    "padding: var(--dk-space-2) 10px": 1
-  }
-}
+{}

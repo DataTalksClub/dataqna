@@ -83,7 +83,7 @@
           <div id="rooms"></div>
 
           <dialog class="dk-dialog" id="new-session-dialog" aria-labelledby="new-session-dialog-title">
-            <form id="new-session-form" style="display: contents">
+            <form id="new-session-form" class="contents">
               <div class="dk-dialog__head"><h2 id="new-session-dialog-title">New session</h2></div>
               <div class="dk-dialog__body">
                 <div class="field">
@@ -114,7 +114,7 @@
                     </select>
                   </div>
                 </div>
-                <p class="muted" style="margin:0">Participants join through the session link or its QR code.</p>
+                <p class="muted flush">Participants join through the session link or its QR code.</p>
               </div>
               <div class="dk-dialog__foot">
                 <button type="button" class="dk-button dk-button--secondary" id="new-session-cancel">Cancel</button>
@@ -215,8 +215,8 @@
           <details class="panel" id="cohost-card">
             <summary>People <span class="summary-hint">co-host invites</span><svg class="chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary>
             <div class="details-body stack">
-              <p class="muted" id="room-owner" style="margin:0"></p>
-              <p class="muted" style="margin:0">Send both the link and the passcode. An invite lasts as long as the session.</p>
+              <p class="muted flush" id="room-owner"></p>
+              <p class="muted flush">Send both the link and the passcode. An invite lasts as long as the session.</p>
               <div class="row wrapping">
                 <input type="text" id="cohost-name" class="grow" placeholder="Name (optional)" aria-label="Name">
                 <input type="text" id="cohost-passcode" class="grow mono" placeholder="Passcode (optional)" aria-label="Passcode">
