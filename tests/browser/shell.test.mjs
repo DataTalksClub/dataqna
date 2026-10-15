@@ -142,3 +142,27 @@ test("a focused nav item draws the kit's inset ring, so the scrolling bar never 
   assert.equal(ring.offset, "-2px");
   await context.close();
 });
+
+test("Tab from Sign out out of the page closes the menu, and Tab back in leaves it closed", async () => {
+  const { page, context } = await open("/admin");
+  await page.focus(".dk-account-trigger");
+  await page.keyboard.press("Enter");
+  await page.keyboard.press("End");
+  assert.equal(await page.evaluate(() => document.activeElement.textContent.trim()), "Sign out");
+  await page.keyboard.press("Tab");
+  await page.waitForFunction(() => document.getElementById("dk-account-menu").hidden, null, { timeout: 3000 });
+  assert.equal(await page.getAttribute(".dk-account-trigger", "aria-expanded"), "false");
+  await page.keyboard.press("Tab");
+  assert.ok(await page.locator("#dk-account-menu").isHidden());
+  await context.close();
+});
+
+test("a click on the page background closes the menu and returns focus to the trigger", async () => {
+  const { page, context } = await open("/admin");
+  await page.click(".dk-account-trigger");
+  await page.keyboard.press("ArrowDown");
+  await page.mouse.click(1400, 860);
+  assert.ok(await page.locator("#dk-account-menu").isHidden());
+  await page.waitForFunction(() => document.activeElement.matches(".dk-account-trigger"), null, { timeout: 3000 });
+  await context.close();
+});
