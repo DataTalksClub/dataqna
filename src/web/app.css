@@ -105,13 +105,11 @@ body {
   -webkit-text-size-adjust: 100%;
 }
 
-/* Links take dakit's link role from its base layer; an unlayered `a`
-   rule here would outrank every kit link component (nav items, buttons). */
-
-/* The family's keyboard indicator (dakit docs/family.md, dataops
-   styles.css): always visible, 3px of the translucent --dk-focus-ring, so
-   it reads on every surface in both themes — never the plain accent. */
-:focus-visible { outline: 3px solid var(--dk-focus-ring); outline-offset: 2px; }
+/* Links and the keyboard focus ring (3px of --dk-focus-ring, offset 2px)
+   come from dakit's base layer. Neither is restated here: an unlayered
+   element rule in this sheet outranks every kit component, so a copy would
+   repaint nav items and buttons and push the inset rings the kit draws in
+   scrolling bars and menus out where their overflow clips them. */
 
 svg { flex: 0 0 auto; }
 

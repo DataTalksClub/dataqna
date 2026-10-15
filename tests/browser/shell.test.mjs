@@ -127,3 +127,18 @@ test("the skip link is the first stop and lands in main", async () => {
   assert.equal(await page.evaluate(() => document.activeElement.id), "main-content");
   await context.close();
 });
+
+test("a focused nav item draws the kit's inset ring, so the scrolling bar never clips it", async () => {
+  const { page, context } = await open("/admin");
+  await page.focus('.dk-shell__nav .dk-nav-item[href="/live"]');
+  await page.keyboard.press("Shift+Tab");
+  await page.keyboard.press("Tab");
+  const ring = await page.evaluate(() => {
+    const style = getComputedStyle(document.activeElement);
+    return { offset: style.outlineOffset, width: style.outlineWidth, label: document.activeElement.textContent.trim() };
+  });
+  assert.equal(ring.label, "Live Q&A");
+  assert.equal(ring.width, "3px");
+  assert.equal(ring.offset, "-2px");
+  await context.close();
+});
