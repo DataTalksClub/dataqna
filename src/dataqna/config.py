@@ -18,7 +18,10 @@ AUTH_JWKS_URL = _clean("AUTH_JWKS_URL") or (
 )
 AUTH_CALLBACK_URL = _clean("AUTH_CALLBACK_URL") or f"{SITE_URL}/auth/callback"
 
-SECRET_ARN = _clean("SESSION_SECRET_ARN")
+SECRET_NAME = _clean("SESSION_SECRET_NAME", "dataqna.session")
+SECRETS_TABLE_NAME = _clean("SECRETS_TABLE_NAME", "dataops-v1-secrets")
+SECRETS_REGION = _clean("SECRETS_REGION", "eu-west-1")
+SECRETS_KEY_ID = _clean("SECRETS_KEY_ID")
 
 SESSION_COOKIE = "dq_session"
 OIDC_COOKIE = "dq_oidc"

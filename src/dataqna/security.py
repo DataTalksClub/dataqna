@@ -12,10 +12,8 @@ import hmac
 import json
 import os
 import time
-
-import boto3
-
 from . import config
+from .dataops_secrets import SecretReader
 
 _ALPHABET = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
 _secret_cache = None
@@ -37,8 +35,12 @@ def secret():
         if override:
             _secret_cache = override.encode()
         else:
-            client = boto3.client("secretsmanager")
-            value = client.get_secret_value(SecretId=config.SECRET_ARN)["SecretString"]
+            reader = SecretReader(
+                table_name=config.SECRETS_TABLE_NAME,
+                key_id=config.SECRETS_KEY_ID,
+                region=config.SECRETS_REGION,
+            )
+            value = reader.read(config.SECRET_NAME)["value"]
             try:
                 _secret_cache = json.loads(value)["signing_secret"].encode()
             except (json.JSONDecodeError, KeyError, TypeError):
