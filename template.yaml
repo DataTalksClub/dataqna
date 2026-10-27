@@ -58,19 +58,6 @@ Resources:
           HostedZoneId: !Ref HostedZoneId
           EvaluateTargetHealth: false
 
-  SessionSecret:
-    Type: AWS::SecretsManager::Secret
-    DeletionPolicy: Retain
-    UpdateReplacePolicy: Retain
-    Properties:
-      Name: !Sub ${AWS::StackName}/session
-      Description: HMAC key for DataQnA session and participant cookies
-      GenerateSecretString:
-        SecretStringTemplate: '{}'
-        GenerateStringKey: signing_secret
-        PasswordLength: 64
-        ExcludePunctuation: true
-
   Table:
     Type: AWS::DynamoDB::Table
     Properties:
