@@ -200,7 +200,7 @@ def bump_counter(room_id, field, delta):
 
 
 def add_admin(room_id, email, role="owner"):
-    """Records who owns a room. Also the index that powers "your sessions"."""
+    """Records who owns or administers a room. Also powers "your sessions"."""
     email = email.lower()
     table().put_item(
         Item={
@@ -214,6 +214,28 @@ def add_admin(room_id, email, role="owner"):
             "GSI1SK": _room_pk(room_id),
             "created_at": now(),
         }
+    )
+
+
+def get_admin(room_id, email):
+    if not email:
+        return None
+    item = table().get_item(Key={"PK": _room_pk(room_id), "SK": f"ADMIN#{email.lower()}"}).get("Item")
+    return item if item and item.get("entity") == "admin" else None
+
+
+def list_admins(room_id):
+    items = table().query(
+        KeyConditionExpression=Key("PK").eq(_room_pk(room_id)) & Key("SK").begins_with("ADMIN#")
+    )["Items"]
+    return sorted(items, key=lambda item: item.get("email", ""))
+
+
+def remove_admin(room_id, email):
+    return _conditional(
+        table().delete_item,
+        Key={"PK": _room_pk(room_id), "SK": f"ADMIN#{email.lower()}"},
+        ConditionExpression="attribute_exists(SK)",
     )
 
 

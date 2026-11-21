@@ -164,9 +164,14 @@ def main():
                                     json={"pinned": False}, timeout=20)
         check("revoking an invite takes effect immediately", after_revoke.status_code == 403)
 
-        no_admins = requests.put(f"{api}/rooms/{room_id}/admins/someone@example.com",
-                                 headers=admin_headers, timeout=20)
-        check("per-room email admins are gone", no_admins.status_code == 404)
+        added_admin = requests.put(f"{api}/rooms/{room_id}/admins/cohost-test@datatalks.club",
+                                   headers=admin_headers, timeout=20)
+        check("room admin can be added",
+              added_admin.status_code == 200
+              and "cohost-test@datatalks.club" in added_admin.json().get("admins", []))
+        removed_admin = requests.delete(f"{api}/rooms/{room_id}/admins/cohost-test@datatalks.club",
+                                        headers=admin_headers, timeout=20)
+        check("room admin can be removed", removed_admin.status_code == 200)
 
     finally:
         requests.delete(f"{api}/rooms/{room_id}?purge=true", headers=admin_headers, timeout=20)
