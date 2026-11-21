@@ -61,13 +61,82 @@ def test_a_stranger_cannot_change_a_room(table):
     assert excinfo.value.status == 403
 
 
-def test_there_is_no_way_to_grant_another_account_access(table):
-    """Access is owner plus session codes. Nothing else, deliberately."""
+def test_room_admins_can_be_listed_added_and_removed(table):
     room = make_room()
-    for method in ("PUT", "DELETE", "GET"):
-        with pytest.raises(HttpError) as excinfo:
-            call(["rooms", room["room_id"], "admins", GUEST], method, identity=owner())
-        assert excinfo.value.status == 404
+    cohost_admin = "orin@datatalks.club"
+    key_identity = api.Identity(email=OWNER, source="key")
+
+    added = call(["rooms", room["room_id"], "admins", cohost_admin], "PUT", identity=key_identity)
+    assert added["statusCode"] == 200
+    assert json.loads(added["body"]) == {"owner": OWNER, "admins": [cohost_admin]}
+
+    listed = call(["rooms", room["room_id"], "admins"], "GET", identity=key_identity)
+    assert json.loads(listed["body"]) == {"owner": OWNER, "admins": [cohost_admin]}
+
+    # The added admin now sees the room in their list and can open presentation mode.
+    as_admin = api.Identity(email=cohost_admin, source="session")
+    admin_rooms = json.loads(call(["rooms"], "GET", identity=as_admin)["body"])
+    assert [r["room_id"] for r in admin_rooms["items"]] == [room["room_id"]]
+    assert store.is_admin(room["room_id"], cohost_admin)
+
+    removed = call(["rooms", room["room_id"], "admins", cohost_admin], "DELETE", identity=key_identity)
+    assert removed["statusCode"] == 200
+    assert not store.is_admin(room["room_id"], cohost_admin)
+
+    with pytest.raises(HttpError) as excinfo:
+        call(["rooms", room["room_id"], "admins", cohost_admin], "DELETE", identity=key_identity)
+    assert excinfo.value.status == 404
+
+
+def test_post_admins_and_email_validation(table):
+    room = make_room()
+    added = call(["rooms", room["room_id"], "admins"], "POST", identity=owner(),
+                 body={"email": "Orin@DataTalks.Club"})
+    assert json.loads(added["body"]) == {"owner": OWNER, "admins": ["orin@datatalks.club"]}
+
+    with pytest.raises(HttpError) as excinfo:
+        call(["rooms", room["room_id"], "admins", GUEST], "PUT", identity=owner())
+    assert excinfo.value.status == 400
+
+    with pytest.raises(HttpError) as excinfo:
+        call(["rooms", room["room_id"], "admins", OWNER], "DELETE", identity=owner())
+    assert excinfo.value.status == 400
+
+
+def test_transfer_ownership_keeps_previous_owner_as_admin(table):
+    room = rooms.create({"title": "Podcast", "state": "open"}, "orin@datatalks.club")
+    orin_key = api.Identity(email="orin@datatalks.club", source="key")
+
+    # A non-owner admin cannot transfer ownership.
+    call(["rooms", room["room_id"], "admins", "host@datatalks.club"], "PUT", identity=orin_key)
+    with pytest.raises(HttpError) as excinfo:
+        call(["rooms", room["room_id"], "owner"], "POST",
+             identity=api.Identity(email="host@datatalks.club", source="session"),
+             body={"email": OWNER})
+    assert excinfo.value.status == 403
+
+    transferred = call(["rooms", room["room_id"], "owner"], "POST", identity=orin_key,
+                       body={"email": OWNER})
+    assert transferred["statusCode"] == 200
+    body = json.loads(transferred["body"])
+    assert body["owner"] == OWNER
+
+    admins_body = json.loads(call(["rooms", room["room_id"], "admins"], "GET", identity=orin_key)["body"])
+    assert admins_body == {"owner": OWNER, "admins": ["host@datatalks.club", "orin@datatalks.club"]}
+
+
+def test_global_admin_can_open_present_without_room_grant(table):
+    import admin_handler
+
+    room = rooms.create({"title": "Orin room", "state": "open"}, "orin@datatalks.club")
+    response = admin_handler.lambda_handler(
+        {
+            "rawPath": f"/admin/rooms/{room['room_id']}/present",
+            "cookies": [f"dq_session={security.new_session_token('root@datatalks.club')}"],
+        },
+        None,
+    )
+    assert response["statusCode"] == 200
 
 
 def test_creating_a_room_ignores_any_admins_field(table):

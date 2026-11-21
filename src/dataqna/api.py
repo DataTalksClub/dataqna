@@ -6,6 +6,8 @@ routes take neither and are protected by rate limits instead.
 """
 
 
+import urllib.parse
+
 from . import config, http, ids, questions, rooms, security, store
 from .http import HttpError
 
@@ -206,6 +208,12 @@ def route(event, segments, method, identity):
         if not store.revoke_cohost_invite(room["room_id"], tail[1]):
             raise HttpError(404, "not_found", "No such co-host code.")
         return http.json_response(200, {"revoked": True})
+    if tail == ["admins"]:
+        return _admins(event, room, method, identity)
+    if len(tail) == 2 and tail[0] == "admins":
+        return _admin_member(room, tail[1], method, identity)
+    if tail == ["owner"]:
+        return _transfer_owner(event, room, method, identity)
     raise HttpError(404, "not_found", "Unknown endpoint.")
 
 
@@ -472,6 +480,67 @@ def _cohosts(event, room, method, identity):
         return http.json_response(201, _cohost_view(room, invite))
 
     raise HttpError(405, "method_not_allowed", f"{method} is not allowed here.")
+
+
+def _clean_admin_email(raw):
+    email = urllib.parse.unquote(str(raw or "")).strip().lower()
+    local, sep, domain = email.partition("@")
+    if not sep or not local or any(ch.isspace() for ch in email) or domain != "datatalks.club":
+        raise HttpError(400, "invalid_request", "Admin email must be a @datatalks.club address.")
+    return email
+
+
+def _admins_payload(room):
+    owner = (room.get("owner") or "").lower()
+    grants = store.list_admins(room["room_id"])
+    return {
+        "owner": owner,
+        "admins": [g["email"] for g in grants if g["email"] != owner],
+    }
+
+
+def _grant_admin(room, email):
+    if email != (room.get("owner") or "").lower():
+        store.add_admin(room["room_id"], email, role="admin")
+    return http.json_response(200, _admins_payload(room))
+
+
+def _admins(event, room, method, identity):
+    identity.require_admin(room)
+    if method == "GET":
+        return http.json_response(200, _admins_payload(room))
+    if method == "POST":
+        email = _clean_admin_email(http.body(event).get("email"))
+        return _grant_admin(room, email)
+    raise HttpError(405, "method_not_allowed", f"{method} is not allowed here.")
+
+
+def _admin_member(room, raw_email, method, identity):
+    identity.require_admin(room)
+    email = _clean_admin_email(raw_email)
+    if method == "PUT":
+        return _grant_admin(room, email)
+    if method == "DELETE":
+        if email == (room.get("owner") or "").lower():
+            raise HttpError(400, "invalid_request", "Cannot remove the room owner.")
+        if not store.remove_admin(room["room_id"], email):
+            raise HttpError(404, "not_found", "No such room admin.")
+        return http.json_response(200, {"removed": True})
+    raise HttpError(405, "method_not_allowed", f"{method} is not allowed here.")
+
+
+def _transfer_owner(event, room, method, identity):
+    if method != "POST":
+        raise HttpError(405, "method_not_allowed", f"{method} is not allowed here.")
+    identity.require_owner(room)
+    new_owner = _clean_admin_email(http.body(event).get("email"))
+    prev_owner = (room.get("owner") or "").lower()
+    if new_owner != prev_owner:
+        if prev_owner:
+            store.add_admin(room["room_id"], prev_owner, role="admin")
+        store.add_admin(room["room_id"], new_owner, role="owner")
+        room = store.update_room(room["room_id"], {"owner": new_owner, "updated_at": store.now()})
+    return http.json_response(200, rooms.admin_view(room))
 
 
 def redeem_cohost(room, name, passcode, source_ip=""):
