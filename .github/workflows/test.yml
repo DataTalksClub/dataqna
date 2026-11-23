@@ -8,7 +8,8 @@ on:
 
 jobs:
   test:
-    runs-on: ubuntu-latest
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: [self-hosted, contabo]
     steps:
       - uses: actions/checkout@v4
 
@@ -27,7 +28,7 @@ jobs:
       - name: Install Playwright and Chromium
         run: |
           npm install --prefix tests/browser --no-save --no-package-lock playwright@1.61.1
-          npx --prefix tests/browser playwright install --with-deps chromium
+          npx --prefix tests/browser playwright install chromium
 
       - name: Run tests
         run: uv run pytest
